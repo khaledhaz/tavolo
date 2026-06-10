@@ -91,6 +91,53 @@ body{background:var(--color-bg);min-height:100vh}
 .wizard-title{font-size:24px;font-weight:600;letter-spacing:-0.02em;margin-bottom:var(--space-2)}
 .wizard-desc{font-size:15px;color:var(--color-text-secondary);margin-bottom:var(--space-6);line-height:1.5}
 
+/* ===== MODULE TOGGLE CARDS (step 0) ===== */
+.module-cards{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)}
+.module-card{
+  position:relative;border:2px solid var(--color-border);border-radius:var(--radius-lg);
+  padding:var(--space-5);cursor:pointer;
+  background:var(--color-surface);
+  transition:border-color var(--duration-fast),background var(--duration-fast),box-shadow var(--duration-fast);
+  user-select:none;text-align:left;
+}
+.module-card:hover{border-color:var(--shell-copper);background:var(--color-surface-raised)}
+.module-card.selected{
+  border-color:var(--shell-copper);background:rgba(194,112,61,.06);
+  box-shadow:0 0 0 3px rgba(194,112,61,.18);
+}
+.module-card-check{
+  position:absolute;top:var(--space-3);right:var(--space-3);
+  width:22px;height:22px;border-radius:50%;
+  background:var(--color-border);border:2px solid var(--color-border);
+  display:flex;align-items:center;justify-content:center;
+  transition:background var(--duration-fast),border-color var(--duration-fast);
+  flex-shrink:0;
+}
+.module-card.selected .module-card-check{
+  background:var(--shell-copper);border-color:var(--shell-copper);
+}
+.module-card-check svg{opacity:0;transition:opacity var(--duration-fast)}
+.module-card.selected .module-card-check svg{opacity:1}
+.module-card-icon{
+  width:44px;height:44px;border-radius:var(--radius-md);
+  background:var(--color-surface-raised);border:1px solid var(--color-border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--color-text-muted);margin-bottom:var(--space-3);
+  transition:background var(--duration-fast),color var(--duration-fast),border-color var(--duration-fast);
+}
+.module-card.selected .module-card-icon{
+  background:rgba(194,112,61,.12);color:var(--shell-copper);border-color:rgba(194,112,61,.3);
+}
+.module-card-name{font-size:15px;font-weight:600;color:var(--color-text-primary);margin-bottom:var(--space-1)}
+.module-card-desc{font-size:12px;color:var(--color-text-muted);line-height:1.5}
+.module-cards-note{
+  font-size:12px;color:var(--color-text-muted);text-align:center;
+  margin-bottom:var(--space-4);display:flex;align-items:center;justify-content:center;gap:5px;
+}
+@media(max-width:440px){
+  .module-cards{grid-template-columns:1fr}
+}
+
 /* ===== SIDEBAR / APP SHELL ===== */
 #app-shell{display:none;min-height:100vh}
 
@@ -472,11 +519,55 @@ body{background:var(--color-bg);min-height:100vh}
 <!-- ===== ONBOARDING WIZARD ===== -->
 <div id="onboard-screen" style="display:none" aria-label="Restaurant setup">
   <div class="wizard-card">
-    <div class="wizard-progress-bar"><div class="wizard-progress-fill" id="wizard-fill" style="width:50%"></div></div>
-    <p class="wizard-step" id="wizard-step-label">Step 1 of 2</p>
-    <h1 class="wizard-title" id="wizard-title">Set up your restaurant</h1>
-    <p class="wizard-desc" id="wizard-desc">Enter your restaurant details. We'll create a sample room and tables so you're ready in 60 seconds.</p>
-    <div id="wizard-content">
+    <div class="wizard-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-label="Setup progress">
+      <div class="wizard-progress-fill" id="wizard-fill" style="width:50%"></div>
+    </div>
+    <p class="wizard-step" id="wizard-step-label" aria-live="polite">Step 1 of 2</p>
+    <h1 class="wizard-title" id="wizard-title">What will you run on Tavolo?</h1>
+    <p class="wizard-desc" id="wizard-desc">Choose your modules — you can change this at any time from Settings.</p>
+
+    <!-- ── Step 0: module picker ── -->
+    <div id="wizard-step0">
+      <div class="module-cards" role="group" aria-label="Select modules">
+
+        <button class="module-card selected" id="mod-card-reservations"
+                type="button" aria-pressed="true" aria-describedby="mod-desc-reservations">
+          <span class="module-card-check" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 3"/></svg>
+          </span>
+          <div class="module-card-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="module-card-name">Reservations</div>
+          <div class="module-card-desc" id="mod-desc-reservations">Bookings, floor map &amp; guest CRM</div>
+        </button>
+
+        <button class="module-card selected" id="mod-card-qr-pay"
+                type="button" aria-pressed="true" aria-describedby="mod-desc-qr-pay">
+          <span class="module-card-check" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 3"/></svg>
+          </span>
+          <div class="module-card-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="10" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><path d="M17 10h4v4h-4z"/><path d="M17 17h4"/><path d="M21 14v7"/></svg>
+          </div>
+          <div class="module-card-name">QR Pay-at-Table</div>
+          <div class="module-card-desc" id="mod-desc-qr-pay">Scan, split &amp; pay — no app needed</div>
+        </button>
+
+      </div>
+
+      <p class="module-cards-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Select at least one module to continue
+      </p>
+      <div id="onboard-error-step0" class="auth-error" role="alert" aria-live="assertive"></div>
+      <button id="onboard-next" class="btn btn-primary btn-block btn-lg" type="button" style="border-radius:var(--radius-full)">
+        Continue
+      </button>
+    </div>
+
+    <!-- ── Step 1: restaurant profile ── -->
+    <div id="wizard-step1" style="display:none">
       <div class="field">
         <label for="onboard-name">Restaurant name</label>
         <input id="onboard-name" class="input" type="text" placeholder="e.g. The Oak Room" autocomplete="organization" required>
@@ -497,11 +588,17 @@ body{background:var(--color-bg);min-height:100vh}
           <option value="Asia/Singapore">Singapore</option>
         </select>
       </div>
+      <div id="onboard-error" class="auth-error" role="alert" aria-live="assertive"></div>
+      <div style="display:flex;gap:var(--space-3)">
+        <button id="onboard-back" class="btn btn-secondary" type="button" style="border-radius:var(--radius-full);min-height:48px;padding:0 var(--space-6)">
+          Back
+        </button>
+        <button id="onboard-submit" class="btn btn-primary btn-block btn-lg" type="button" style="border-radius:var(--radius-full)">
+          Create my restaurant
+        </button>
+      </div>
     </div>
-    <div id="onboard-error" class="auth-error" role="alert" aria-live="assertive"></div>
-    <button id="onboard-submit" class="btn btn-primary btn-block btn-lg" style="border-radius:var(--radius-full);margin-top:var(--space-2)">
-      Create my restaurant
-    </button>
+
   </div>
 </div>
 
@@ -1043,13 +1140,106 @@ $('#signout-btn').addEventListener('click', async function () {
 });
 
 /* =====================================================================
-   ONBOARDING WIZARD
+   ONBOARDING WIZARD  (Phase 6 — unified 2-step flow)
+   Step 0: module picker  →  Step 1: restaurant profile + create
 ===================================================================== */
-async function showOnboarding() {
-  $('#auth-screen').style.display   = 'none';
-  $('#onboard-screen').style.display = 'flex';
-  $('#app-shell').style.display     = 'none';
 
+/* ---- wizard state ---- */
+var wizard = {
+  step:        0,       // 0 = modules, 1 = profile
+  reservations: true,
+  qr_pay:       true,
+};
+
+function wizardSetProgress(step) {
+  /* step 0 → 50 %, step 1 → 100 % */
+  var pct = step === 0 ? 50 : 100;
+  $('#wizard-fill').style.width = pct + '%';
+  $('#wizard-fill').parentElement.setAttribute('aria-valuenow', String(pct));
+  $('#wizard-step-label').textContent = 'Step ' + (step + 1) + ' of 2';
+}
+
+function wizardGoToStep(step) {
+  wizard.step = step;
+  if (step === 0) {
+    $('#wizard-title').textContent = 'What will you run on Tavolo?';
+    $('#wizard-desc').textContent  = 'Choose your modules — you can change this at any time from Settings.';
+    $('#wizard-step0').style.display = '';
+    $('#wizard-step1').style.display = 'none';
+    wizardSetProgress(0);
+    $('#onboard-next').focus();
+  } else {
+    $('#wizard-title').textContent = 'Set up your restaurant';
+    $('#wizard-desc').textContent  = 'Enter your restaurant details. We\'ll have you ready in 60 seconds.';
+    $('#wizard-step0').style.display = 'none';
+    $('#wizard-step1').style.display = '';
+    wizardSetProgress(1);
+    $('#onboard-name').focus();
+  }
+}
+
+/* ---- module card toggle ---- */
+function toggleModuleCard(cardId, stateKey) {
+  var card = $('#' + cardId);
+  var on   = !wizard[stateKey];
+  /* enforce at least one selected */
+  var otherKey = stateKey === 'reservations' ? 'qr_pay' : 'reservations';
+  if (!on && !wizard[otherKey]) return; /* block deselecting last one */
+  wizard[stateKey] = on;
+  card.classList.toggle('selected', on);
+  card.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+
+$('#mod-card-reservations').addEventListener('click', function () {
+  toggleModuleCard('mod-card-reservations', 'reservations');
+});
+$('#mod-card-reservations').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleModuleCard('mod-card-reservations', 'reservations'); }
+});
+$('#mod-card-qr-pay').addEventListener('click', function () {
+  toggleModuleCard('mod-card-qr-pay', 'qr_pay');
+});
+$('#mod-card-qr-pay').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleModuleCard('mod-card-qr-pay', 'qr_pay'); }
+});
+
+/* ---- step 0 → step 1 ---- */
+$('#onboard-next').addEventListener('click', function () {
+  var errEl = $('#onboard-error-step0');
+  errEl.style.display = 'none';
+  if (!wizard.reservations && !wizard.qr_pay) {
+    errEl.textContent = 'Please select at least one module to continue.';
+    errEl.style.display = 'block';
+    return;
+  }
+  wizardGoToStep(1);
+});
+
+/* ---- back button ---- */
+$('#onboard-back').addEventListener('click', function () {
+  $('#onboard-error').style.display = 'none';
+  wizardGoToStep(0);
+});
+
+/* ---- show onboarding entry point ---- */
+async function showOnboarding() {
+  $('#auth-screen').style.display    = 'none';
+  $('#onboard-screen').style.display = 'flex';
+  $('#app-shell').style.display      = 'none';
+
+  /* reset wizard to step 0 */
+  wizard.step         = 0;
+  wizard.reservations = true;
+  wizard.qr_pay       = true;
+  $('#mod-card-reservations').classList.add('selected');
+  $('#mod-card-reservations').setAttribute('aria-pressed', 'true');
+  $('#mod-card-qr-pay').classList.add('selected');
+  $('#mod-card-qr-pay').setAttribute('aria-pressed', 'true');
+  $('#onboard-error-step0').style.display = 'none';
+  $('#onboard-error').style.display       = 'none';
+  wizardGoToStep(0);
+
+  /* pre-select timezone */
   var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
   var tzSel = $('#onboard-tz');
   Array.prototype.forEach.call(tzSel.options, function (opt) {
@@ -1057,30 +1247,188 @@ async function showOnboarding() {
   });
 }
 
+/* ---- step 1 submit: create plat + module rows ---- */
 $('#onboard-submit').addEventListener('click', async function () {
   var name  = $('#onboard-name').value.trim();
   var tz    = $('#onboard-tz').value;
   var errEl = $('#onboard-error');
   errEl.style.display = 'none';
+
   if (!name) {
     errEl.textContent = 'Please enter your restaurant name.';
     errEl.style.display = 'block';
+    $('#onboard-name').focus();
     return;
   }
+
   var btn = $('#onboard-submit');
-  btn.textContent = 'Setting up your restaurant...'; btn.disabled = true;
+  var backBtn = $('#onboard-back');
+  btn.textContent = 'Setting up your restaurant…'; btn.disabled = true;
+  backBtn.disabled = true;
+
   try {
-    var sess   = await data.auth.getSession();
-    var userId = sess.data.session.user.id;
-    var rest   = await data.onboarding.seed(userId, name, tz);
-    state.restaurant = rest;
-    toast('Restaurant created! Welcome to Tavolo.', 'ok');
+    var sess    = await data.auth.getSession();
+    var session = (sess.data && sess.data.session) ? sess.data.session : state.session;
+    if (!session || !session.user) throw { phase: 'platform', raw: { message: 'Not authenticated. Please sign in again.' } };
+    var userId = session.user.id;
+    var slug   = utils.slugify(name);
+    var modules = { reservations: wizard.reservations, qr_pay: wizard.qr_pay };
+
+    /* ── (a) plat_restaurants — use upsert on slug to be retry-safe ── */
+    var platRes = await window.PLAT.client
+      .from('plat_restaurants')
+      .upsert({
+        owner_user_id: userId,
+        name:          name,
+        slug:          slug,
+        timezone:      tz,
+        modules:       modules,
+      }, { onConflict: 'slug', ignoreDuplicates: false })
+      .select()
+      .single();
+    if (platRes.error) throw { phase: 'platform', raw: platRes.error };
+    var platRow = platRes.data;
+    var platId  = platRow.id;
+
+    /* ── (b) cov_restaurants + seed (if reservations enabled) ── */
+    var covRow = null;
+    if (wizard.reservations) {
+      /* upsert so a failed + retried onboarding doesn't duplicate */
+      var covInsert = await window.PLAT.client
+        .from('cov_restaurants')
+        .upsert({
+          owner_user_id:        userId,
+          name:                 name,
+          slug:                 slug,
+          timezone:             tz,
+          booking_enabled:      true,
+          default_turn_minutes: 90,
+          buffer_minutes:       15,
+          max_party_online:     10,
+          deposit_required:     false,
+          plat_restaurant_id:   platId,
+        }, { onConflict: 'slug', ignoreDuplicates: false })
+        .select()
+        .single();
+      if (covInsert.error) throw { phase: 'reservations', raw: covInsert.error };
+      covRow = covInsert.data;
+
+      /* seed room + service period + tables only when freshly created
+         (detect: check if room already exists to avoid double-seeding on retry) */
+      var existingRooms = await window.PLAT.client
+        .from('cov_rooms')
+        .select('id')
+        .eq('restaurant_id', covRow.id)
+        .limit(1);
+      if (!existingRooms.data || existingRooms.data.length === 0) {
+        var roomIns = await window.PLAT.client
+          .from('cov_rooms')
+          .insert({ restaurant_id: covRow.id, name: 'Main Dining', sort_order: 0, is_active: true })
+          .select().single();
+        if (roomIns.error) throw { phase: 'reservations_room', raw: roomIns.error };
+        var roomId = roomIns.data.id;
+
+        await window.PLAT.client.from('cov_service_periods').insert({
+          restaurant_id:         covRow.id,
+          name:                  'Dinner',
+          days_of_week:          [0,1,2,3,4,5,6],
+          start_time:            '17:00:00',
+          end_time:              '22:00:00',
+          last_seating_time:     '21:30:00',
+          slot_interval_minutes: 30,
+        });
+
+        var covTableSeeds = [
+          { label:'T1', seats_min:1, seats_max:2, shape:'square', pos_x:40,  pos_y:40,  sort_order:0, online_bookable:true, width:80, height:60 },
+          { label:'T2', seats_min:1, seats_max:2, shape:'square', pos_x:160, pos_y:40,  sort_order:1, online_bookable:true, width:80, height:60 },
+          { label:'T3', seats_min:2, seats_max:4, shape:'rect',   pos_x:40,  pos_y:160, sort_order:2, online_bookable:true, width:80, height:60 },
+          { label:'T4', seats_min:4, seats_max:6, shape:'rect',   pos_x:200, pos_y:160, sort_order:3, online_bookable:true, width:80, height:60 },
+        ];
+        /* batch insert all 4 tables in one round-trip */
+        var covTableRows = covTableSeeds.map(function (t) {
+          return Object.assign({}, t, { restaurant_id: covRow.id, room_id: roomId, is_active: true });
+        });
+        var covTableIns = await window.PLAT.client.from('cov_tables').insert(covTableRows);
+        if (covTableIns.error) throw { phase: 'reservations_tables', raw: covTableIns.error };
+      }
+    }
+
+    /* ── (c) mesa_restaurants + 4 starter tables (if qr_pay enabled) ── */
+    if (wizard.qr_pay) {
+      var mesaIns = await window.PLAT.client
+        .from('mesa_restaurants')
+        .upsert({
+          owner_user_id:     userId,
+          name:              name,
+          slug:              slug,
+          currency:          'USD',
+          brand_primary:     '#1A1A1A',
+          brand_accent:      '#C2703D',
+          is_active:         true,
+          plat_restaurant_id: platId,
+        }, { onConflict: 'slug', ignoreDuplicates: false })
+        .select()
+        .single();
+      if (mesaIns.error) throw { phase: 'qr_pay', raw: mesaIns.error };
+      var mesaRow = mesaIns.data;
+
+      /* seed 4 starter tables (only when none exist yet) */
+      var existingMesaTables = await window.PLAT.client
+        .from('mesa_tables')
+        .select('id')
+        .eq('restaurant_id', mesaRow.id)
+        .limit(1);
+      if (!existingMesaTables.data || existingMesaTables.data.length === 0) {
+        /* table_code must be globally unique — prefix with first 2 upper chars of slug */
+        var prefix = slug.replace(/[^a-z]/g, '').substring(0, 2).toUpperCase() || 'TV';
+        var mesaStarters = [
+          { label: 'Table 1', table_code: prefix + '-01', seats: 2 },
+          { label: 'Table 2', table_code: prefix + '-02', seats: 4 },
+          { label: 'Table 3', table_code: prefix + '-03', seats: 4 },
+          { label: 'Table 4', table_code: prefix + '-04', seats: 6 },
+        ];
+        /* batch insert all 4 mesa tables in one round-trip */
+        var mesaTableRows = mesaStarters.map(function (t) {
+          return Object.assign({}, t, { restaurant_id: mesaRow.id, is_active: true });
+        });
+        var mesaTableIns = await window.PLAT.client.from('mesa_tables').insert(mesaTableRows);
+        if (mesaTableIns.error) throw { phase: 'qr_pay_tables', raw: mesaTableIns.error };
+      }
+    }
+
+    /* ── success ── */
+    /* state.restaurant is used by loadApp() — set it to the cov row when available,
+       otherwise synthesise a minimal compatible shape from the plat row */
+    state.restaurant = covRow || {
+      id:       platRow.id,
+      name:     platRow.name,
+      slug:     platRow.slug,
+      timezone: platRow.timezone,
+      booking_enabled:      false,
+      default_turn_minutes: 90,
+    };
+
+    window.PLAT.getModules.bust();
+    toast('Welcome to Tavolo.', 'ok');
     $('#onboard-screen').style.display = 'none';
     await loadApp();
+
   } catch (e) {
-    btn.disabled = false;
-    btn.textContent = 'Create my restaurant';
-    errEl.textContent = 'Setup failed. Please try again.';
+    btn.disabled = false; btn.textContent = 'Create my restaurant';
+    backBtn.disabled = false;
+    var phase = e && e.phase ? e.phase : null;
+    var rawMsg = (e && e.raw && e.raw.message) ? e.raw.message : '';
+    var userMsg;
+    if (phase === 'platform') {
+      userMsg = 'Could not create your restaurant profile.' + (rawMsg ? ' (' + rawMsg + ')' : '') + ' Please try again.';
+    } else if (phase === 'reservations' || phase === 'reservations_room' || phase === 'reservations_tables') {
+      userMsg = 'Reservations module setup failed.' + (rawMsg ? ' (' + rawMsg + ')' : '') + ' You can retry safely.';
+    } else if (phase === 'qr_pay' || phase === 'qr_pay_tables') {
+      userMsg = 'QR Pay module setup failed.' + (rawMsg ? ' (' + rawMsg + ')' : '') + ' You can retry safely.';
+    } else {
+      userMsg = 'Setup failed. Please try again.';
+    }
+    errEl.textContent = userMsg;
     errEl.style.display = 'block';
     console.error('[tavolo] onboarding error', e);
   }
