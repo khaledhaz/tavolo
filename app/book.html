@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#c2703d">
+<title>Reserve a Table — Tavolo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+/* ===== MIDNIGHT & COPPER — DARK PREMIUM OVERRIDE ===== */
+:root {
+  /* Dark canvas */
+  --bk-bg:          #080a0e;
+  --bk-surface:     #0d0f14;
+  --bk-surface-2:   #13161d;
+  --bk-surface-3:   #1a1e27;
+  --bk-border:      rgba(255,255,255,0.08);
+  --bk-border-mid:  rgba(255,255,255,0.13);
+  /* Copper primary */
+  --bk-copper:      #c2703d;
+  --bk-copper-dim:  #a85e30;
+  --bk-copper-glow: rgba(194,112,61,0.18);
+  --bk-copper-fg:   #ffffff;
+  /* Honey-gold — focus / highlights */
+  --bk-gold:        #f0b51d;
+  --bk-gold-glow:   rgba(240,181,29,0.20);
+  /* Text */
+  --bk-text:        #f0ede8;
+  --bk-text-2:      #a09890;
+  --bk-text-3:      #635d58;
+  /* Semantic */
+  --bk-success:     #3aa870;
+  --bk-success-bg:  rgba(58,168,112,0.12);
+  --bk-error:       #e05252;
+  --bk-error-bg:    rgba(224,82,82,0.12);
+  --bk-warning:     #e8a040;
+  /* Shadows */
+  --bk-shadow-card: 0 0 0 1px rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.55);
+  --bk-shadow-btn:  0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ===== BOOK PAGE SHELL ===== */
+*,*::before,*::after{box-sizing:border-box}
+html,body{min-height:100%;overflow-x:hidden;max-width:100%}
+body{
+  background:var(--bk-bg);
+  min-height:100vh;display:flex;flex-direction:column;width:100%;
+  color:var(--bk-text);
+  font-family:'Inter','DM Sans',system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== BRANDED HEADER ===== */
+.bk-header{
+  background:var(--bk-surface);
+  border-bottom:1px solid var(--bk-border);
+  padding:18px 24px;
+  display:flex;align-items:center;gap:16px;
+  min-width:0;flex-wrap:wrap;
+  position:sticky;top:0;z-index:10;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.bk-logo{
+  width:44px;height:44px;border-radius:10px;flex-shrink:0;
+  background:var(--bk-copper);display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.02em;
+  overflow:hidden;box-shadow:0 2px 8px rgba(194,112,61,0.35);
+}
+.bk-logo img{width:100%;height:100%;object-fit:cover;display:block}
+.bk-header-info{flex:1;min-width:0}
+.bk-header-name{
+  font-family:'Cormorant Garamond','Georgia',serif;
+  font-size:21px;font-weight:700;letter-spacing:0;color:var(--bk-text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  line-height:1.2;
+}
+.bk-header-address{
+  font-size:12px;color:var(--bk-text-2);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.bk-header-badge{
+  flex-shrink:0;
+  background:rgba(194,112,61,0.15);
+  color:var(--bk-copper);
+  border:1px solid rgba(194,112,61,0.25);
+  font-size:11px;font-weight:600;padding:4px 12px;border-radius:9999px;
+  white-space:nowrap;letter-spacing:0.03em;
+}
+
+/* ===== MAIN CONTENT ===== */
+.bk-main{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:36px 20px 64px;
+  min-width:0;
+}
+.bk-card{
+  background:var(--bk-surface);
+  border:1px solid var(--bk-border);
+  border-radius:20px;
+  box-shadow:var(--bk-shadow-card);
+  width:100%;max-width:480px;overflow:hidden;
+}
+
+/* ===== STEP PROGRESS ===== */
+.bk-progress{
+  padding:20px 24px 16px;
+  border-bottom:1px solid var(--bk-border);
+}
+.bk-progress-track{
+  height:2px;background:var(--bk-border-mid);border-radius:9999px;overflow:hidden;margin-bottom:10px;
+}
+.bk-progress-fill{
+  height:100%;
+  background:linear-gradient(90deg, var(--bk-copper), var(--bk-gold));
+  border-radius:9999px;
+  transition:width var(--duration-normal) var(--easing-standard);
+  box-shadow:0 0 8px rgba(194,112,61,0.5);
+}
+.bk-step-label{
+  font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;
+  color:var(--bk-text-3);
+}
+
+/* ===== STEP BODY ===== */
+.bk-body{padding:28px 24px}
+
+.bk-section-title{
+  font-family:'Cormorant Garamond','Georgia',serif;
+  font-size:22px;font-weight:700;letter-spacing:-0.01em;color:var(--bk-text);
+  margin-bottom:20px;line-height:1.2;
+}
+
+/* ===== DATE PICKER ===== */
+.bk-date-input{
+  width:100%;min-height:52px;padding:14px 16px;
+  background:var(--bk-surface-2);
+  border:1px solid var(--bk-border-mid);
+  border-radius:10px;font-size:16px;color:var(--bk-text);
+  transition:border-color var(--duration-fast),box-shadow var(--duration-fast);
+  -webkit-appearance:none;
+}
+.bk-date-input::placeholder{color:var(--bk-text-3)}
+.bk-date-input:focus{
+  outline:none;
+  border-color:var(--bk-gold);
+  box-shadow:0 0 0 3px var(--bk-gold-glow);
+}
+/* date input colorscheme for dark */
+.bk-date-input[type="date"]{color-scheme:dark}
+
+/* ===== PARTY SELECTOR ===== */
+.bk-party-grid{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;
+}
+@media(max-width:420px){.bk-party-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:374px){.bk-party-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.bk-party-btn{
+  aspect-ratio:1;border-radius:10px;
+  border:1px solid var(--bk-border-mid);
+  background:var(--bk-surface-2);
+  font-size:16px;font-weight:600;color:var(--bk-text);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  min-width:0;min-height:48px;width:100%;
+  transition:border-color var(--duration-fast),background var(--duration-fast),color var(--duration-fast),box-shadow var(--duration-fast);
+}
+.bk-party-btn:hover{
+  border-color:var(--bk-copper);
+  background:var(--bk-copper-glow);
+}
+.bk-party-btn.selected{
+  border-color:var(--bk-copper);
+  background:var(--bk-copper);
+  color:#fff;
+  box-shadow:0 0 12px rgba(194,112,61,0.4);
+}
+.bk-party-btn:focus-visible{
+  outline:2px solid var(--bk-gold);
+  outline-offset:2px;
+  box-shadow:0 0 0 4px var(--bk-gold-glow);
+}
+.bk-party-more{
+  width:100%;min-height:48px;border-radius:10px;
+  border:1px dashed var(--bk-border-mid);
+  background:transparent;color:var(--bk-text-2);font-size:13px;
+  cursor:pointer;margin-top:12px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:border-color var(--duration-fast),color var(--duration-fast);
+}
+.bk-party-more:hover{border-color:var(--bk-copper);color:var(--bk-copper)}
+.bk-party-more.hidden{display:none}
+.bk-party-large{margin-top:12px;display:none}
+.bk-party-large.show{display:flex;align-items:center;gap:12px}
+.bk-party-large .bk-date-input{min-height:48px;font-size:15px}
+
+/* ===== SLOT GRID ===== */
+.bk-slots-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+}
+@media(max-width:374px){.bk-slots-grid{grid-template-columns:repeat(2,1fr)}}
+.bk-slot{
+  min-height:56px;border-radius:10px;
+  border:1px solid var(--bk-border-mid);
+  background:var(--bk-surface-2);
+  font-size:14px;font-weight:600;color:var(--bk-text);
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  transition:border-color var(--duration-fast),background var(--duration-fast),color var(--duration-fast),box-shadow var(--duration-fast);
+  padding:10px 8px;
+}
+.bk-slot:hover{
+  border-color:var(--bk-copper);
+  background:var(--bk-copper-glow);
+}
+.bk-slot.selected{
+  border-color:var(--bk-copper);
+  background:var(--bk-copper);
+  color:#fff;
+  box-shadow:0 0 14px rgba(194,112,61,0.45);
+}
+.bk-slot-limited{
+  font-size:9px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--bk-warning);opacity:.95;
+}
+.bk-slot.selected .bk-slot-limited{color:rgba(255,255,255,0.75)}
+.bk-slot:focus-visible{
+  outline:2px solid var(--bk-gold);
+  outline-offset:2px;
+  box-shadow:0 0 0 4px var(--bk-gold-glow);
+}
+
+/* ===== FORM ===== */
+.bk-form-row{margin-bottom:18px}
+.bk-form-row label{
+  display:block;font-size:13px;font-weight:500;
+  color:var(--bk-text-2);margin-bottom:8px;letter-spacing:0.02em;
+}
+.bk-form-row .bk-date-input{font-size:15px}
+.bk-required{color:#e05252;margin-left:2px}
+.bk-opt{font-size:11px;color:var(--bk-text-3);font-weight:400;margin-left:4px}
+.bk-char{font-size:11px;color:var(--bk-text-3);float:right;margin-top:6px}
+.bk-booking-summary{
+  background:var(--bk-surface-2);border-radius:12px;
+  border:1px solid var(--bk-border);
+  padding:16px;margin-bottom:20px;font-size:14px;
+}
+.bk-booking-summary-row{display:flex;gap:12px;align-items:baseline;margin-bottom:8px}
+.bk-booking-summary-row:last-child{margin-bottom:0}
+.bk-booking-summary-label{
+  font-size:11px;font-weight:600;color:var(--bk-text-3);
+  min-width:56px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.05em;
+}
+.bk-booking-summary-val{
+  font-weight:600;color:var(--bk-text);min-width:0;word-break:break-word;
+}
+
+/* ===== ACTIONS ===== */
+.bk-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.bk-btn-primary{
+  flex:1;min-height:54px;border-radius:9999px;
+  background:var(--bk-copper);color:#fff;
+  font-size:16px;font-weight:600;letter-spacing:0.01em;
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:filter var(--duration-fast),transform var(--duration-instant),box-shadow var(--duration-fast);
+  box-shadow:var(--bk-shadow-btn);
+}
+.bk-btn-primary:hover{
+  filter:brightness(1.08);
+  box-shadow:0 4px 20px rgba(194,112,61,0.5);
+}
+.bk-btn-primary:active{transform:scale(.97)}
+.bk-btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.bk-btn-back{
+  min-height:54px;padding:0 22px;border-radius:9999px;
+  background:var(--bk-surface-2);color:var(--bk-text-2);
+  border:1px solid var(--bk-border-mid);font-size:15px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+  transition:background var(--duration-fast),color var(--duration-fast),border-color var(--duration-fast);
+}
+.bk-btn-back:hover{
+  background:var(--bk-surface-3);
+  color:var(--bk-text);
+  border-color:var(--bk-border-mid);
+}
+.bk-btn-primary:focus-visible,.bk-btn-back:focus-visible{
+  outline:2px solid var(--bk-gold);
+  outline-offset:3px;
+  box-shadow:0 0 0 5px var(--bk-gold-glow);
+}
+
+/* ===== STATUS STATES ===== */
+.bk-status{
+  text-align:center;padding:44px 24px;
+}
+.bk-status-icon{
+  width:64px;height:64px;border-radius:50%;margin:0 auto 18px;
+  display:flex;align-items:center;justify-content:center;
+}
+.bk-status-icon.loading{background:var(--bk-surface-3)}
+.bk-status-icon.empty{background:var(--bk-surface-3)}
+.bk-status-icon.error{background:var(--bk-error-bg);border:1px solid rgba(224,82,82,0.2)}
+.bk-status-icon.success{background:var(--bk-success-bg);border:1px solid rgba(58,168,112,0.2)}
+.bk-status-title{
+  font-family:'Cormorant Garamond','Georgia',serif;
+  font-size:20px;font-weight:700;color:var(--bk-text);
+  margin-bottom:8px;letter-spacing:0;
+}
+.bk-status-desc{
+  font-size:14px;color:var(--bk-text-2);line-height:1.7;
+  max-width:300px;margin:0 auto 22px;
+}
+.bk-spin{
+  width:28px;height:28px;
+  border:2px solid var(--bk-border-mid);
+  border-top-color:var(--bk-copper);border-radius:50%;
+  animation:bk-spin .8s linear infinite;
+}
+@keyframes bk-spin{to{transform:rotate(360deg)}}
+.bk-no-slots-grid{display:flex;flex-direction:column;gap:12px}
+
+/* ===== CONFIRMATION ===== */
+.bk-confirm-icon{
+  width:72px;height:72px;border-radius:50%;margin:0 auto 20px;
+  background:var(--bk-success-bg);
+  border:1px solid rgba(58,168,112,0.25);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 24px rgba(58,168,112,0.15);
+}
+.bk-confirm-title{
+  font-family:'Cormorant Garamond','Georgia',serif;
+  font-size:28px;font-weight:700;color:var(--bk-text);
+  letter-spacing:-0.01em;text-align:center;margin-bottom:8px;
+  line-height:1.1;
+}
+.bk-confirm-sub{
+  font-size:15px;color:var(--bk-text-2);text-align:center;
+  margin-bottom:28px;line-height:1.6;
+}
+.bk-confirm-detail{
+  background:var(--bk-surface-2);
+  border:1px solid var(--bk-border);
+  border-radius:14px;
+  padding:20px;margin-bottom:20px;
+}
+.bk-confirm-row{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.bk-confirm-row:last-child{margin-bottom:0}
+.bk-confirm-label{
+  font-size:11px;font-weight:600;color:var(--bk-text-3);
+  min-width:72px;flex-shrink:0;padding-top:2px;
+  text-transform:uppercase;letter-spacing:0.06em;
+}
+.bk-confirm-val{
+  font-size:14px;font-weight:600;color:var(--bk-text);
+  min-width:0;word-break:break-word;
+}
+.bk-confirm-actions{display:flex;flex-direction:column;gap:10px}
+.bk-cal-btn{
+  min-height:50px;border-radius:9999px;
+  border:1px solid var(--bk-border-mid);
+  background:var(--bk-surface-2);color:var(--bk-text-2);
+  font-size:14px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  text-decoration:none;
+  transition:background var(--duration-fast),color var(--duration-fast),border-color var(--duration-fast);
+}
+.bk-cal-btn:hover{
+  background:var(--bk-surface-3);
+  color:var(--bk-text);
+  border-color:var(--bk-copper);
+}
+.bk-cal-btn:focus-visible{outline:2px solid var(--bk-gold);outline-offset:2px}
+.bk-manage-link{
+  text-align:center;font-size:13px;color:var(--bk-text-3);margin-top:18px;
+  line-height:1.6;
+}
+.bk-manage-link a{color:var(--bk-copper);font-weight:500}
+.bk-manage-link a:hover{color:var(--bk-gold)}
+
+/* ===== MANAGE MODE ===== */
+.bk-manage-header{
+  padding:16px 24px;border-bottom:1px solid var(--bk-border);
+  font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;
+  color:var(--bk-text-3);background:var(--bk-surface-2);
+}
+.bk-status-chip{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 12px;
+  border-radius:9999px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;
+}
+.bk-status-chip.booked{background:rgba(194,112,61,0.15);color:var(--bk-copper);border:1px solid rgba(194,112,61,0.25)}
+.bk-status-chip.confirmed{background:rgba(58,168,112,0.12);color:var(--bk-success);border:1px solid rgba(58,168,112,0.2)}
+.bk-status-chip.cancelled{background:var(--bk-surface-3);color:var(--bk-text-3);border:1px solid var(--bk-border)}
+.bk-status-chip.seated{background:rgba(240,181,29,0.12);color:var(--bk-gold);border:1px solid rgba(240,181,29,0.2)}
+.bk-status-chip.completed{background:rgba(58,168,112,0.12);color:var(--bk-success);border:1px solid rgba(58,168,112,0.2)}
+.bk-cancel-warn{
+  background:var(--bk-error-bg);
+  border:1px solid rgba(224,82,82,0.2);
+  border-radius:10px;padding:16px;font-size:14px;
+  color:#f07070;margin-bottom:16px;line-height:1.5;
+}
+.bk-btn-danger{
+  min-height:50px;border-radius:9999px;width:100%;
+  background:#c03030;color:#fff;
+  font-size:15px;font-weight:600;border:none;cursor:pointer;
+  transition:filter var(--duration-fast),transform var(--duration-instant);
+  box-shadow:0 2px 8px rgba(192,48,48,0.35);
+}
+.bk-btn-danger:hover{filter:brightness(1.1)}
+.bk-btn-danger:active{transform:scale(.97)}
+.bk-btn-danger:disabled{opacity:.4;cursor:not-allowed}
+.bk-btn-danger:focus-visible{outline:2px solid var(--bk-gold);outline-offset:2px}
+
+/* ===== ERROR INLINE ===== */
+.bk-inline-error{
+  background:var(--bk-error-bg);
+  border:1px solid rgba(224,82,82,0.2);
+  color:#f07070;
+  border-radius:10px;padding:12px 16px;
+  font-size:14px;margin-bottom:16px;line-height:1.5;display:none;
+}
+.bk-inline-error.show{display:block}
+
+/* ===== NOT FOUND ===== */
+#not-found-screen{
+  flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;
+}
+.bk-nf-card{
+  text-align:center;max-width:360px;padding:48px 28px;
+}
+.bk-nf-icon{
+  width:72px;height:72px;border-radius:18px;
+  background:var(--bk-surface-2);
+  border:1px solid var(--bk-border);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 22px;color:var(--bk-text-3);
+}
+.bk-nf-title{
+  font-family:'Cormorant Garamond','Georgia',serif;
+  font-size:26px;font-weight:700;letter-spacing:-0.01em;
+  margin-bottom:12px;color:var(--bk-text);
+}
+.bk-nf-body{font-size:15px;color:var(--bk-text-2);line-height:1.65}
+
+/* ===== FOOTER ===== */
+.bk-footer{
+  text-align:center;padding:24px 20px;
+  font-size:12px;color:var(--bk-text-3);
+  border-top:1px solid var(--bk-border);
+}
+.bk-footer a{color:var(--bk-text-3);text-decoration:none;transition:color var(--duration-fast)}
+.bk-footer a:hover{color:var(--bk-copper)}
+.bk-footer strong{color:var(--bk-copper)}
+
+/* ===== DECORATIVE SEPARATOR LINE IN STEP BODY ===== */
+.bk-step-sep{
+  height:1px;background:var(--bk-border);margin:20px 0;border:none;
+}
+
+/* ===== SLOT DATE/PARTY META LINE ===== */
+.bk-slot-meta{
+  font-size:13px;color:var(--bk-text-2);margin-bottom:16px;
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+}
+.bk-slot-meta-dot{color:var(--bk-text-3);font-size:10px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:599px){
+  .bk-main{padding:20px 16px 48px}
+  .bk-body{padding:22px 18px}
+  .bk-progress{padding:16px 18px 12px}
+  .bk-section-title{font-size:20px;margin-bottom:18px}
+  .bk-confirm-title{font-size:24px}
+  .bk-actions{flex-direction:column}
+  .bk-btn-back{justify-content:center}
+  .bk-header{padding:14px 18px}
+}
+@media(max-width:374px){
+  .bk-header-name{font-size:18px}
+  .bk-btn-primary,.bk-btn-back{font-size:15px;min-height:50px}
+  .bk-slots-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOADING OVERLAY (initial page load) ===== -->
+<div id="page-loading" aria-live="polite" role="status" style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;background:var(--bk-bg)">
+  <div class="bk-spin" style="width:36px;height:36px;border-width:2px" aria-hidden="true"></div>
+  <p style="font-size:13px;color:var(--bk-text-2);letter-spacing:0.04em;text-transform:uppercase;font-weight:500">Loading…</p>
+</div>
+
+<!-- ===== NOT FOUND SCREEN ===== -->
+<div id="not-found-screen" style="display:none" aria-label="Restaurant not found">
+  <div class="bk-nf-card">
+    <div class="bk-nf-icon" aria-hidden="true">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+    </div>
+    <h1 class="bk-nf-title">Page not found</h1>
+    <p class="bk-nf-body" id="nf-message">This booking page isn't available. Please check the link you were given.</p>
+  </div>
+</div>
+
+<!-- ===== MAIN BOOKING APP ===== -->
+<div id="booking-app" style="display:none;flex-direction:column;min-height:100vh">
+
+  <!-- Branded header -->
+  <header class="bk-header" id="bk-header">
+    <div class="bk-logo" id="bk-logo" aria-hidden="true">C</div>
+    <div class="bk-header-info">
+      <div class="bk-header-name" id="bk-rest-name">Restaurant</div>
+      <div class="bk-header-address" id="bk-address"></div>
+    </div>
+    <div class="bk-header-badge" aria-label="Online booking available">Reserve online</div>
+  </header>
+
+  <main class="bk-main" id="bk-main">
+
+    <!-- STEP CARD (date/party/slots/form/confirmation) -->
+    <div class="bk-card" id="bk-card">
+      <!-- Progress bar -->
+      <div class="bk-progress" id="bk-progress" aria-hidden="true">
+        <div class="bk-progress-track"><div class="bk-progress-fill" id="bk-progress-fill" style="width:25%"></div></div>
+        <div class="bk-step-label" id="bk-step-label">Step 1 of 4</div>
+      </div>
+
+      <!-- Step body (dynamically populated) -->
+      <div class="bk-body" id="bk-step-body">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bk-footer">
+    <a href="index.html" rel="noopener">Powered by <strong>Tavolo</strong></a>
+  </footer>
+</div>
+
+<!-- ===== MANAGE MODE CARD ===== -->
+<div id="manage-app" style="display:none;flex-direction:column;min-height:100vh">
+  <header class="bk-header" id="manage-header">
+    <div class="bk-logo" id="manage-logo" aria-hidden="true">C</div>
+    <div class="bk-header-info">
+      <div class="bk-header-name" id="manage-rest-name">Restaurant</div>
+      <div class="bk-header-address" id="manage-rest-address"></div>
+    </div>
+  </header>
+
+  <main class="bk-main">
+    <div class="bk-card" id="manage-card">
+      <div class="bk-manage-header">Manage your booking</div>
+      <div class="bk-body" id="manage-body">
+        <div class="bk-status">
+          <div class="bk-status-icon loading" aria-hidden="true"><div class="bk-spin"></div></div>
+          <p class="bk-status-desc" role="status">Loading your booking…</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bk-footer">
+    <a href="index.html" rel="noopener">Powered by <strong>Tavolo</strong></a>
+  </footer>
+</div>
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+(function () {
+'use strict';
+
+/* ============================================================
+   SUPABASE CLIENT (anon — public booking only)
+============================================================ */
+var SUPABASE_URL = 'https://durugcxsakdbgimgkyiw.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_rfZYlRhgpU23UJHox-tpHw_142Q3U2V';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+/* ============================================================
+   UTILS
+============================================================ */
+function esc(str) {
+  var d = document.createElement('div');
+  d.textContent = String(str == null ? '' : str);
+  return d.innerHTML;
+}
+function el(id) { return document.getElementById(id); }
+function show(id) { var e = el(id); if (e) { e.style.display = e.tagName === 'DIV' ? 'flex' : 'block'; } }
+function hide(id) { var e = el(id); if (e) e.style.display = 'none'; }
+
+// Robustly parse a timestamp that may be ISO ("...T..+00:00") or Postgres-style ("... 09:00:00+00")
+function parseTs(iso) {
+  if (iso instanceof Date) return iso;
+  if (!iso) return new Date(NaN);
+  var s = String(iso).trim().replace(' ', 'T');
+  // normalize a bare "+00" / "-00" offset to "+00:00"
+  s = s.replace(/([+-]\d{2})$/, '$1:00');
+  return new Date(s);
+}
+// Format a UTC ISO timestamp to local time in a given IANA tz
+function fmtDate(iso, tz) {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz || 'UTC', weekday:'short', day:'numeric', month:'short', year:'numeric',
+    }).format(parseTs(iso));
+  } catch(e) { return iso ? String(iso).slice(0, 10) : ''; }
+}
+function fmtTime(iso, tz) {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz || 'UTC', hour:'2-digit', minute:'2-digit', hour12:false,
+    }).format(parseTs(iso));
+  } catch(e) { return ''; }
+}
+function fmtDateTime(iso, tz) {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz || 'UTC',
+      weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false,
+    }).format(parseTs(iso));
+  } catch(e) { return iso || ''; }
+}
+
+// Today's local date in YYYY-MM-DD for the given tz
+function todayInTz(tz) {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'UTC' }).format(new Date());
+  } catch(e) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+// Build ISO start time string from a date string (YYYY-MM-DD) and time string (HH:MM) in a given tz
+// We need to convert local-tz datetime to UTC ISO for the RPC
+function localToISO(dateStr, timeStr, tz) {
+  // Use the Temporal-compatible approach: create a date string and interpret in the tz
+  // Fallback: construct the naive datetime and offset
+  try {
+    // Use Intl to determine UTC offset at that moment
+    var naive = dateStr + 'T' + timeStr + ':00';
+    // Try using temporal-polyfill approach via Date constructor with timezone
+    // Since we can't easily do this in vanilla JS without a library, we build a full ISO string
+    // and let the RPC (which stores as timestamptz) handle it — OR we pass it in UTC.
+    // Best approach: pass as an ISO string WITHOUT timezone so postgres interprets it
+    // per the session timezone. But instead, we send the slot in local time and let the RPC
+    // return available_slots in UTC ISO. We send the same UTC ISO back.
+    // The available_slots RPC returns UTC ISO slot strings — we just store and pass them through.
+    return naive; // naive local-tz string; caller should use the raw slot value from the RPC
+  } catch(e) {
+    return dateStr + 'T' + timeStr + ':00';
+  }
+}
+
+// Apply brand color to CSS variable
+function applyBrandColor(color) {
+  if (!color || !/^#[0-9a-fA-F]{3,8}$/.test(color)) return;
+  document.documentElement.style.setProperty('--color-restaurant-accent', color);
+  // Determine if the color is light or dark for contrast
+  var r = parseInt(color.slice(1,3), 16);
+  var g = parseInt(color.slice(3,5), 16);
+  var b = parseInt(color.slice(5,7), 16);
+  var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  document.documentElement.style.setProperty(
+    '--color-restaurant-accent-foreground', luminance > 0.55 ? '#1A1208' : '#FFFFFF'
+  );
+  // Update theme-color meta
+  var tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.content = color;
+}
+
+/* ============================================================
+   APP STATE
+============================================================ */
+var state = {
+  restaurant: null,   // cov_restaurants row
+  date: '',           // YYYY-MM-DD
+  party: 0,           // int
+  slots: [],          // array of { slot_start, free_tables } from RPC
+  selectedSlot: null, // full slot object
+  booking: null,      // result from cov_book RPC
+  step: 1,            // 1=date, 2=party, 3=slots, 4=form
+};
+
+/* ============================================================
+   URL PARSING
+============================================================ */
+function getParam(name) {
+  var u = new URL(window.location.href);
+  return u.searchParams.get(name) || '';
+}
+function getSlug() {
+  var slug = getParam('r');
+  if (!slug) {
+    // fallback: hash-based #r=<slug>
+    var m = window.location.hash.match(/[#&]r=([^&]+)/);
+    if (m) slug = decodeURIComponent(m[1]);
+  }
+  return slug.trim();
+}
+function getManageToken() {
+  return getParam('manage').trim();
+}
+
+/* ============================================================
+   BOOT
+============================================================ */
+(async function boot() {
+  var token = getManageToken();
+  if (token) {
+    await bootManage(token);
+    return;
+  }
+  var slug = getSlug();
+  if (!slug) {
+    showNotFound('No restaurant specified. Please use the link provided by the restaurant.');
+    return;
+  }
+  await bootBooking(slug);
+})();
+
+/* ============================================================
+   BOOKING FLOW BOOT
+============================================================ */
+async function bootBooking(slug) {
+  try {
+    var { data: rows, error } = await sb
+      .from('cov_restaurants')
+      .select('id,name,slug,timezone,brand_color,logo_url,address,booking_enabled,max_party_online,default_turn_minutes')
+      .eq('slug', slug)
+      .eq('booking_enabled', true)
+      .limit(1);
+
+    if (error) throw error;
+    if (!rows || rows.length === 0) {
+      showNotFound('This restaurant isn\'t accepting online bookings, or the link is incorrect.');
+      return;
+    }
+
+    state.restaurant = rows[0];
+    applyBrandColor(state.restaurant.brand_color);
+    renderBrandedHeader(state.restaurant);
+
+    hide('page-loading');
+    show('booking-app');
+
+    // Default date to today
+    state.date = todayInTz(state.restaurant.timezone);
+    renderStep(1);
+  } catch (err) {
+    console.error('[coverly/book] boot error', err);
+    showNotFound('Something went wrong loading this booking page. Please try again.');
+  }
+}
+
+/* ============================================================
+   BRANDED HEADER
+============================================================ */
+function renderBrandedHeader(rest) {
+  var nameEl = el('bk-rest-name');
+  var addrEl = el('bk-address');
+  var logoEl = el('bk-logo');
+  if (nameEl) nameEl.textContent = rest.name || 'Restaurant';
+  if (addrEl) addrEl.textContent = rest.address || '';
+  if (addrEl) addrEl.style.display = rest.address ? 'block' : 'none';
+  if (logoEl) {
+    if (rest.logo_url) {
+      logoEl.innerHTML = '<img src="' + esc(rest.logo_url) + '" alt="' + esc(rest.name) + ' logo">';
+    } else {
+      logoEl.textContent = (rest.name || 'C').charAt(0).toUpperCase();
+      logoEl.style.background = rest.brand_color || 'var(--color-primary)';
+    }
+  }
+  document.title = 'Reserve a Table — ' + (rest.name || 'Tavolo');
+}
+
+/* ============================================================
+   STEP RENDERER
+============================================================ */
+var STEP_LABELS = ['', 'Pick a date', 'Party size', 'Choose a time', 'Your details'];
+var STEP_PROGRESS = ['', '25%', '50%', '75%', '100%'];
+
+function setProgress(step) {
+  var fill = el('bk-progress-fill');
+  var label = el('bk-step-label');
+  if (fill) fill.style.width = STEP_PROGRESS[step] || '25%';
+  if (label) label.textContent = 'Step ' + step + ' of 4';
+  var progress = el('bk-progress');
+  if (progress) progress.style.display = step <= 4 ? 'block' : 'none';
+}
+
+function renderStep(step) {
+  state.step = step;
+  setProgress(step);
+  var body = el('bk-step-body');
+  if (!body) return;
+
+  switch (step) {
+    case 1: body.innerHTML = renderDateStep(); wireDateStep(); break;
+    case 2: body.innerHTML = renderPartyStep(); wirePartyStep(); break;
+    case 3: renderSlotsStep(body); break;
+    case 4: body.innerHTML = renderFormStep(); wireFormStep(); break;
+    default: break;
+  }
+}
+
+/* ============================================================
+   STEP 1 — DATE
+============================================================ */
+function renderDateStep() {
+  var min = todayInTz(state.restaurant.timezone);
+  // Max: 60 days out
+  var maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 60);
+  var max = maxDate.toISOString().slice(0, 10);
+
+  return [
+    '<h2 class="bk-section-title" id="step1-heading">When would you like to visit?</h2>',
+    '<div class="bk-form-row">',
+      '<label for="bk-date-input">Date<span class="bk-required" aria-hidden="true">*</span></label>',
+      '<input id="bk-date-input" class="bk-date-input" type="date"',
+        ' min="' + min + '" max="' + max + '"',
+        ' value="' + esc(state.date || min) + '"',
+        ' aria-label="Select date" aria-required="true"',
+        ' required>',
+    '</div>',
+    '<div class="bk-inline-error" id="step1-error" role="alert" aria-live="assertive"></div>',
+    '<div class="bk-actions">',
+      '<button class="bk-btn-primary" id="step1-next" aria-label="Continue to party size">',
+        'Continue',
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>',
+      '</button>',
+    '</div>',
+  ].join('');
+}
+
+function wireDateStep() {
+  var inp = el('bk-date-input');
+  var btn = el('step1-next');
+  var errEl = el('step1-error');
+  if (!btn || !inp) return;
+
+  function next() {
+    var val = inp.value;
+    if (!val) { showInlineError(errEl, 'Please select a date.'); return; }
+    var today = todayInTz(state.restaurant.timezone);
+    if (val < today) { showInlineError(errEl, 'Please select today or a future date.'); return; }
+    hideInlineError(errEl);
+    state.date = val;
+    renderStep(2);
+  }
+
+  btn.addEventListener('click', next);
+  inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') next(); });
+}
+
+/* ============================================================
+   STEP 2 — PARTY SIZE
+============================================================ */
+function renderPartyStep() {
+  var max = state.restaurant.max_party_online || 10;
+  var quickMax = Math.min(max, 10);
+  var btns = '';
+  for (var i = 1; i <= quickMax; i++) {
+    btns += '<button class="bk-party-btn' + (state.party === i ? ' selected' : '') + '" data-party="' + i + '" aria-label="Party of ' + i + '" aria-pressed="' + (state.party === i ? 'true' : 'false') + '">' + i + '</button>';
+  }
+
+  var largeSection = max > 10 ? [
+    '<button class="bk-party-more' + (state.party > 10 ? ' hidden' : '') + '" id="bk-party-more-btn" aria-label="Enter larger party size">',
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+      'Larger party (11–' + max + ')',
+    '</button>',
+    '<div class="bk-party-large' + (state.party > 10 ? ' show' : '') + '" id="bk-party-large-row">',
+      '<label for="bk-party-large-input" style="font-size:14px;font-weight:500;color:var(--color-text-secondary);white-space:nowrap">Party of:</label>',
+      '<input id="bk-party-large-input" class="bk-date-input" type="number" min="11" max="' + max + '" value="' + (state.party > 10 ? state.party : '') + '" placeholder="11–' + max + '" aria-label="Enter party size between 11 and ' + max + '" style="max-width:120px;min-height:44px;font-size:15px">',
+    '</div>',
+  ].join('') : '';
+
+  return [
+    '<h2 class="bk-section-title" id="step2-heading">How many guests?</h2>',
+    '<div class="bk-party-grid" role="group" aria-label="Select party size">', btns, '</div>',
+    largeSection,
+    '<div class="bk-inline-error" id="step2-error" role="alert" aria-live="assertive"></div>',
+    '<div class="bk-actions">',
+      '<button class="bk-btn-back" id="step2-back" aria-label="Back to date selection">',
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
+        'Back',
+      '</button>',
+      '<button class="bk-btn-primary" id="step2-next" aria-label="Continue to time selection">',
+        'Continue',
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>',
+      '</button>',
+    '</div>',
+  ].join('');
+}
+
+function wirePartyStep() {
+  var errEl = el('step2-error');
+  var max = state.restaurant.max_party_online || 10;
+
+  // Quick party buttons
+  var btns = document.querySelectorAll('.bk-party-btn');
+  btns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var p = parseInt(this.dataset.party, 10);
+      state.party = p;
+      btns.forEach(function(b) {
+        var sel = parseInt(b.dataset.party, 10) === p;
+        b.classList.toggle('selected', sel);
+        b.setAttribute('aria-pressed', sel ? 'true' : 'false');
+      });
+    });
+    btn.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+
+  // Larger party toggle
+  var moreBtn = el('bk-party-more-btn');
+  var largeRow = el('bk-party-large-row');
+  if (moreBtn && largeRow) {
+    moreBtn.addEventListener('click', function() {
+      moreBtn.classList.add('hidden');
+      largeRow.classList.add('show');
+      var inp = el('bk-party-large-input');
+      if (inp) { inp.focus(); }
+    });
+    // Update state.party from large input
+    var largeInp = el('bk-party-large-input');
+    if (largeInp) {
+      largeInp.addEventListener('input', function() {
+        var v = parseInt(this.value, 10);
+        if (v > 0) state.party = v;
+      });
+    }
+  }
+
+  el('step2-back').addEventListener('click', function() { renderStep(1); });
+
+  function next() {
+    // Re-check large input if visible
+    var largeRow2 = el('bk-party-large-row');
+    if (largeRow2 && largeRow2.classList.contains('show')) {
+      var v = parseInt((el('bk-party-large-input') || {}).value || '0', 10);
+      if (v > 0) state.party = v;
+    }
+    if (!state.party || state.party < 1) { showInlineError(errEl, 'Please select your party size.'); return; }
+    if (state.party > max) { showInlineError(errEl, 'Maximum party size for online booking is ' + max + '. Please call us for larger parties.'); return; }
+    hideInlineError(errEl);
+    renderStep(3);
+  }
+
+  el('step2-next').addEventListener('click', next);
+}
+
+/* ============================================================
+   STEP 3 — TIME SLOTS
+============================================================ */
+async function renderSlotsStep(body) {
+  // Show loading
+  body.innerHTML = [
+    '<h2 class="bk-section-title">Choose a time</h2>',
+    '<div class="bk-status" role="status" aria-live="polite" aria-label="Loading available times">',
+      '<div class="bk-status-icon loading" aria-hidden="true"><div class="bk-spin"></div></div>',
+      '<p class="bk-status-desc">Checking availability…</p>',
+    '</div>',
+  ].join('');
+
+  try {
+    var { data: slots, error } = await sb.rpc('cov_available_slots', {
+      p_slug: state.restaurant.slug,
+      p_date: state.date,
+      p_party: state.party,
+    });
+
+    if (error) throw error;
+    // RPC returns rows shaped { slot, free_tables }; the UI expects { slot_start, free_tables }.
+    var mapped = (slots || []).map(function (r) { return { slot_start: r.slot, free_tables: r.free_tables }; });
+    state.slots = mapped;
+    body.innerHTML = buildSlotsHTML(mapped);
+    wireSlots(body);
+  } catch (err) {
+    console.error('[coverly/book] slots error', err);
+    body.innerHTML = buildSlotsErrorHTML();
+    var retryBtn = body.querySelector('#slots-retry');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', function() { renderSlotsStep(body); });
+    }
+    var backBtn = body.querySelector('#slots-err-back');
+    if (backBtn) {
+      backBtn.addEventListener('click', function() { renderStep(2); });
+    }
+  }
+}
+
+function buildSlotsHTML(slots) {
+  var summaryDateStr = fmtDate(state.date + 'T12:00:00', state.restaurant.timezone);
+  var parts = [
+    '<h2 class="bk-section-title">Choose a time</h2>',
+    '<p class="bk-slot-meta">',
+      '<span>' + esc(summaryDateStr) + '</span>',
+      '<span class="bk-slot-meta-dot">&#x2022;</span>',
+      '<span>Party of ' + esc(String(state.party)) + '</span>',
+    '</p>',
+  ];
+
+  if (!slots || slots.length === 0) {
+    parts.push([
+      '<div class="bk-status" role="status" aria-live="polite">',
+        '<div class="bk-status-icon empty" aria-hidden="true">',
+          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#635d58" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+        '</div>',
+        '<p class="bk-status-title">No availability</p>',
+        '<p class="bk-status-desc">There are no available times for that date and party size. Try a different date.</p>',
+      '</div>',
+      '<div class="bk-actions">',
+        '<button class="bk-btn-back" id="slots-back">',
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
+          'Try another date',
+        '</button>',
+      '</div>',
+    ].join(''));
+  } else {
+    parts.push('<div class="bk-slots-grid" role="group" aria-label="Available time slots">');
+    slots.forEach(function(s) {
+      var timeStr = fmtTime(s.slot_start, state.restaurant.timezone);
+      var isLow = s.free_tables <= 2;
+      var limitedHTML = isLow ? '<span class="bk-slot-limited">Limited</span>' : '';
+      parts.push(
+        '<button class="bk-slot" data-slot=\'' + JSON.stringify(s).replace(/'/g, '&#39;') + '\'' +
+          ' aria-label="' + timeStr + (isLow ? ', limited availability' : '') + '"' +
+          ' aria-pressed="false">',
+          '<span>' + esc(timeStr) + '</span>',
+          limitedHTML,
+        '</button>'
+      );
+    });
+    parts.push('</div>');
+    parts.push([
+      '<div class="bk-actions" style="margin-top:var(--space-5)">',
+        '<button class="bk-btn-back" id="slots-back">',
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
+          'Back',
+        '</button>',
+      '</div>',
+    ].join(''));
+  }
+
+  return parts.join('');
+}
+
+function buildSlotsErrorHTML() {
+  return [
+    '<h2 class="bk-section-title">Choose a time</h2>',
+    '<div class="bk-status" role="alert">',
+      '<div class="bk-status-icon error" aria-hidden="true">',
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e05252" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+      '</div>',
+      '<p class="bk-status-title">Couldn\'t load times</p>',
+      '<p class="bk-status-desc">We had trouble fetching availability. Please check your connection and try again.</p>',
+    '</div>',
+    '<div class="bk-actions">',
+      '<button class="bk-btn-back" id="slots-err-back">',
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
+        'Back',
+      '</button>',
+      '<button class="bk-btn-primary" id="slots-retry">Try again</button>',
+    '</div>',
+  ].join('');
+}
+
+function wireSlots(body) {
+  var slots = body.querySelectorAll('.bk-slot');
+  slots.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var slotData = null;
+      try { slotData = JSON.parse(this.dataset.slot); } catch(e) {}
+      if (!slotData) return;
+      slots.forEach(function(b) { b.classList.remove('selected'); b.setAttribute('aria-pressed', 'false'); });
+      this.classList.add('selected');
+      this.setAttribute('aria-pressed', 'true');
+      state.selectedSlot = slotData;
+      // Brief delay so user sees the selection, then advance
+      setTimeout(function() { renderStep(4); }, 200);
+    });
+    btn.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+  var backBtn = body.querySelector('#slots-back');
+  if (backBtn) {
+    backBtn.addEventListener('click', function() { renderStep(2); });
+  }
+}
+
+/* ============================================================
+   STEP 4 — BOOKING FORM
+============================================================ */
+function renderFormStep() {
+  var rest = state.restaurant;
+  var slot = state.selectedSlot;
+  var timeStr = slot ? fmtTime(slot.slot_start, rest.timezone) : '';
+  var dateStr = state.date ? fmtDate(state.date + 'T12:00:00', rest.timezone) : '';
+
+  return [
+    '<h2 class="bk-section-title">Complete your booking</h2>',
+    // Summary strip
+    '<div class="bk-booking-summary" aria-label="Booking summary">',
+      '<div class="bk-booking-summary-row">',
+        '<span class="bk-booking-summary-label">Date</span>',
+        '<span class="bk-booking-summary-val">' + esc(dateStr) + '</span>',
+      '</div>',
+      '<div class="bk-booking-summary-row">',
+        '<span class="bk-booking-summary-label">Time</span>',
+        '<span class="bk-booking-summary-val">' + esc(timeStr) + '</span>',
+      '</div>',
+      '<div class="bk-booking-summary-row">',
+        '<span class="bk-booking-summary-label">Guests</span>',
+        '<span class="bk-booking-summary-val">' + esc(String(state.party)) + '</span>',
+      '</div>',
+    '</div>',
+    // Form
+    '<div class="bk-inline-error" id="form-error" role="alert" aria-live="assertive"></div>',
+    '<div class="bk-form-row">',
+      '<label for="bk-name">Full name<span class="bk-required" aria-hidden="true">*</span></label>',
+      '<input id="bk-name" class="bk-date-input" type="text" autocomplete="name" placeholder="Jane Smith" aria-required="true" maxlength="80" required>',
+    '</div>',
+    '<div class="bk-form-row">',
+      '<label for="bk-phone">Phone<span class="bk-required" aria-hidden="true">*</span></label>',
+      '<input id="bk-phone" class="bk-date-input" type="tel" autocomplete="tel" placeholder="+44 7700 900123" aria-required="true" maxlength="30" required>',
+    '</div>',
+    '<div class="bk-form-row">',
+      '<label for="bk-email">Email<span class="bk-opt">(optional)</span></label>',
+      '<input id="bk-email" class="bk-date-input" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120">',
+    '</div>',
+    '<div class="bk-form-row">',
+      '<label for="bk-requests">Special requests<span class="bk-opt">(optional)</span></label>',
+      '<textarea id="bk-requests" class="bk-date-input" rows="3" maxlength="300" placeholder="Allergies, dietary needs, high chair, anniversary…" style="min-height:80px;resize:vertical"></textarea>',
+      '<div class="bk-char" id="bk-requests-char" aria-live="polite">0 / 300</div>',
+    '</div>',
+    '<div class="bk-actions">',
+      '<button class="bk-btn-back" id="form-back" aria-label="Back to time selection">',
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
+        'Back',
+      '</button>',
+      '<button class="bk-btn-primary" id="form-submit" aria-label="Confirm reservation">',
+        'Confirm reservation',
+      '</button>',
+    '</div>',
+    '<p style="font-size:12px;color:var(--color-text-muted);margin-top:var(--space-4);line-height:1.5;text-align:center">',
+      'By confirming you agree that the restaurant may contact you about this reservation.',
+    '</p>',
+  ].join('');
+}
+
+function wireFormStep() {
+  el('form-back').addEventListener('click', function() { renderStep(3); });
+
+  var reqTA = el('bk-requests');
+  var charCount = el('bk-requests-char');
+  if (reqTA && charCount) {
+    reqTA.addEventListener('input', function() {
+      charCount.textContent = this.value.length + ' / 300';
+    });
+  }
+
+  el('form-submit').addEventListener('click', submitBooking);
+}
+
+async function submitBooking() {
+  var errEl = el('form-error');
+  var nameEl = el('bk-name');
+  var phoneEl = el('bk-phone');
+  var emailEl = el('bk-email');
+  var reqEl = el('bk-requests');
+  var btn = el('form-submit');
+
+  var name = nameEl ? nameEl.value.trim() : '';
+  var phone = phoneEl ? phoneEl.value.trim() : '';
+  var email = emailEl ? emailEl.value.trim() : '';
+  var requests = reqEl ? reqEl.value.trim() : '';
+
+  // Client-side validation
+  hideInlineError(errEl);
+  if (!name) { showInlineError(errEl, 'Please enter your name.'); if(nameEl) nameEl.focus(); return; }
+  if (!phone) { showInlineError(errEl, 'Please enter your phone number.'); if(phoneEl) phoneEl.focus(); return; }
+  if (phone.length < 7) { showInlineError(errEl, 'Please enter a valid phone number.'); if(phoneEl) phoneEl.focus(); return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showInlineError(errEl, 'Please enter a valid email address, or leave it blank.'); if(emailEl) emailEl.focus(); return; }
+
+  var slot = state.selectedSlot;
+  if (!slot) { showInlineError(errEl, 'No time slot selected. Please go back and choose a time.'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Confirming…';
+
+  try {
+    var { data: result, error } = await sb.rpc('cov_book', {
+      p_slug:     state.restaurant.slug,
+      p_start:    slot.slot_start,
+      p_party:    state.party,
+      p_name:     name,
+      p_phone:    phone,
+      p_email:    email || null,
+      p_requests: requests || null,
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Confirm reservation';
+
+    if (error) throw error;
+
+    if (!result) {
+      showInlineError(errEl, 'Something went wrong. Please try again.');
+      return;
+    }
+
+    if (result.ok) {
+      state.booking = result;
+      renderConfirmation(result, { name, phone, email, requests });
+      return;
+    }
+
+    // Handle named RPC errors
+    switch (result.error) {
+      case 'no_availability':
+        // Slot was just taken — re-fetch and offer alternatives
+        showInlineError(errEl, 'That time was just taken. Fetching nearby available times…');
+        btn.disabled = true;
+        var body = el('bk-step-body');
+        setTimeout(async function() {
+          btn.disabled = false;
+          if (body) await renderSlotsStep(body);
+        }, 1200);
+        break;
+      case 'past_slot':
+        showInlineError(errEl, 'That time has already passed. Please pick a future slot.');
+        break;
+      case 'party_out_of_range':
+        showInlineError(errEl, 'The party size is outside the accepted range for online booking. Please call the restaurant.');
+        break;
+      case 'restaurant_unavailable':
+        showInlineError(errEl, 'Online booking is currently unavailable. Please call the restaurant directly.');
+        break;
+      default:
+        showInlineError(errEl, result.message || 'Booking failed. Please try again.');
+    }
+  } catch (err) {
+    console.error('[coverly/book] book rpc error', err);
+    btn.disabled = false;
+    btn.textContent = 'Confirm reservation';
+    showInlineError(errEl, 'Something went wrong. Please check your connection and try again.');
+  }
+}
+
+/* ============================================================
+   CONFIRMATION SCREEN
+============================================================ */
+function renderConfirmation(result, guestInfo) {
+  var rest = state.restaurant;
+  var slot = state.selectedSlot;
+  var timeStr = slot ? fmtTime(slot.slot_start, rest.timezone) : '';
+  var dateStr = state.date ? fmtDate(state.date + 'T12:00:00', rest.timezone) : '';
+  var manageToken = result.manage_token || '';
+  var manageUrl = manageToken
+    ? window.location.origin + window.location.pathname + '?manage=' + encodeURIComponent(manageToken)
+    : '';
+
+  // Build .ics content for add-to-calendar
+  var icsLink = '';
+  if (slot && slot.slot_start) {
+    var dtStart = slot.slot_start.replace(/[-:]/g, '').replace(/\.\d+/, '');
+    if (!dtStart.endsWith('Z')) dtStart += 'Z';
+    // End time: turn_minutes (default 90) after start
+    var turnMs = (rest.default_turn_minutes || 90) * 60 * 1000;
+    var endDate = new Date(parseTs(slot.slot_start).getTime() + turnMs);
+    var dtEnd = endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    var icsBody = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Tavolo//Booking//EN',
+      'BEGIN:VEVENT',
+      'DTSTART:' + dtStart,
+      'DTEND:' + dtEnd,
+      'SUMMARY:Table at ' + (rest.name || 'Restaurant'),
+      'DESCRIPTION:Party of ' + state.party + (guestInfo.requests ? '. Notes: ' + guestInfo.requests : ''),
+      'LOCATION:' + (rest.address || ''),
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    icsLink = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsBody);
+  }
+
+  var progress = el('bk-progress');
+  if (progress) progress.style.display = 'none';
+
+  var body = el('bk-step-body');
+  if (!body) return;
+
+  body.innerHTML = [
+    '<div class="bk-confirm-icon" aria-hidden="true">',
+      '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    '</div>',
+    '<h2 class="bk-confirm-title">You\'re booked!</h2>',
+    '<p class="bk-confirm-sub">We look forward to seeing you, ' + esc(guestInfo.name.split(' ')[0]) + '.</p>',
+    '<div class="bk-confirm-detail" aria-label="Booking details">',
+      '<div class="bk-confirm-row"><span class="bk-confirm-label">Restaurant</span><span class="bk-confirm-val">' + esc(rest.name) + '</span></div>',
+      '<div class="bk-confirm-row"><span class="bk-confirm-label">Date</span><span class="bk-confirm-val">' + esc(dateStr) + '</span></div>',
+      '<div class="bk-confirm-row"><span class="bk-confirm-label">Time</span><span class="bk-confirm-val">' + esc(timeStr) + '</span></div>',
+      '<div class="bk-confirm-row"><span class="bk-confirm-label">Guests</span><span class="bk-confirm-val">' + esc(String(state.party)) + '</span></div>',
+      '<div class="bk-confirm-row"><span class="bk-confirm-label">Name</span><span class="bk-confirm-val">' + esc(guestInfo.name) + '</span></div>',
+      (guestInfo.requests ? '<div class="bk-confirm-row"><span class="bk-confirm-label">Requests</span><span class="bk-confirm-val">' + esc(guestInfo.requests) + '</span></div>' : ''),
+    '</div>',
+    '<div class="bk-confirm-actions">',
+      (icsLink ? '<a class="bk-cal-btn" href="' + icsLink + '" download="reservation.ics" aria-label="Add to calendar">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+        'Add to calendar' +
+      '</a>' : ''),
+    '</div>',
+    (manageUrl ? [
+      '<div class="bk-manage-link">',
+        'Need to change or cancel? <a href="' + esc(manageUrl) + '">Manage your booking</a>',
+      '</div>',
+    ].join('') : ''),
+  ].join('');
+}
+
+/* ============================================================
+   MANAGE MODE
+============================================================ */
+async function bootManage(token) {
+  hide('page-loading');
+  show('manage-app');
+
+  try {
+    var { data: result, error } = await sb.rpc('cov_manage_get', { p_token: token });
+
+    if (error) throw error;
+
+    if (!result || result.ok === false) {
+      renderManageError('This manage link is invalid or has expired.');
+      return;
+    }
+
+    // Load restaurant branding if possible
+    var restId = result.restaurant_id || (result.reservation && result.reservation.restaurant_id);
+    if (result.restaurant) {
+      var rest = result.restaurant;
+      applyBrandColor(rest.brand_color);
+      var mname = el('manage-rest-name');
+      var maddr = el('manage-rest-address');
+      var mlogo = el('manage-logo');
+      if (mname) mname.textContent = rest.name || 'Restaurant';
+      if (maddr) { maddr.textContent = rest.address || ''; maddr.style.display = rest.address ? 'block' : 'none'; }
+      if (mlogo) {
+        if (rest.logo_url) {
+          mlogo.innerHTML = '<img src="' + esc(rest.logo_url) + '" alt="' + esc(rest.name) + ' logo">';
+        } else {
+          mlogo.textContent = (rest.name || 'C').charAt(0).toUpperCase();
+          mlogo.style.background = rest.brand_color || 'var(--color-primary)';
+        }
+      }
+      document.title = 'Manage your booking — ' + (rest.name || 'Tavolo');
+    }
+
+    renderManageView(result, token);
+  } catch (err) {
+    console.error('[coverly/book] manage_get error', err);
+    renderManageError('We couldn\'t load your booking. Please check the link or try again.');
+  }
+}
+
+function renderManageView(result, token) {
+  var body = el('manage-body');
+  if (!body) return;
+
+  var res = result.reservation || result;
+  var rest = result.restaurant || {};
+  var tz = rest.timezone || 'UTC';
+  var status = res.status || 'booked';
+  var isCancelled = status === 'cancelled';
+  var isCompleted = status === 'completed' || status === 'seated' || status === 'no_show';
+
+  var guestName = (res.cov_guests && res.cov_guests.name) || res.guest_name || 'Guest';
+
+  var timeStr = fmtDateTime(res.starts_at, tz);
+
+  var statusChipClass = { booked:'booked', confirmed:'confirmed', cancelled:'cancelled', seated:'seated', completed:'completed' }[status] || 'booked';
+
+  body.innerHTML = [
+    '<div style="margin-bottom:20px;display:flex;align-items:center;gap:12px">',
+      '<h2 style="font-family:\'Cormorant Garamond\',Georgia,serif;font-size:22px;font-weight:700;letter-spacing:0;color:#f0ede8;flex:1;min-width:0;line-height:1.2">Your booking</h2>',
+      '<span class="bk-status-chip ' + statusChipClass + '">' + esc(status) + '</span>',
+    '</div>',
+    '<div class="bk-confirm-detail" aria-label="Booking details">',
+      (rest.name ? '<div class="bk-confirm-row"><span class="bk-confirm-label">Restaurant</span><span class="bk-confirm-val">' + esc(rest.name) + '</span></div>' : ''),
+      '<div class="bk-confirm-row"><span class="bk-confirm-label">When</span><span class="bk-confirm-val">' + esc(timeStr) + '</span></div>',
+      '<div class="bk-confirm-row"><span class="bk-confirm-label">Guests</span><span class="bk-confirm-val">' + esc(String(res.party_size || '')) + '</span></div>',
+      '<div class="bk-confirm-row"><span class="bk-confirm-label">Name</span><span class="bk-confirm-val">' + esc(guestName) + '</span></div>',
+      (res.special_requests ? '<div class="bk-confirm-row"><span class="bk-confirm-label">Requests</span><span class="bk-confirm-val">' + esc(res.special_requests) + '</span></div>' : ''),
+    '</div>',
+    (!isCancelled && !isCompleted ? [
+      '<div id="cancel-section">',
+        '<div class="bk-cancel-warn" role="note">',
+          'To cancel, tap the button below. This cannot be undone.',
+        '</div>',
+        '<div class="bk-inline-error" id="cancel-error" role="alert" aria-live="assertive"></div>',
+        '<button class="bk-btn-danger" id="cancel-btn" aria-label="Cancel this reservation">Cancel reservation</button>',
+      '</div>',
+    ].join('') : ''),
+    (isCancelled ? '<div class="bk-status-chip cancelled" style="width:100%;justify-content:center;padding:12px;margin-top:8px">This reservation has been cancelled.</div>' : ''),
+    (isCompleted ? '<div class="bk-status-chip completed" style="width:100%;justify-content:center;padding:12px;margin-top:8px">This reservation is complete — thank you for visiting!</div>' : ''),
+  ].join('');
+
+  var cancelBtn = el('cancel-btn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function() { doManageCancel(token, res); });
+  }
+}
+
+async function doManageCancel(token, res) {
+  var cancelBtn = el('cancel-btn');
+  var errEl = el('cancel-error');
+  if (errEl) hideInlineError(errEl);
+  if (cancelBtn) { cancelBtn.disabled = true; cancelBtn.textContent = 'Cancelling…'; }
+
+  try {
+    var { data: result, error } = await sb.rpc('cov_manage_cancel', { p_token: token });
+
+    if (error) throw error;
+
+    if (!result || result.ok === false) {
+      if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = 'Cancel reservation'; }
+      if (errEl) showInlineError(errEl, result && result.error === 'already_cancelled' ? 'This reservation is already cancelled.' : 'Could not cancel. Please contact the restaurant directly.');
+      return;
+    }
+
+    // Success — show cancelled state
+    var body = el('manage-body');
+    if (body) {
+      var section = el('cancel-section');
+      if (section) {
+        section.innerHTML = '<div class="bk-status" role="status" aria-live="polite">' +
+          '<div class="bk-status-icon success" aria-hidden="true">' +
+            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '</div>' +
+          '<p class="bk-status-title">Reservation cancelled</p>' +
+          '<p class="bk-status-desc">Your reservation has been cancelled successfully. We hope to see you another time.</p>' +
+        '</div>';
+      }
+    }
+  } catch (err) {
+    console.error('[coverly/book] manage_cancel error', err);
+    if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = 'Cancel reservation'; }
+    if (errEl) showInlineError(errEl, 'Something went wrong. Please try again or contact the restaurant.');
+  }
+}
+
+function renderManageError(msg) {
+  var body = el('manage-body');
+  if (!body) return;
+  body.innerHTML = [
+    '<div class="bk-status" role="alert">',
+      '<div class="bk-status-icon error" aria-hidden="true">',
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e05252" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+      '</div>',
+      '<p class="bk-status-title">Booking not found</p>',
+      '<p class="bk-status-desc">' + esc(msg) + '</p>',
+    '</div>',
+  ].join('');
+}
+
+/* ============================================================
+   NOT FOUND
+============================================================ */
+function showNotFound(msg) {
+  hide('page-loading');
+  hide('booking-app');
+  hide('manage-app');
+  var nfMsg = el('nf-message');
+  if (nfMsg && msg) nfMsg.textContent = msg;
+  show('not-found-screen');
+}
+
+/* ============================================================
+   INLINE ERROR HELPERS
+============================================================ */
+function showInlineError(el, msg) {
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  el.style.display = 'block';
+  el.focus();
+}
+function hideInlineError(el) {
+  if (!el) return;
+  el.classList.remove('show');
+  el.style.display = 'none';
+  el.textContent = '';
+}
+
+}());
+</script>
+</body>
+</html>

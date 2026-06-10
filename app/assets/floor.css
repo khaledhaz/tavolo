@@ -1,0 +1,887 @@
+/* ============================================================================
+   Coverly — Live Floor CSS  (MIDNIGHT & COPPER — dark premium with brand)
+   Injected by floor.js; never edit index.html.
+   Palette rule: deep charcoal canvas + copper (#c2703d) / honey-gold (#f0b51d)
+   brand accents on CHROME only (toolbar, active tab, selected ring, primary
+   buttons, focus rings, editor highlights).
+   Status colours stay semantic and NEVER use brand hues:
+     open=green, reserved=amber, seated=red, dirty=grey, blocked=dashed grey.
+   ============================================================================ */
+
+/* ── Dark palette custom properties (scoped to floor only) ───────────────── */
+:root {
+  --fl-bg:              #0d0f14;
+  --fl-bg-vignette:     radial-gradient(ellipse at center, #13161f 0%, #0d0f14 100%);
+  --fl-surface:         #14171f;
+  --fl-surface-raised:  #1c2030;
+  --fl-border:          rgba(255,255,255,0.08);
+  --fl-border-strong:   rgba(255,255,255,0.14);
+  --fl-text-primary:    #f0eff2;
+  --fl-text-secondary:  #a8a9b4;
+  --fl-text-muted:      #60626e;
+  --fl-overlay:         rgba(0,0,0,0.75);
+
+  /* Brand accent — copper & honey-gold (chrome only, not status) */
+  --fl-copper:          #c2703d;
+  --fl-copper-dim:      rgba(194,112,61,0.18);
+  --fl-copper-glow:     rgba(194,112,61,0.32);
+  --fl-copper-border:   rgba(194,112,61,0.55);
+  --fl-gold:            #f0b51d;
+  --fl-gold-dim:        rgba(240,181,29,0.15);
+
+  /* Status colours — status meaning only, never brand */
+  --fl-open-bg:         #0d2e1d;
+  --fl-open-border:     #1e6b40;
+  --fl-open-text:       #4cd48a;
+  --fl-open-glow:       rgba(30,107,64,0.35);
+
+  --fl-reserved-bg:     #2b1e07;
+  --fl-reserved-border: #c28a1a;
+  --fl-reserved-text:   #f5c045;
+  --fl-reserved-glow:   rgba(194,138,26,0.35);
+
+  --fl-seated-bg:       #2a0d0d;
+  --fl-seated-border:   #c03030;
+  --fl-seated-text:     #f56565;
+  --fl-seated-glow:     rgba(192,48,48,0.35);
+
+  --fl-dirty-bg:        #1a1a1e;
+  --fl-dirty-border:    #3e3f4a;
+  --fl-dirty-text:      #7a7b87;
+
+  --fl-blocked-border:  #3e3f4a;
+  --fl-blocked-text:    #5a5b67;
+}
+
+/* ── Root layout ─────────────────────────────────────────────────────────── */
+.fl-root {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  min-height: 400px;
+  overflow: hidden;
+  background: var(--fl-bg);
+  color: var(--fl-text-primary);
+}
+
+@media (max-width: 599px) {
+  .fl-root {
+    height: calc(100vh - 64px - 60px - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.fl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--fl-surface);
+  /* Copper top-border accent — premium chrome detail */
+  border-top: 2px solid var(--fl-copper);
+  border-bottom: 1px solid var(--fl-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.fl-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.fl-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* ── Room tabs ───────────────────────────────────────────────────────────── */
+.fl-room-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.fl-room-tab {
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--fl-border-strong);
+  background: transparent;
+  color: var(--fl-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 32px;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+
+.fl-room-tab:hover {
+  background: var(--fl-surface-raised);
+  color: var(--fl-text-primary);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.fl-room-tab.active {
+  background: var(--fl-copper-dim);
+  color: #f0eff2;
+  border-color: var(--fl-copper-border);
+  box-shadow: 0 0 0 1px var(--fl-copper-glow) inset;
+}
+
+.fl-room-tab:focus-visible {
+  outline: 2px solid var(--fl-gold);
+  outline-offset: 2px;
+}
+
+.fl-room-empty {
+  font-size: 12px;
+  color: var(--fl-text-muted);
+  padding: 0 8px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.fl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  min-height: 34px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms, color 120ms, opacity 120ms, border-color 120ms;
+  background: transparent;
+  color: var(--fl-text-primary);
+}
+
+.fl-btn:focus-visible {
+  outline: 2px solid var(--fl-gold);
+  outline-offset: 2px;
+}
+
+.fl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.fl-btn:active   { transform: scale(0.97); }
+
+.fl-btn-primary {
+  background: var(--fl-copper-dim);
+  color: #f0c49a;
+  border-color: var(--fl-copper-border);
+}
+.fl-btn-primary:hover {
+  background: rgba(194,112,61,0.30);
+  border-color: var(--fl-copper);
+  color: #ffd8b8;
+}
+
+/* accent = amber/gold for walkin (seat) */
+.fl-btn-accent {
+  background: rgba(245,192,69,0.16);
+  color: #f5c045;
+  border-color: rgba(245,192,69,0.35);
+}
+.fl-btn-accent:hover {
+  background: rgba(245,192,69,0.25);
+  border-color: rgba(245,192,69,0.55);
+}
+
+.fl-btn-success {
+  background: rgba(76,212,138,0.14);
+  color: #4cd48a;
+  border-color: rgba(76,212,138,0.35);
+}
+.fl-btn-success:hover {
+  background: rgba(76,212,138,0.24);
+  border-color: rgba(76,212,138,0.55);
+}
+
+.fl-btn-danger {
+  background: rgba(245,101,101,0.14);
+  color: #f56565;
+  border-color: rgba(245,101,101,0.35);
+}
+.fl-btn-danger:hover {
+  background: rgba(245,101,101,0.24);
+  border-color: rgba(245,101,101,0.5);
+}
+
+.fl-btn-ghost {
+  background: transparent;
+  color: var(--fl-text-secondary);
+  border-color: var(--fl-border-strong);
+}
+.fl-btn-ghost:hover {
+  background: var(--fl-surface-raised);
+  color: var(--fl-text-primary);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.fl-add-room-btn {
+  font-size: 12px;
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+/* ── Legend ──────────────────────────────────────────────────────────────── */
+.fl-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--fl-text-muted);
+  flex-wrap: wrap;
+  letter-spacing: 0.02em;
+}
+
+.fl-legend-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 3px;
+  flex-shrink: 0;
+}
+
+.fl-s-open    { background: var(--fl-open-border); }
+.fl-s-reserved{ background: var(--fl-reserved-border); }
+.fl-s-seated  { background: var(--fl-seated-border); }
+.fl-s-dirty   { background: var(--fl-dirty-border); }
+.fl-s-blocked {
+  background: transparent;
+  border: 2px dashed var(--fl-blocked-border);
+  border-radius: 50%;
+  width: 9px;
+  height: 9px;
+}
+
+@media (max-width: 599px) {
+  .fl-legend { display: none; }
+  .fl-toolbar-left  { width: 100%; flex: 1 1 100%; }
+  .fl-toolbar-right { width: 100%; flex: 1 1 100%; justify-content: flex-end; }
+}
+
+/* ── Body (canvas + editor) ──────────────────────────────────────────────── */
+.fl-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Canvas wrap — dark floor with subtle vignette ───────────────────────── */
+.fl-canvas-wrap {
+  flex: 1;
+  overflow: auto;
+  /* Dot-grid on dark: very subtle */
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-color: var(--fl-bg);
+  position: relative;
+  min-width: 0;
+  /* Vignette shadow inset around the edges */
+  box-shadow: inset 0 0 80px rgba(0,0,0,0.55);
+}
+
+.fl-canvas {
+  position: relative;
+  min-width: 800px;
+  min-height: 600px;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Table chips ─────────────────────────────────────────────────────────── */
+.fl-table {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Default rounded-square; round class overrides */
+  border-radius: 18px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    box-shadow 140ms ease,
+    transform   140ms ease,
+    border-color 140ms ease,
+    background   140ms ease;
+  min-width: 44px;
+  min-height: 44px;
+  overflow: hidden;
+  /* Soft inner highlight line at top */
+  background-clip: padding-box;
+}
+
+.fl-table:focus-visible {
+  outline: 2px solid var(--fl-gold);
+  outline-offset: 3px;
+}
+
+.fl-table:hover {
+  transform: translateY(-3px) scale(1.02);
+  z-index: 10;
+}
+
+.fl-table.fl-draggable {
+  cursor: grab;
+}
+
+.fl-table.fl-draggable:active {
+  cursor: grabbing;
+  z-index: 100;
+  transform: scale(1.06);
+}
+
+/* Round shape — circles for 2-tops */
+.fl-table.fl-round {
+  border-radius: 50%;
+}
+
+/* ── State colours ── status carries all meaning ──────────────────────────── */
+
+/* OPEN — calm green */
+.fl-table.fl-s-open {
+  background: var(--fl-open-bg);
+  border-color: var(--fl-open-border);
+  color: var(--fl-open-text);
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(30,107,64,0.25),
+    inset 0 1px 0 rgba(76,212,138,0.12);
+}
+.fl-table.fl-s-open:hover {
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.65),
+    0 0 20px var(--fl-open-glow),
+    inset 0 1px 0 rgba(76,212,138,0.18);
+}
+
+/* RESERVED — amber/gold */
+.fl-table.fl-s-reserved {
+  background: var(--fl-reserved-bg);
+  border-color: var(--fl-reserved-border);
+  color: var(--fl-reserved-text);
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(194,138,26,0.25),
+    inset 0 1px 0 rgba(245,192,69,0.12);
+}
+.fl-table.fl-s-reserved:hover {
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.65),
+    0 0 20px var(--fl-reserved-glow),
+    inset 0 1px 0 rgba(245,192,69,0.18);
+}
+
+/* SEATED — red */
+.fl-table.fl-s-seated {
+  background: var(--fl-seated-bg);
+  border-color: var(--fl-seated-border);
+  color: var(--fl-seated-text);
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(192,48,48,0.25),
+    inset 0 1px 0 rgba(245,101,101,0.12);
+}
+.fl-table.fl-s-seated:hover {
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.65),
+    0 0 20px var(--fl-seated-glow),
+    inset 0 1px 0 rgba(245,101,101,0.18);
+}
+
+/* DIRTY — muted grey */
+.fl-table.fl-s-dirty {
+  background: var(--fl-dirty-bg);
+  border-color: var(--fl-dirty-border);
+  color: var(--fl-dirty-text);
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* BLOCKED — dashed grey outline, transparent fill */
+.fl-table.fl-s-blocked {
+  background: rgba(255,255,255,0.025);
+  border: 2px dashed var(--fl-blocked-border);
+  color: var(--fl-blocked-text);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+/* ── Table inner elements ────────────────────────────────────────────────── */
+.fl-table-label {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+.fl-table-seats {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.65;
+  margin-top: 3px;
+  letter-spacing: 0.03em;
+}
+
+.fl-table-badge {
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  flex-wrap: wrap;
+  padding: 0 4px;
+}
+
+/* VIP badge — amber pill */
+.fl-vip {
+  background: rgba(194,138,26,0.35);
+  color: #f5c045;
+  border: 1px solid rgba(194,138,26,0.5);
+  border-radius: 999px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.fl-next-time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+
+.fl-party {
+  opacity: 0.75;
+}
+
+.fl-blocked-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+.fl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--fl-text-muted);
+  font-size: 14px;
+  min-height: 300px;
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Error state ─────────────────────────────────────────────────────────── */
+.fl-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 48px 20px;
+  min-height: 300px;
+  color: var(--fl-text-secondary);
+  font-size: 14px;
+  background: var(--fl-bg);
+}
+
+/* ── Loading skeleton ────────────────────────────────────────────────────── */
+.fl-loading {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--fl-bg);
+}
+
+.fl-loading-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--fl-surface);
+  border-bottom: 1px solid var(--fl-border);
+}
+
+.fl-loading-canvas {
+  flex: 1;
+  position: relative;
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-content: flex-start;
+}
+
+.fl-skel-tab {
+  height: 32px;
+  width: 72px;
+  border-radius: 999px;
+}
+
+.fl-skel-table {
+  border-radius: 18px;
+}
+
+/* Override global skeleton to use dark palette */
+.fl-loading .skeleton,
+.fl-skel-tab.skeleton,
+.fl-skel-table.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--fl-surface-raised) 25%,
+    rgba(255,255,255,0.07) 50%,
+    var(--fl-surface-raised) 75%
+  );
+  background-size: 400% 100%;
+  animation: fl-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes fl-shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── Action sheet overlay ────────────────────────────────────────────────── */
+.fl-overlay-bg {
+  position: fixed;
+  inset: 0;
+  background: var(--fl-overlay);
+  z-index: 600;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  animation: fl-overlay-in 180ms ease;
+  backdrop-filter: blur(2px);
+}
+
+@keyframes fl-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.fl-sheet {
+  background: var(--fl-surface);
+  border-radius: 20px 20px 0 0;
+  /* Copper top-edge — brand chrome detail on the sheet */
+  border-top: 2px solid var(--fl-copper);
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow:
+    0 -8px 40px rgba(0,0,0,0.7),
+    0 -1px 0 var(--fl-border-strong);
+  animation: fl-sheet-in 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes fl-sheet-in {
+  from { transform: translateY(28px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.fl-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--fl-border);
+  position: sticky;
+  top: 0;
+  background: var(--fl-surface);
+  z-index: 1;
+}
+
+.fl-sheet-info {
+  min-width: 0;
+}
+
+.fl-sheet-label {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fl-text-primary);
+}
+
+.fl-sheet-meta {
+  font-size: 13px;
+  color: var(--fl-text-muted);
+  margin-top: 2px;
+  text-transform: capitalize;
+}
+
+.fl-sheet-close {
+  flex-shrink: 0;
+  margin-left: 12px;
+  color: var(--fl-text-muted) !important;
+  border-color: var(--fl-border-strong) !important;
+  background: var(--fl-surface-raised) !important;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0;
+}
+.fl-sheet-close:hover {
+  color: var(--fl-text-primary) !important;
+  background: rgba(255,255,255,0.1) !important;
+}
+
+.fl-sheet-body {
+  padding: 16px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fl-sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fl-sheet-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fl-text-muted);
+}
+
+.fl-sheet-action {
+  width: 100%;
+  justify-content: center;
+  min-height: 48px;
+  font-size: 15px;
+  border-radius: 12px;
+}
+
+/* Force dark selects inside the sheet */
+.fl-assign-select {
+  font-size: 14px;
+  background: var(--fl-surface-raised) !important;
+  border-color: var(--fl-border-strong) !important;
+  color: var(--fl-text-primary) !important;
+}
+
+.fl-sheet-res-detail {
+  font-size: 15px;
+  padding: 12px 16px;
+  background: var(--fl-surface-raised);
+  border-radius: 12px;
+  border: 1px solid var(--fl-border);
+  color: var(--fl-text-primary);
+}
+
+/* ── Editor panel ────────────────────────────────────────────────────────── */
+.fl-editor-panel {
+  width: 268px;
+  flex-shrink: 0;
+  background: var(--fl-surface);
+  border-left: 1px solid var(--fl-border);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--fl-text-primary);
+}
+
+@media (max-width: 767px) {
+  .fl-editor-panel {
+    width: 210px;
+  }
+}
+
+@media (max-width: 599px) {
+  .fl-editor-panel {
+    position: fixed;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 50vh;
+    border-left: none;
+    border-top: 1px solid var(--fl-border-strong);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.7);
+    z-index: 300;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+}
+
+.fl-ep-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fl-text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--fl-border);
+}
+
+.fl-ep-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fl-ep-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fl-text-secondary);
+}
+
+.fl-ep-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fl-ep-row {
+  display: flex;
+  gap: 8px;
+}
+
+.fl-ep-row .fl-ep-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.fl-ep-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fl-ep-field > label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fl-text-secondary);
+}
+
+/* Dark form inputs inside the editor panel */
+.fl-editor-panel .input,
+.fl-editor-panel .select,
+.fl-sheet-body .input,
+.fl-sheet-body .select {
+  background: var(--fl-surface-raised) !important;
+  border-color: var(--fl-border-strong) !important;
+  color: var(--fl-text-primary) !important;
+}
+.fl-editor-panel .input:focus,
+.fl-editor-panel .select:focus,
+.fl-sheet-body .input:focus,
+.fl-sheet-body .select:focus {
+  border-color: var(--fl-copper-border) !important;
+  box-shadow: 0 0 0 3px var(--fl-copper-dim) !important;
+  outline: none;
+}
+.fl-editor-panel .input::placeholder {
+  color: var(--fl-text-muted) !important;
+}
+
+.fl-ep-check label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--fl-text-primary);
+  cursor: pointer;
+}
+
+.fl-ep-empty-msg {
+  font-size: 13px;
+  color: var(--fl-text-muted);
+  padding: 4px 0;
+}
+
+/* Table list in editor */
+.fl-ep-table-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fl-ep-table-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  border-radius: 8px;
+  transition: background 120ms;
+}
+
+.fl-ep-table-row:hover {
+  background: var(--fl-surface-raised);
+}
+
+.fl-ep-tbl-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fl-text-primary);
+  min-width: 28px;
+}
+
+.fl-ep-tbl-seats {
+  font-size: 11px;
+  color: var(--fl-text-muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fl-ep-edit-btn,
+.fl-ep-del-btn {
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* Active-room highlight in editor room list — copper brand accent */
+.fl-ep-room-active {
+  background: var(--fl-copper-dim) !important;
+  border-left: 2px solid var(--fl-copper);
+  padding-left: 4px;
+}
+
+/* Error dialog inputs */
+#fl-rr-err,
+#fl-ar-err {
+  color: #f56565;
+}

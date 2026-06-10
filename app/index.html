@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#c2703d">
+<title>Tavolo — Restaurant Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+
+/* ===== APP SHELL ===== */
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;overflow-x:hidden}
+body{background:var(--color-bg);min-height:100vh}
+
+/* ===== TOAST ===== */
+#cov-toast{
+  position:fixed;left:50%;bottom:calc(var(--space-8) + env(safe-area-inset-bottom,0));
+  transform:translateX(-50%);z-index:9999;
+  display:flex;flex-direction:column;gap:var(--space-2);align-items:center;pointer-events:none;
+}
+.cov-toast{
+  background:var(--color-text-primary);color:#fff;
+  padding:var(--space-3) var(--space-5);border-radius:var(--radius-full);
+  font-size:14px;box-shadow:var(--shadow-lg);
+  animation:cov-toast-in var(--duration-normal) var(--easing-decelerate);
+  white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;
+}
+.cov-toast.err{background:var(--color-destructive)}
+.cov-toast.ok{background:var(--color-success)}
+.cov-toast.warn{background:var(--color-warning);color:var(--color-warning-foreground)}
+@keyframes cov-toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== AUTH SCREEN ===== */
+#auth-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--space-5);
+}
+.auth-card{
+  background:var(--color-surface);border-radius:var(--radius-xl);
+  padding:var(--space-10) var(--space-8);width:100%;max-width:420px;
+  box-shadow:var(--shadow-lg);border:1px solid var(--color-border);
+}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:var(--space-8)}
+.auth-logo-mark{
+  width:40px;height:40px;border-radius:var(--radius-md);
+  background:var(--shell-copper);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:18px;font-weight:700;letter-spacing:-0.03em;flex-shrink:0;
+  font-style:italic;
+}
+.auth-logo-name{font-size:26px;font-weight:700;letter-spacing:-0.04em;color:var(--color-text-primary);font-style:italic}
+.auth-logo-name span{color:var(--shell-copper)}
+.auth-tabs{display:flex;background:var(--color-surface-raised);border-radius:var(--radius-full);padding:3px;gap:2px;margin-bottom:var(--space-6)}
+.auth-tab{
+  flex:1;min-height:36px;border-radius:var(--radius-full);border:none;cursor:pointer;
+  font-size:14px;font-weight:500;color:var(--color-text-secondary);background:none;
+  transition:background var(--duration-fast),color var(--duration-fast),box-shadow var(--duration-fast);
+}
+.auth-tab.active{background:var(--color-surface);color:var(--color-text-primary);box-shadow:var(--shadow-sm)}
+.auth-error{
+  background:var(--color-destructive-light);color:var(--color-destructive);
+  border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);
+  font-size:14px;margin-bottom:var(--space-4);display:none;
+}
+.pw-wrap{position:relative}
+.pw-wrap .input{padding-right:44px}
+.pw-toggle{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--color-text-muted);
+  padding:4px;display:flex;align-items:center;min-width:44px;min-height:44px;justify-content:center;
+}
+
+/* ===== ONBOARDING WIZARD ===== */
+#onboard-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--space-5);
+}
+.wizard-card{
+  background:var(--color-surface);border-radius:var(--radius-xl);
+  padding:var(--space-8);width:100%;max-width:520px;
+  box-shadow:var(--shadow-lg);border:1px solid var(--color-border);
+}
+.wizard-progress-bar{height:3px;background:var(--color-border);border-radius:var(--radius-full);margin-bottom:var(--space-6);overflow:hidden}
+.wizard-progress-fill{height:100%;background:var(--shell-copper);border-radius:var(--radius-full);transition:width var(--duration-normal)}
+.wizard-step{font-size:12px;color:var(--color-text-muted);margin-bottom:var(--space-5)}
+.wizard-title{font-size:24px;font-weight:600;letter-spacing:-0.02em;margin-bottom:var(--space-2)}
+.wizard-desc{font-size:15px;color:var(--color-text-secondary);margin-bottom:var(--space-6);line-height:1.5}
+
+/* ===== SIDEBAR / APP SHELL ===== */
+#app-shell{display:none;min-height:100vh}
+
+.sidebar{
+  position:fixed;top:0;left:0;width:240px;height:100vh;
+  background:var(--shell-bg);z-index:200;
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
+}
+.sidebar-logo{
+  padding:var(--space-5) var(--space-5) var(--space-4);
+  color:#fff;border-bottom:1px solid var(--shell-border);flex-shrink:0;
+  display:flex;align-items:center;gap:10px;
+}
+.sidebar-logo-mark{
+  width:32px;height:32px;border-radius:var(--radius-sm);
+  background:var(--shell-copper);color:#fff;font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:-0.02em;
+  font-style:italic;
+}
+.sidebar-logo-text{font-size:18px;font-weight:700;letter-spacing:-0.04em;color:#fff;font-style:italic}
+.sidebar-logo-text span{color:var(--shell-copper)}
+
+.sidebar-section-label{
+  font-size:10px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);padding:var(--space-4) var(--space-4) var(--space-2);
+  flex-shrink:0;
+}
+.sidebar-nav{flex:1;padding:var(--space-3);display:flex;flex-direction:column;overflow-y:auto;min-height:0}
+.nav-item{
+  display:flex;align-items:center;gap:var(--space-3);height:40px;padding:0 var(--space-3);
+  border-radius:var(--radius-md);font-size:13px;font-weight:500;letter-spacing:0.01em;
+  color:rgba(255,255,255,.6);cursor:pointer;border:none;background:none;
+  width:100%;text-align:left;min-width:0;
+  transition:background var(--duration-fast),color var(--duration-fast);
+  position:relative;overflow:hidden;flex-shrink:0;
+}
+.nav-item::after{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%) scaleY(0);
+  width:3px;height:60%;background:var(--shell-copper);border-radius:0 2px 2px 0;
+  transition:transform var(--duration-fast);
+}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:rgba(194,112,61,.15);color:#fff}
+.nav-item.active::after{transform:translateY(-50%) scaleY(1)}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-item-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-badge{
+  margin-left:auto;min-width:18px;height:18px;border-radius:var(--radius-full);
+  background:var(--shell-copper);color:#fff;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;
+}
+/* stub items — slightly dimmer */
+.nav-item.stub{opacity:.65}
+.nav-item.stub:hover{opacity:1}
+
+.sidebar-bottom{
+  padding:var(--space-4);border-top:1px solid var(--shell-border);
+  display:flex;flex-direction:column;gap:var(--space-3);flex-shrink:0;
+}
+.sidebar-avatar{
+  width:32px;height:32px;border-radius:var(--radius-full);
+  background:rgba(194,112,61,.2);display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;color:var(--shell-copper);flex-shrink:0;
+}
+.sidebar-rest-name{
+  font-size:13px;font-weight:500;color:#fff;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.sidebar-signout{
+  width:28px;height:28px;border-radius:var(--radius-sm);background:none;border:none;
+  color:rgba(255,255,255,.35);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:color var(--duration-fast),background var(--duration-fast);flex-shrink:0;
+}
+.sidebar-signout:hover{color:#fff;background:rgba(255,255,255,.1)}
+.sidebar-user-row{display:flex;align-items:center;gap:var(--space-3);min-width:0}
+
+/* Module badge at bottom of sidebar */
+.sidebar-module-badge{
+  font-size:10px;font-weight:500;letter-spacing:0.04em;
+  color:rgba(240,181,29,.85);background:rgba(240,181,29,.08);
+  border:1px solid rgba(240,181,29,.2);border-radius:var(--radius-full);
+  padding:3px 10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* ===== MAIN AREA ===== */
+.main-area{margin-left:240px;display:flex;flex-direction:column;min-height:100vh;min-width:0;flex:1}
+.topbar{
+  height:64px;background:var(--color-surface);border-bottom:1px solid var(--color-border);
+  display:flex;align-items:center;padding:0 var(--space-8);justify-content:space-between;
+  position:sticky;top:0;z-index:100;flex-shrink:0;
+}
+.topbar-left{display:flex;align-items:center;gap:var(--space-3);min-width:0}
+.topbar-title{font-size:20px;font-weight:600;letter-spacing:-0.01em;color:var(--color-text-primary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar-right{display:flex;align-items:center;gap:var(--space-4);flex-shrink:0}
+.hamburger{
+  display:none;width:40px;height:40px;border-radius:var(--radius-sm);background:none;border:none;
+  cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;
+}
+.hamburger span{display:block;width:20px;height:2px;background:var(--color-text-primary);border-radius:2px}
+.content-area{flex:1;padding:var(--space-8);min-width:0}
+
+/* ===== SECTION TRANSITIONS ===== */
+.section{display:none}
+.section.active{display:block;animation:section-in .18s var(--easing-standard) both}
+@keyframes section-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== DASHBOARD KPIs ===== */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));
+  gap:var(--space-4);margin-bottom:var(--space-6);
+}
+.kpi-card{
+  background:var(--color-surface);border:1px solid var(--color-border);
+  border-radius:var(--radius-lg);padding:var(--space-5);
+  transition:box-shadow var(--duration-fast),transform var(--duration-fast);
+  animation:kpi-in .3s var(--easing-standard) both;
+}
+.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+@keyframes kpi-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.kpi-card:nth-child(1){animation-delay:.04s}
+.kpi-card:nth-child(2){animation-delay:.08s}
+.kpi-card:nth-child(3){animation-delay:.12s}
+.kpi-card:nth-child(4){animation-delay:.16s}
+.kpi-icon{width:36px;height:36px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-3)}
+.kpi-icon.gold{background:var(--color-accent-light);color:var(--color-accent)}
+.kpi-icon.green{background:var(--color-success-light);color:var(--color-success)}
+.kpi-icon.blue{background:var(--color-info-light);color:var(--color-info)}
+.kpi-icon.red{background:var(--color-destructive-light);color:var(--color-destructive)}
+.kpi-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:var(--space-2)}
+.kpi-value{font-size:32px;font-weight:700;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;color:var(--color-text-primary);line-height:1;margin-bottom:var(--space-1)}
+.kpi-sub{font-size:13px;color:var(--color-text-muted)}
+
+/* ===== DASHBOARD PANELS ===== */
+.dash-grid{
+  display:grid;grid-template-columns:1fr 360px;gap:var(--space-5);align-items:start;
+}
+.panel{
+  background:var(--color-surface);border:1px solid var(--color-border);
+  border-radius:var(--radius-lg);overflow:hidden;
+}
+.panel-head{
+  padding:var(--space-5) var(--space-5) var(--space-4);
+  border-bottom:1px solid var(--color-border);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);
+}
+.panel-title{font-size:16px;font-weight:600;color:var(--color-text-primary);letter-spacing:-0.01em}
+.panel-body{padding:var(--space-4) var(--space-5)}
+.panel-empty{text-align:center;padding:var(--space-10) var(--space-5);color:var(--color-text-muted);font-size:14px}
+.panel-empty svg{margin:0 auto var(--space-3)}
+.panel-empty p{font-size:15px;font-weight:500;color:var(--color-text-secondary);margin-bottom:var(--space-1)}
+
+/* Upcoming reservations list */
+.res-list{display:flex;flex-direction:column;gap:2px}
+.res-row{
+  display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-1);
+  border-bottom:1px solid var(--color-border);cursor:pointer;border-radius:var(--radius-md);
+  transition:background var(--duration-fast);
+}
+.res-row:last-child{border-bottom:none}
+.res-row:hover{background:var(--color-surface-raised)}
+.res-time{
+  font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--shell-copper);
+  min-width:44px;flex-shrink:0;
+}
+.res-info{flex:1;min-width:0}
+.res-name{font-size:14px;font-weight:500;color:var(--color-text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-meta{font-size:12px;color:var(--color-text-muted)}
+.res-status{flex-shrink:0}
+
+/* Status badges */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 10px;
+  border-radius:var(--radius-full);font-size:11px;font-weight:600;
+  letter-spacing:0.05em;text-transform:uppercase;border:1px solid transparent;
+}
+.badge-booked{background:var(--color-accent-light);color:var(--color-accent-hover);border-color:rgba(240,181,29,.3)}
+.badge-confirmed{background:var(--color-info-light);color:var(--color-info);border-color:rgba(43,108,176,.3)}
+.badge-seated{background:var(--color-primary-light);color:var(--shell-copper);border-color:rgba(194,112,61,.3)}
+.badge-completed{background:var(--color-success-light);color:var(--color-success);border-color:rgba(42,122,85,.3)}
+.badge-no_show{background:var(--color-destructive-light);color:var(--color-destructive);border-color:rgba(181,59,47,.3)}
+.badge-cancelled{background:var(--color-surface-raised);color:var(--color-text-muted);border-color:var(--color-border)}
+.badge-waitlist{background:#f3e8ff;color:#7c3aed;border-color:rgba(124,58,237,.25)}
+
+/* Quick actions row */
+.quick-actions{display:flex;gap:var(--space-3);margin-bottom:var(--space-6);flex-wrap:wrap}
+.quick-btn{
+  display:inline-flex;align-items:center;gap:var(--space-2);
+  min-height:44px;padding:0 var(--space-5);border-radius:var(--radius-md);
+  font-size:14px;font-weight:500;cursor:pointer;border:none;
+  transition:background var(--duration-fast),transform .15s,box-shadow .15s;
+}
+.quick-btn:active{transform:scale(.97)}
+.quick-btn-primary{background:var(--shell-copper);color:#fff}
+.quick-btn-primary:hover{background:var(--color-primary-hover);box-shadow:0 4px 12px rgba(194,112,61,.3)}
+.quick-btn-secondary{background:var(--color-surface);color:var(--color-text-primary);border:1px solid var(--color-border)}
+.quick-btn-secondary:hover{background:var(--color-surface-raised)}
+
+/* Live dot */
+.live-dot{
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--color-success);margin-right:5px;
+  animation:live-pulse 2.5s infinite;
+}
+@keyframes live-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.6}}
+
+/* ===== SKELETON ===== */
+.skel-text{height:14px;border-radius:var(--radius-sm);background:linear-gradient(90deg,var(--color-surface-raised) 25%,var(--color-border) 50%,var(--color-surface-raised) 75%);background-size:800px 100%;animation:shimmer 1.4s infinite linear;margin-bottom:8px}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skel-card{border-radius:var(--radius-lg);background:linear-gradient(90deg,var(--color-surface-raised) 25%,var(--color-border) 50%,var(--color-surface-raised) 75%);background-size:800px 100%;animation:shimmer 1.4s infinite linear}
+.skeleton-card{height:96px;border-radius:var(--radius-lg)}
+
+/* ===== STUB SECTIONS (QR Pay Phase 3) ===== */
+.stub-section{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:400px;text-align:center;gap:var(--space-4);
+}
+.stub-icon{
+  width:72px;height:72px;border-radius:var(--radius-xl);
+  background:var(--color-surface-raised);border:1px solid var(--color-border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--color-text-muted);
+}
+.stub-title{font-size:20px;font-weight:600;color:var(--color-text-primary)}
+.stub-body{font-size:15px;color:var(--color-text-secondary);max-width:400px;line-height:1.6}
+.stub-badge-qr{
+  font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;
+  background:rgba(240,181,29,.10);color:#a87500;
+  border:1px solid rgba(240,181,29,.3);border-radius:var(--radius-full);
+  padding:4px 12px;
+}
+
+/* ===== MODAL ===== */
+.modal-overlay{
+  position:fixed;inset:0;background:var(--color-overlay);z-index:500;
+  display:none;align-items:center;justify-content:center;padding:var(--space-5);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--color-surface);border-radius:var(--radius-xl);
+  padding:var(--space-8);width:100%;max-width:440px;box-shadow:var(--shadow-xl);
+  animation:modal-in .2s var(--easing-decelerate) both;
+}
+@keyframes modal-in{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5)}
+.modal-title{font-size:20px;font-weight:600;letter-spacing:-0.01em}
+.icon-btn{
+  width:36px;height:36px;border-radius:var(--radius-sm);background:none;
+  border:1px solid var(--color-border);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--color-text-secondary);
+  transition:color var(--duration-fast),background var(--duration-fast);
+}
+.icon-btn:hover{color:var(--color-text-primary);background:var(--color-surface-raised)}
+
+/* ===== MOBILE OVERLAY ===== */
+.mobile-overlay{
+  display:none;position:fixed;inset:0;background:var(--color-overlay);z-index:199;
+}
+
+/* ===== BOTTOM TAB BAR (phone) ===== */
+.bottom-tab-bar{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  height:60px;background:var(--shell-bg);z-index:200;
+  border-top:1px solid var(--shell-border);padding:0 4px;
+  align-items:stretch;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+.bottom-tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;border:none;background:none;color:rgba(255,255,255,.45);
+  cursor:pointer;padding:4px 2px;font-size:10px;font-weight:500;letter-spacing:.02em;
+  min-width:0;transition:color var(--duration-fast);
+}
+.bottom-tab svg{flex-shrink:0}
+.bottom-tab.active{color:var(--shell-copper)}
+.bottom-tab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:1023px){
+  .sidebar{transform:translateX(-100%);transition:transform var(--duration-normal) var(--easing-decelerate)}
+  .sidebar.open{transform:translateX(0)}
+  .mobile-overlay.open{display:block}
+  .main-area{margin-left:0;min-width:0}
+  .content-area{padding:var(--space-5)}
+  .hamburger{display:flex}
+  .topbar{padding:0 var(--space-5)}
+  .dash-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr))}
+  .modal{max-width:calc(100vw - 32px)}
+}
+@media(max-width:599px){
+  .bottom-tab-bar{display:flex}
+  .content-area{padding:var(--space-4);padding-bottom:76px}
+  .topbar{padding:0 var(--space-4)}
+  .topbar-title{font-size:17px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .kpi-value{font-size:26px}
+  .quick-actions{gap:var(--space-2)}
+  .quick-btn{font-size:13px;padding:0 var(--space-4)}
+  .modal-overlay{align-items:flex-end;padding:0}
+  .modal{
+    border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+    max-width:100%;padding:var(--space-6) var(--space-5);
+    max-height:92vh;overflow-y:auto;
+  }
+  .wizard-card{padding:var(--space-6) var(--space-5)}
+  .auth-card{padding:var(--space-8) var(--space-5)}
+  #cov-toast{bottom:76px}
+}
+@media(max-width:374px){
+  .kpi-grid{grid-template-columns:1fr}
+  .kpi-value{font-size:22px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  .live-dot{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div id="cov-toast" role="status" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ===== AUTH SCREEN ===== -->
+<main id="auth-screen" aria-label="Sign in to Tavolo">
+  <div class="auth-card">
+    <div class="auth-logo" aria-hidden="true">
+      <div class="auth-logo-mark">T</div>
+      <div class="auth-logo-name">tav<span>olo</span></div>
+    </div>
+    <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+      <button class="auth-tab active" id="tab-signin" role="tab" aria-selected="true" aria-controls="panel-signin">Sign in</button>
+      <button class="auth-tab" id="tab-signup" role="tab" aria-selected="false" aria-controls="panel-signup">Create account</button>
+    </div>
+
+    <!-- Sign in panel -->
+    <div id="panel-signin" role="tabpanel" aria-labelledby="tab-signin">
+      <div id="signin-error" class="auth-error" role="alert" aria-live="assertive"></div>
+      <div class="field">
+        <label for="signin-email">Email address</label>
+        <input id="signin-email" class="input" type="email" autocomplete="email" placeholder="you@restaurant.com" required>
+      </div>
+      <div class="field">
+        <label for="signin-password">Password</label>
+        <div class="pw-wrap">
+          <input id="signin-password" class="input" type="password" autocomplete="current-password" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required>
+          <button class="pw-toggle" type="button" aria-label="Show password" id="signin-pw-toggle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button id="signin-btn" class="btn btn-primary btn-block btn-lg" style="border-radius:var(--radius-full)">Sign in</button>
+      <button id="signin-demo-btn" type="button" class="btn btn-block" style="margin-top:10px;border-radius:var(--radius-full);background:transparent;border:1px solid var(--color-border);color:var(--color-text-muted)">Use demo credentials</button>
+    </div>
+
+    <!-- Sign up panel -->
+    <div id="panel-signup" role="tabpanel" aria-labelledby="tab-signup" style="display:none">
+      <div id="signup-error" class="auth-error" role="alert" aria-live="assertive"></div>
+      <div class="field">
+        <label for="signup-email">Email address</label>
+        <input id="signup-email" class="input" type="email" autocomplete="email" placeholder="you@restaurant.com" required>
+      </div>
+      <div class="field">
+        <label for="signup-password">Password <span style="font-weight:400;color:var(--color-text-muted)">(min 8 characters)</span></label>
+        <div class="pw-wrap">
+          <input id="signup-password" class="input" type="password" autocomplete="new-password" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" required>
+          <button class="pw-toggle" type="button" aria-label="Show password" id="signup-pw-toggle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button id="signup-btn" class="btn btn-primary btn-block btn-lg" style="border-radius:var(--radius-full)">Create account</button>
+      <p style="text-align:center;margin-top:var(--space-4);font-size:13px;color:var(--color-text-muted)">Free to start. Restaurant setup takes 60 seconds.</p>
+    </div>
+  </div>
+</main>
+
+<!-- ===== ONBOARDING WIZARD ===== -->
+<div id="onboard-screen" style="display:none" aria-label="Restaurant setup">
+  <div class="wizard-card">
+    <div class="wizard-progress-bar"><div class="wizard-progress-fill" id="wizard-fill" style="width:50%"></div></div>
+    <p class="wizard-step" id="wizard-step-label">Step 1 of 2</p>
+    <h1 class="wizard-title" id="wizard-title">Set up your restaurant</h1>
+    <p class="wizard-desc" id="wizard-desc">Enter your restaurant details. We'll create a sample room and tables so you're ready in 60 seconds.</p>
+    <div id="wizard-content">
+      <div class="field">
+        <label for="onboard-name">Restaurant name</label>
+        <input id="onboard-name" class="input" type="text" placeholder="e.g. The Oak Room" autocomplete="organization" required>
+      </div>
+      <div class="field">
+        <label for="onboard-tz">Timezone</label>
+        <select id="onboard-tz" class="input select">
+          <option value="America/New_York">Eastern (US)</option>
+          <option value="America/Chicago">Central (US)</option>
+          <option value="America/Denver">Mountain (US)</option>
+          <option value="America/Los_Angeles">Pacific (US)</option>
+          <option value="Europe/London" selected>London (UK)</option>
+          <option value="Europe/Paris">Paris / Berlin (EU)</option>
+          <option value="Europe/Amsterdam">Amsterdam (EU)</option>
+          <option value="Asia/Dubai">Dubai (GST)</option>
+          <option value="Asia/Riyadh">Riyadh (AST)</option>
+          <option value="Australia/Sydney">Sydney (AEST)</option>
+          <option value="Asia/Singapore">Singapore</option>
+        </select>
+      </div>
+    </div>
+    <div id="onboard-error" class="auth-error" role="alert" aria-live="assertive"></div>
+    <button id="onboard-submit" class="btn btn-primary btn-block btn-lg" style="border-radius:var(--radius-full);margin-top:var(--space-2)">
+      Create my restaurant
+    </button>
+  </div>
+</div>
+
+<!-- ===== APP SHELL ===== -->
+<div id="app-shell" aria-label="Tavolo operator app">
+  <div class="mobile-overlay" id="mobile-overlay" aria-hidden="true"></div>
+
+  <!-- Bottom tab bar (phone <=599px) -->
+  <nav class="bottom-tab-bar" id="bottom-tab-bar" aria-label="Main navigation">
+    <button class="bottom-tab active" data-section="dashboard" aria-label="Dashboard" aria-current="page">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dash</span>
+    </button>
+    <button class="bottom-tab" data-section="floor" aria-label="Floor">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Floor</span>
+    </button>
+    <button class="bottom-tab" data-section="reservations" aria-label="Reservations">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Reservations</span>
+    </button>
+    <button class="bottom-tab" data-section="guests" aria-label="Guests">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Guests</span>
+    </button>
+    <button class="bottom-tab" data-section="settings" aria-label="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar" aria-label="Dashboard navigation">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark" aria-hidden="true">T</div>
+      <div class="sidebar-logo-text">tav<span>olo</span></div>
+    </div>
+
+    <div class="sidebar-nav" role="list">
+
+      <!-- Always-visible top item -->
+      <button class="nav-item active" data-section="dashboard" role="listitem" aria-current="page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="nav-item-label">Dashboard</span>
+      </button>
+
+      <!-- RESERVATIONS group — hidden if modules.reservations is false -->
+      <div id="nav-group-reservations">
+        <div class="sidebar-section-label" aria-hidden="true">Reservations</div>
+        <button class="nav-item" data-section="floor" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span class="nav-item-label">Live Floor</span>
+        </button>
+        <button class="nav-item" data-section="timeline" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/><line x1="8" y1="3" x2="8" y2="21"/></svg>
+          <span class="nav-item-label">Timeline</span>
+        </button>
+        <button class="nav-item" data-section="reservations" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span class="nav-item-label">Reservations</span>
+        </button>
+        <button class="nav-item" data-section="guests" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="nav-item-label">Guests</span>
+        </button>
+        <button class="nav-item" data-section="waitlist" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span class="nav-item-label">Waitlist</span>
+        </button>
+        <button class="nav-item" data-section="blackouts" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          <span class="nav-item-label">Blackouts</span>
+        </button>
+      </div>
+
+      <!-- QR PAY group — hidden if modules.qr_pay is false -->
+      <div id="nav-group-qr-pay">
+        <div class="sidebar-section-label" aria-hidden="true">QR Pay</div>
+        <button class="nav-item stub" data-section="qr-pay-floor" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span class="nav-item-label">Pay Floor</span>
+        </button>
+        <button class="nav-item stub" data-section="qr-menu" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="nav-item-label">Menu</span>
+        </button>
+        <button class="nav-item stub" data-section="qr-tables" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="10" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/></svg>
+          <span class="nav-item-label">Tables &amp; QR</span>
+        </button>
+        <button class="nav-item stub" data-section="qr-analytics" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="nav-item-label">Analytics</span>
+        </button>
+        <button class="nav-item stub" data-section="qr-staff" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="nav-item-label">Staff</span>
+        </button>
+      </div>
+
+      <!-- ACCOUNT group — always visible -->
+      <div id="nav-group-account">
+        <div class="sidebar-section-label" aria-hidden="true">Account</div>
+        <button class="nav-item" data-section="settings" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="nav-item-label">Settings</span>
+        </button>
+      </div>
+
+    </div><!-- /sidebar-nav -->
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-user-row">
+        <div class="sidebar-avatar" id="sidebar-avatar" aria-hidden="true">?</div>
+        <span class="sidebar-rest-name" id="sidebar-rest-name">Loading...</span>
+        <button class="sidebar-signout" id="signout-btn" aria-label="Sign out" title="Sign out">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+      <div id="sidebar-module-badge" class="sidebar-module-badge" style="display:none" aria-label="Active modules"></div>
+    </div>
+  </nav>
+
+  <!-- Main area -->
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" id="hamburger-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+          <span></span><span></span><span></span>
+        </button>
+        <h1 class="topbar-title" id="topbar-title">Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <span id="live-indicator" style="display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--color-success)" aria-label="Live updates active">
+          <span class="live-dot" aria-hidden="true"></span>Live
+        </span>
+      </div>
+    </header>
+
+    <main class="content-area" id="content-area">
+
+      <!-- DASHBOARD (built fully) -->
+      <section id="section-dashboard" class="section active" aria-label="Dashboard">
+        <div class="quick-actions" id="dash-quick-actions">
+          <button class="quick-btn quick-btn-primary" id="btn-add-reservation" aria-label="Add reservation">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Reservation
+          </button>
+          <button class="quick-btn quick-btn-secondary" id="btn-add-walkin" aria-label="Add walk-in">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Walk-in
+          </button>
+        </div>
+
+        <div class="kpi-grid" id="kpi-grid" role="list" aria-label="Today's key metrics">
+          <div class="skel-card" style="height:120px" aria-hidden="true"></div>
+          <div class="skel-card" style="height:120px" aria-hidden="true"></div>
+          <div class="skel-card" style="height:120px" aria-hidden="true"></div>
+          <div class="skel-card" style="height:120px" aria-hidden="true"></div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="panel" aria-label="Upcoming reservations">
+            <div class="panel-head">
+              <h2 class="panel-title">Upcoming - next 2 hours</h2>
+              <button class="btn btn-secondary" id="view-all-res-btn" style="min-height:36px;font-size:13px;padding:0 var(--space-4);border-radius:var(--radius-full)">View all</button>
+            </div>
+            <div id="upcoming-res-body" class="panel-body">
+              <div class="skel-text" style="width:80%;margin-bottom:12px" aria-hidden="true"></div>
+              <div class="skel-text" style="width:65%;margin-bottom:12px" aria-hidden="true"></div>
+              <div class="skel-text" style="width:72%" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div class="panel">
+              <div class="panel-head">
+                <h2 class="panel-title" id="dash-date-label">Today</h2>
+              </div>
+              <div class="panel-body" id="dash-date-body" style="font-size:13px;color:var(--color-text-secondary);line-height:1.7"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h2 class="panel-title">Booking link</h2>
+              </div>
+              <div class="panel-body">
+                <div id="booking-link-display" style="font-size:13px;color:var(--color-text-muted);word-break:break-all"></div>
+                <button id="copy-booking-link" class="btn btn-secondary" style="min-height:36px;font-size:13px;padding:0 var(--space-4);border-radius:var(--radius-full);margin-top:var(--space-3)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy link
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Feature module sections — empty shells; each module's render() populates them -->
+      <section id="section-floor"        class="section" aria-label="Live Floor"           style="display:none"></section>
+      <section id="section-timeline"     class="section" aria-label="Reservation Timeline" style="display:none"></section>
+      <section id="section-reservations" class="section" aria-label="Reservations"         style="display:none"></section>
+      <section id="section-guests"       class="section" aria-label="Guest CRM"            style="display:none"></section>
+      <section id="section-waitlist"     class="section" aria-label="Waitlist"             style="display:none"></section>
+      <section id="section-blackouts"    class="section" aria-label="Blackouts"            style="display:none"></section>
+      <section id="section-settings"     class="section" aria-label="Settings"             style="display:none"></section>
+
+      <!-- QR PAY Phase-3 stubs -->
+      <section id="section-qr-pay-floor" class="section" aria-label="Pay Floor" style="display:none">
+        <div class="stub-section">
+          <div class="stub-icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <span class="stub-badge-qr">Coming - Phase 3</span>
+          <h2 class="stub-title">Pay Floor</h2>
+          <p class="stub-body">This screen lands shortly. Live table payment status - open bills, split-pay claims, and session closures.</p>
+        </div>
+      </section>
+
+      <section id="section-qr-menu" class="section" aria-label="Menu" style="display:none">
+        <div class="stub-section">
+          <div class="stub-icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <span class="stub-badge-qr">Coming - Phase 3</span>
+          <h2 class="stub-title">Menu</h2>
+          <p class="stub-body">This screen lands shortly. Build and publish your digital menu - categories, items, modifiers, and pricing.</p>
+        </div>
+      </section>
+
+      <section id="section-qr-tables" class="section" aria-label="Tables and QR" style="display:none">
+        <div class="stub-section">
+          <div class="stub-icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="10" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/></svg>
+          </div>
+          <span class="stub-badge-qr">Coming - Phase 3</span>
+          <h2 class="stub-title">Tables &amp; QR</h2>
+          <p class="stub-body">This screen lands shortly. Generate and print QR codes for each table - guests scan to view the menu and pay.</p>
+        </div>
+      </section>
+
+      <section id="section-qr-analytics" class="section" aria-label="Analytics" style="display:none">
+        <div class="stub-section">
+          <div class="stub-icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <span class="stub-badge-qr">Coming - Phase 3</span>
+          <h2 class="stub-title">Analytics</h2>
+          <p class="stub-body">This screen lands shortly. Revenue, tips, service charge, and payment-method breakdown with daily and weekly trends.</p>
+        </div>
+      </section>
+
+      <section id="section-qr-staff" class="section" aria-label="Staff" style="display:none">
+        <div class="stub-section">
+          <div class="stub-icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="stub-badge-qr">Coming - Phase 3</span>
+          <h2 class="stub-title">Staff</h2>
+          <p class="stub-body">This screen lands shortly. Manage staff profiles, PINs, and per-server order visibility and tip tracking.</p>
+        </div>
+      </section>
+
+    </main><!-- /content-area -->
+  </div><!-- /main-area -->
+</div><!-- /app-shell -->
+
+<!-- Add Reservation / Walk-in modal -->
+<div class="modal-overlay" id="res-modal" role="dialog" aria-modal="true" aria-labelledby="res-modal-title">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 class="modal-title" id="res-modal-title">Add Reservation</h2>
+      <button class="icon-btn" id="res-modal-close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <p style="font-size:15px;color:var(--color-text-secondary);margin-bottom:var(--space-5);line-height:1.5">
+      The full reservation editor is built by the <strong>reservations-agent</strong>. For now, navigate to <strong>Reservations</strong> in the sidebar.
+    </p>
+    <button class="btn btn-primary btn-block" id="res-modal-goto" style="border-radius:var(--radius-md)">Go to Reservations</button>
+  </div>
+</div>
+
+<!-- Supabase + unified platform runtime (replaces data.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/platform.js"></script>
+
+<script>
+(function () {
+'use strict';
+
+/* =========================================================================
+   BACK-COMPAT BOOTSTRAP
+   platform.js creates window.COV but the shim omits `screens`.
+   PLAT.screens is the canonical store; alias COV.screens to it so all
+   screen modules that write window.COV.screens[name] also populate PLAT.screens.
+========================================================================= */
+window.COV.screens = window.PLAT.screens;
+
+var data  = window.COV.data;
+var utils = window.COV.utils;
+var $ = utils.el, $$ = utils.els, esc = utils.esc, toast = utils.toast;
+var fmtTime = utils.formatTime;
+
+/* ---- app state ---- */
+var state = {
+  session:    null,
+  restaurant: null,
+  section:    'dashboard',
+  channels:   [],
+};
+
+/* =====================================================================
+   SECTIONS REGISTRY
+===================================================================== */
+var SECTIONS = [
+  'dashboard', 'floor', 'timeline', 'reservations', 'guests',
+  'waitlist', 'blackouts', 'settings',
+  'qr-pay-floor', 'qr-menu', 'qr-tables', 'qr-analytics', 'qr-staff',
+];
+
+var SECTION_LABELS = {
+  dashboard:       'Dashboard',
+  floor:           'Live Floor',
+  timeline:        'Timeline',
+  reservations:    'Reservations',
+  guests:          'Guests',
+  waitlist:        'Waitlist',
+  blackouts:       'Blackouts',
+  settings:        'Settings',
+  'qr-pay-floor':  'Pay Floor',
+  'qr-menu':       'Menu',
+  'qr-tables':     'Tables & QR',
+  'qr-analytics':  'Analytics',
+  'qr-staff':      'Staff',
+};
+
+/* =====================================================================
+   MODULE FLAGS
+===================================================================== */
+function applyModuleFlags(modules) {
+  var hasRes   = !modules || modules.reservations !== false;
+  var hasQrPay = !modules || modules.qr_pay       !== false;
+
+  var grpRes = $('#nav-group-reservations');
+  var grpQr  = $('#nav-group-qr-pay');
+  if (grpRes) grpRes.style.display = hasRes   ? '' : 'none';
+  if (grpQr)  grpQr.style.display  = hasQrPay ? '' : 'none';
+
+  var badge = $('#sidebar-module-badge');
+  if (badge) {
+    var parts = [];
+    if (hasRes)   parts.push('Reservations');
+    if (hasQrPay) parts.push('QR Pay');
+    badge.textContent  = parts.join(' · ');
+    badge.style.display = parts.length ? '' : 'none';
+  }
+}
+
+/* =====================================================================
+   ROUTING
+===================================================================== */
+function route(hash) {
+  var sec = (hash || '').replace(/^#\/?/, '') || 'dashboard';
+  if (SECTIONS.indexOf(sec) === -1) sec = 'dashboard';
+  state.section = sec;
+
+  $$('.nav-item').forEach(function (b) {
+    var active = b.dataset.section === sec;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+  $$('#bottom-tab-bar .bottom-tab').forEach(function (t) {
+    var active = t.dataset.section === sec;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+  $$('.section').forEach(function (s) {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  var el = $('#section-' + sec);
+  if (el) { el.classList.add('active'); el.style.display = 'block'; }
+  $('#topbar-title').textContent = SECTION_LABELS[sec] || 'Tavolo';
+
+  if (sec === 'dashboard') loadDashboard();
+
+  /* Feature module contract: assets/<sec>.js registers
+     window.COV.screens[sec] = { render(sectionEl) }
+     render() is called on every navigation; modules manage their own caching. */
+  if (window.COV.screens && window.COV.screens[sec] &&
+      typeof window.COV.screens[sec].render === 'function') {
+    try { window.COV.screens[sec].render(el); }
+    catch (err) { console.error('screen render failed:', sec, err); }
+  }
+
+  closeSidebar();
+}
+
+/* Expose state for screen modules */
+window.COV.state = state;
+
+window.addEventListener('hashchange', function () { route(location.hash); });
+$$('.nav-item, #bottom-tab-bar .bottom-tab').forEach(function (b) {
+  b.addEventListener('click', function () {
+    location.hash = '#/' + b.dataset.section;
+  });
+  b.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      location.hash = '#/' + b.dataset.section;
+    }
+  });
+});
+
+/* =====================================================================
+   SIDEBAR (mobile toggle)
+===================================================================== */
+function openSidebar() {
+  $('#sidebar').classList.add('open');
+  $('#mobile-overlay').classList.add('open');
+  $('#hamburger-btn').setAttribute('aria-expanded', 'true');
+  $('#mobile-overlay').removeAttribute('aria-hidden');
+}
+function closeSidebar() {
+  $('#sidebar').classList.remove('open');
+  $('#mobile-overlay').classList.remove('open');
+  $('#hamburger-btn').setAttribute('aria-expanded', 'false');
+  $('#mobile-overlay').setAttribute('aria-hidden', 'true');
+}
+$('#hamburger-btn').addEventListener('click', function () {
+  $('#sidebar').classList.contains('open') ? closeSidebar() : openSidebar();
+});
+$('#mobile-overlay').addEventListener('click', closeSidebar);
+
+/* =====================================================================
+   AUTH
+===================================================================== */
+function setAuthTab(tab) {
+  var isSignin = (tab === 'signin');
+  $('#tab-signin').classList.toggle('active', isSignin);
+  $('#tab-signup').classList.toggle('active', !isSignin);
+  $('#tab-signin').setAttribute('aria-selected', isSignin ? 'true' : 'false');
+  $('#tab-signup').setAttribute('aria-selected', isSignin ? 'false' : 'true');
+  $('#panel-signin').style.display = isSignin ? 'block' : 'none';
+  $('#panel-signup').style.display = isSignin ? 'none' : 'block';
+}
+$('#tab-signin').addEventListener('click', function () { setAuthTab('signin'); });
+$('#tab-signup').addEventListener('click', function () { setAuthTab('signup'); });
+
+function wirePwToggle(toggleId, inputId) {
+  var btn = $('#' + toggleId);
+  var inp = $('#' + inputId);
+  if (!btn || !inp) return;
+  btn.addEventListener('click', function () {
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  });
+}
+wirePwToggle('signin-pw-toggle', 'signin-password');
+wirePwToggle('signup-pw-toggle', 'signup-password');
+
+async function doSignIn() {
+  var email = $('#signin-email').value.trim();
+  var pw    = $('#signin-password').value;
+  var errEl = $('#signin-error');
+  errEl.style.display = 'none';
+  if (!email || !pw) {
+    errEl.textContent = 'Please enter your email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+  var btn = $('#signin-btn');
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+  var result = await data.auth.signIn(email, pw);
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (result.error) {
+    errEl.textContent = 'Incorrect email or password. Please try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+  await initApp();
+}
+$('#signin-btn').addEventListener('click', doSignIn);
+$('#signin-email').addEventListener('keydown', function (e) { if (e.key === 'Enter') doSignIn(); });
+$('#signin-password').addEventListener('keydown', function (e) { if (e.key === 'Enter') doSignIn(); });
+$('#signin-demo-btn').addEventListener('click', function () {
+  $('#signin-email').value    = 'demo@mesa.app';
+  $('#signin-password').value = 'mesademo123';
+  $('#signin-error').style.display = 'none';
+  doSignIn();
+});
+
+async function doSignUp() {
+  var email = $('#signup-email').value.trim();
+  var pw    = $('#signup-password').value;
+  var errEl = $('#signup-error');
+  errEl.style.display = 'none';
+  if (!email) {
+    errEl.textContent = 'Please enter your email address.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (pw.length < 8) {
+    errEl.textContent = 'Password must be at least 8 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  var btn = $('#signup-btn');
+  btn.textContent = 'Creating account...'; btn.disabled = true;
+  var result = await data.auth.signUp(email, pw);
+  btn.disabled = false; btn.textContent = 'Create account';
+  if (result.error) {
+    errEl.textContent = result.error.message || 'Could not create account. Please try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (result.data && result.data.session) {
+    state.session = result.data.session;
+    await initApp();
+  } else {
+    errEl.style.display = 'block';
+    errEl.style.background = 'var(--color-success-light)';
+    errEl.style.color = 'var(--color-success)';
+    errEl.textContent = 'Check your email to confirm your account, then sign in.';
+    setAuthTab('signin');
+    $('#signin-email').value = email;
+  }
+}
+$('#signup-btn').addEventListener('click', doSignUp);
+$('#signup-password').addEventListener('keydown', function (e) { if (e.key === 'Enter') doSignUp(); });
+
+$('#signout-btn').addEventListener('click', async function () {
+  state.channels.forEach(function (ch) { window.COV.data.realtime.removeChannel(ch); });
+  state.channels = [];
+  await data.auth.signOut();
+  location.reload();
+});
+
+/* =====================================================================
+   ONBOARDING WIZARD
+===================================================================== */
+async function showOnboarding() {
+  $('#auth-screen').style.display   = 'none';
+  $('#onboard-screen').style.display = 'flex';
+  $('#app-shell').style.display     = 'none';
+
+  var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
+  var tzSel = $('#onboard-tz');
+  Array.prototype.forEach.call(tzSel.options, function (opt) {
+    if (opt.value === tz) opt.selected = true;
+  });
+}
+
+$('#onboard-submit').addEventListener('click', async function () {
+  var name  = $('#onboard-name').value.trim();
+  var tz    = $('#onboard-tz').value;
+  var errEl = $('#onboard-error');
+  errEl.style.display = 'none';
+  if (!name) {
+    errEl.textContent = 'Please enter your restaurant name.';
+    errEl.style.display = 'block';
+    return;
+  }
+  var btn = $('#onboard-submit');
+  btn.textContent = 'Setting up your restaurant...'; btn.disabled = true;
+  try {
+    var sess   = await data.auth.getSession();
+    var userId = sess.data.session.user.id;
+    var rest   = await data.onboarding.seed(userId, name, tz);
+    state.restaurant = rest;
+    toast('Restaurant created! Welcome to Tavolo.', 'ok');
+    $('#onboard-screen').style.display = 'none';
+    await loadApp();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Create my restaurant';
+    errEl.textContent = 'Setup failed. Please try again.';
+    errEl.style.display = 'block';
+    console.error('[tavolo] onboarding error', e);
+  }
+});
+
+/* =====================================================================
+   APP INIT
+===================================================================== */
+async function initApp() {
+  $('#auth-screen').style.display = 'none';
+  var sess = await data.auth.getSession();
+  if (!sess.data || !sess.data.session) {
+    $('#auth-screen').style.display = 'flex';
+    return;
+  }
+  state.session = sess.data.session;
+
+  try {
+    var rest = await data.restaurant.get();
+    if (!rest) { await showOnboarding(); return; }
+    state.restaurant = rest;
+  } catch (e) {
+    await showOnboarding();
+    return;
+  }
+  await loadApp();
+}
+
+async function loadApp() {
+  var rest = state.restaurant;
+  $('#sidebar-rest-name').textContent = rest.name || 'My Restaurant';
+  $('#sidebar-avatar').textContent    = (rest.name || '?').charAt(0).toUpperCase();
+  $('#app-shell').style.display       = 'flex';
+
+  /* Query module flags; default both on for legacy accounts */
+  try {
+    var modData = await window.PLAT.getModules();
+    applyModuleFlags(modData.modules);
+  } catch (e) {
+    applyModuleFlags({ reservations: true, qr_pay: true });
+    console.warn('[tavolo] getModules failed, defaulting all modules on', e);
+  }
+
+  route(location.hash || '#/dashboard');
+}
+
+data.auth.onAuthStateChange(function (event, session) {
+  if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && !state.restaurant) {
+    initApp();
+  }
+});
+
+/* =====================================================================
+   DASHBOARD
+===================================================================== */
+async function loadDashboard() {
+  if (!state.restaurant) return;
+  var rest  = state.restaurant;
+  var today = getTodayInTz(rest.timezone);
+
+  var dateLabel = new Intl.DateTimeFormat('en-GB', {
+    timeZone: rest.timezone || 'UTC',
+    weekday: 'long', month: 'long', day: 'numeric',
+  }).format(new Date());
+  $('#dash-date-label').textContent = dateLabel;
+
+  var bookingUrl = window.location.origin +
+    window.location.pathname.replace('index.html', '') +
+    'book.html?r=' + (rest.slug || '');
+  $('#booking-link-display').textContent = bookingUrl;
+
+  $('#dash-date-body').innerHTML = [
+    '<div style="font-size:14px;font-weight:600;color:var(--color-text-primary);margin-bottom:4px">' + esc(rest.name || 'Your Restaurant') + '</div>',
+    '<div>Timezone: ' + esc(rest.timezone || 'UTC') + '</div>',
+    '<div>Turn time: ' + esc(String(rest.default_turn_minutes || 90)) + ' min</div>',
+    '<div>Booking: ' + (rest.booking_enabled
+      ? '<span style="color:var(--color-success);font-weight:500">On</span>'
+      : '<span style="color:var(--color-destructive);font-weight:500">Off</span>') + '</div>',
+  ].join('');
+
+  var kpiGrid = $('#kpi-grid');
+  kpiGrid.innerHTML = [
+    '<div class="skel-card" style="height:120px" aria-hidden="true"></div>',
+    '<div class="skel-card" style="height:120px" aria-hidden="true"></div>',
+    '<div class="skel-card" style="height:120px" aria-hidden="true"></div>',
+    '<div class="skel-card" style="height:120px" aria-hidden="true"></div>',
+  ].join('');
+
+  $('#upcoming-res-body').innerHTML = [
+    '<div class="skel-text" style="width:80%;margin-bottom:12px" aria-hidden="true"></div>',
+    '<div class="skel-text" style="width:65%;margin-bottom:12px" aria-hidden="true"></div>',
+    '<div class="skel-text" style="width:72%" aria-hidden="true"></div>',
+  ].join('');
+
+  try {
+    var results = await Promise.all([
+      data.reservations.countCoversForDate(rest.id, today),
+      data.reservations.listUpcoming(rest.id, 2),
+      data.reservations.noShowRate30d(rest.id),
+      data.tables.list(rest.id),
+    ]);
+    var covers     = results[0];
+    var upcoming   = results[1] || [];
+    var noShowRate = results[2];
+    var allTables  = results[3] || [];
+
+    var seatedNow   = upcoming.filter(function (r) { return r.status === 'seated'; }).length;
+    var totalTables = allTables.filter(function (t) { return t.is_active; }).length;
+    var occupancy   = totalTables > 0 ? Math.round((seatedNow / totalTables) * 100) : 0;
+
+    renderKPIs(covers, upcoming.length, occupancy, noShowRate);
+    renderUpcoming(upcoming, rest.timezone);
+  } catch (e) {
+    kpiGrid.innerHTML =
+      '<div class="panel" style="grid-column:1/-1;padding:var(--space-5);text-align:center;color:var(--color-destructive)">' +
+        'Failed to load dashboard data. ' +
+        '<button onclick="loadDashboard()" style="color:var(--shell-copper);background:none;border:none;cursor:pointer;text-decoration:underline">Retry</button>' +
+      '</div>';
+    console.error('[tavolo] dashboard load error', e);
+  }
+}
+
+function getTodayInTz(tz) {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'UTC' }).format(new Date());
+  } catch (e) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function renderKPIs(covers, upcomingCount, occupancy, noShowRate) {
+  var kpiGrid = $('#kpi-grid');
+  kpiGrid.setAttribute('role', 'list');
+  kpiGrid.innerHTML = [
+    kpiCard("Today's covers", String(covers),
+      'Guests expected today (booked + confirmed + seated)',
+      'gold',
+      '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+
+    kpiCard('Upcoming (2h)', String(upcomingCount),
+      'Reservations arriving in the next 2 hours',
+      'blue',
+      '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
+
+    kpiCard('Occupancy', occupancy + '%',
+      'Seated now vs. total active tables',
+      'green',
+      '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'),
+
+    kpiCard('No-show rate (30d)', Math.round(noShowRate * 100) + '%',
+      'No-shows as % of completed + no-show reservations in last 30 days',
+      noShowRate > 0.15 ? 'red' : 'green',
+      '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>'),
+  ].join('');
+}
+
+function kpiCard(label, value, sub, iconClass, iconPath) {
+  return '<div class="kpi-card" role="listitem">' +
+    '<div class="kpi-icon ' + iconClass + '" aria-hidden="true">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+        iconPath +
+      '</svg>' +
+    '</div>' +
+    '<div class="kpi-label">' + esc(label) + '</div>' +
+    '<div class="kpi-value" aria-label="' + esc(label) + ': ' + esc(value) + '">' + esc(value) + '</div>' +
+    '<div class="kpi-sub">' + esc(sub) + '</div>' +
+  '</div>';
+}
+
+function renderUpcoming(reservations, tz) {
+  var body = $('#upcoming-res-body');
+  if (!reservations || !reservations.length) {
+    body.innerHTML =
+      '<div class="panel-empty">' +
+        '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" ' +
+          'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>' +
+          '<line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' +
+        '</svg>' +
+        '<p>No upcoming reservations</p>' +
+        '<span>Quiet next 2 hours.</span>' +
+      '</div>';
+    return;
+  }
+  body.innerHTML = '<div class="res-list" role="list">' +
+    reservations.map(function (r) {
+      var guest   = r.cov_guests || {};
+      var table   = r.cov_tables || {};
+      var name    = guest.name || 'Walk-in';
+      var timeStr = fmtTime(r.starts_at, tz);
+      var tags = (guest.tags || []).slice(0, 2).map(function (t) {
+        return '<span class="badge badge-accent" style="margin-left:4px;font-size:10px">' + esc(t) + '</span>';
+      }).join('');
+      return '<div class="res-row" role="listitem" tabindex="0" aria-label="' +
+        esc(name) + ' at ' + esc(timeStr) + '">' +
+        '<div class="res-time">' + esc(timeStr) + '</div>' +
+        '<div class="res-info">' +
+          '<div class="res-name">' + esc(name) + tags + '</div>' +
+          '<div class="res-meta">Party of ' + esc(String(r.party_size)) +
+            (table.label ? ' &middot; ' + esc(table.label) : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="res-status">' +
+          '<span class="badge badge-' + esc(r.status) + '">' + esc(r.status) + '</span>' +
+        '</div>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+}
+
+/* =====================================================================
+   QUICK ACTIONS
+===================================================================== */
+$('#btn-add-reservation').addEventListener('click', function () {
+  $('#res-modal-title').textContent = 'Add Reservation';
+  $('#res-modal').classList.add('open');
+});
+$('#btn-add-walkin').addEventListener('click', function () {
+  $('#res-modal-title').textContent = 'Add Walk-in';
+  $('#res-modal').classList.add('open');
+});
+$('#res-modal-close').addEventListener('click', function () {
+  $('#res-modal').classList.remove('open');
+});
+$('#res-modal-goto').addEventListener('click', function () {
+  $('#res-modal').classList.remove('open');
+  location.hash = '#/reservations';
+});
+$('#res-modal').addEventListener('click', function (e) {
+  if (e.target === this) this.classList.remove('open');
+});
+$('#res-modal').addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') this.classList.remove('open');
+});
+$('#copy-booking-link').addEventListener('click', function () {
+  var txt = $('#booking-link-display').textContent;
+  if (!txt) return;
+  navigator.clipboard.writeText(txt).then(function () {
+    toast('Booking link copied!', 'ok');
+  }).catch(function () {
+    toast('Could not copy to clipboard', 'err');
+  });
+});
+$('#view-all-res-btn').addEventListener('click', function () {
+  location.hash = '#/reservations';
+});
+
+/* =====================================================================
+   BOOT
+===================================================================== */
+(async function boot() {
+  var sess = await data.auth.getSession();
+  if (sess.data && sess.data.session) {
+    state.session = sess.data.session;
+    await initApp();
+  }
+  /* else: auth screen is already visible (default HTML state) */
+}());
+
+}());
+</script>
+
+<!-- Feature modules — each registers window.COV.screens.<name> = { render(sectionEl) } -->
+<script src="assets/floor.js"></script>
+<script src="assets/timeline.js"></script>
+<script src="assets/reservations.js"></script>
+<script src="assets/guests.js"></script>
+<script src="assets/waitlist.js"></script>
+<script src="assets/blackouts.js"></script>
+<script src="assets/settings.js"></script>
+<script src="assets/mesa-floor.js"></script>
+<script src="assets/mesa-menu.js"></script>
+<script src="assets/mesa-tables.js"></script>
+<script src="assets/mesa-analytics.js"></script>
+<script src="assets/mesa-staff.js"></script>
+</body>
+</html>
