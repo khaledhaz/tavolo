@@ -982,6 +982,13 @@
         if (email) guestFields.email = email;
         var savedGuest = await data.guests.upsert(guestFields);
         guestId = savedGuest.id;
+      } else if (!guestId && name) {
+        /* No phone, but a name was typed — create a named guest so the
+           reservation doesn't silently save as an anonymous Walk-in. */
+        var namedFields = { restaurant_id: rest.id, name: name };
+        if (email) namedFields.email = email;
+        var namedGuest = await data.guests.upsert(namedFields);
+        guestId = namedGuest.id;
       }
 
       var fields = {

@@ -1343,7 +1343,13 @@ function wireFormStep() {
   el('form-submit').addEventListener('click', submitBooking);
 }
 
+var _bookingInFlight = false;
 async function submitBooking() {
+  if (_bookingInFlight) return;  /* re-entrancy guard: rapid double-click must not double-book */
+  _bookingInFlight = true;
+  try { await _submitBookingInner(); } finally { _bookingInFlight = false; }
+}
+async function _submitBookingInner() {
   var errEl = el('form-error');
   var nameEl = el('bk-name');
   var phoneEl = el('bk-phone');

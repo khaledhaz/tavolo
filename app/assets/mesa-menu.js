@@ -1304,7 +1304,7 @@
           name:          name,
           description:   desc,
           price_cents:   priceCents,
-          allergens:     allergens.length ? allergens : null,
+          allergens:     allergens,  /* NOT NULL text[] column — empty array, never null */
           is_available:  isAvail,
           photo_url:     photoUrl,
         };
