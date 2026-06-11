@@ -170,6 +170,7 @@
   display: grid;\n\
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));\n\
   gap: var(--space-4);\n\
+  padding-bottom: 48px;\n\
 }\n\
 .mesa-qr-card {\n\
   background: var(--color-surface);\n\

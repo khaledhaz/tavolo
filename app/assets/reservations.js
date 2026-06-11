@@ -18,6 +18,15 @@
   /* ------------------------------------------------------------------ */
   var CSS = `
 /* ===== RESERVATIONS SCREEN ===== */
+
+/* Override the global amber badge-booked with blue so it's distinct from the
+   amber time text in the same row. Confirmed stays green-ish (badge-confirmed). */
+.badge-booked {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  border-color: rgba(30,64,175,.25) !important;
+}
+
 .res-screen-bar {
   display: flex; align-items: center; gap: 12px;
   margin-bottom: 20px; flex-wrap: wrap;
@@ -56,12 +65,12 @@
 .res-row-tag.allergy { background: var(--color-destructive-light); color: var(--color-destructive); }
 
 /* status action buttons */
-.res-actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+.res-actions-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
 .res-act-btn {
   font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-full);
   border: 1px solid var(--color-border); background: var(--color-surface);
   cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast);
-  white-space: nowrap; min-height: 28px;
+  white-space: nowrap; min-height: 36px;
 }
 .res-act-btn:hover { background: var(--color-surface-raised); }
 .res-act-btn.confirm  { border-color: var(--color-info); color: var(--color-info); }
@@ -162,6 +171,53 @@
   .re-row { grid-template-columns: 1fr; }
   .res-screen-bar { gap: 8px; }
   .res-screen-actions { margin-left: 0; width: 100%; }
+
+  /* Responsive reservation rows: collapse table to cards so action buttons
+     have full width to wrap horizontally instead of stacking in a narrow column */
+  .res-table, .res-table thead, .res-table tbody,
+  .res-table th, .res-table td, .res-table tr {
+    display: block;
+  }
+  .res-table thead tr {
+    position: absolute; left: -9999px; top: -9999px; /* visually hide, accessible via aria-label on td */
+  }
+  .res-table tbody tr {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background: var(--color-surface);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: center;
+  }
+  .res-table tbody tr:hover { background: var(--color-surface-raised); }
+  .res-table td {
+    border: none;
+    padding: 2px 0;
+    font-size: 14px;
+  }
+  /* Time gets emphasis */
+  .res-table td:first-child { flex: 0 0 auto; }
+  /* Guest name */
+  .res-table td:nth-child(2) { flex: 1 1 120px; min-width: 0; }
+  /* Party — compact */
+  .res-table td:nth-child(3) { flex: 0 0 auto; font-size: 13px; color: var(--color-text-muted); }
+  .res-table td:nth-child(3)::before { content: 'Party: '; }
+  /* Table label */
+  .res-table td:nth-child(4) { flex: 0 0 auto; font-size: 13px; color: var(--color-text-muted); }
+  /* Status badge */
+  .res-table td:nth-child(5) { flex: 0 0 auto; }
+  /* Actions — full row, wrapping */
+  .res-table td:last-child {
+    flex: 1 1 100%;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border);
+  }
+  .res-actions-cell { flex-wrap: wrap; gap: 6px; }
+  .res-act-btn { min-height: 36px; }
 }
 `;
 
@@ -524,7 +580,7 @@
                 '<input id="re-party" class="re-input" type="number" min="1" max="50" placeholder="2" required>' +
               '</div>' +
               '<div class="re-field">' +
-                '<label class="re-label" for="re-turn">Turn (minutes)</label>' +
+                '<label class="re-label" for="re-turn">Seating duration (minutes)</label>' +
                 '<input id="re-turn" class="re-input" type="number" min="30" max="360" placeholder="90">' +
               '</div>' +
             '</div>' +

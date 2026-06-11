@@ -243,7 +243,8 @@
   align-items: center;
   gap: 10px;
   font-size: 11px;
-  color: var(--fl-text-muted);
+  /* Fix #3: raise contrast — was var(--fl-text-muted) = #60626e, too faint on dark toolbar */
+  color: rgba(255,255,255,0.75);
   flex-wrap: wrap;
   letter-spacing: 0.02em;
 }
@@ -263,10 +264,11 @@
 .fl-s-dirty   { background: var(--fl-dirty-border); }
 .fl-s-blocked {
   background: transparent;
-  border: 2px dashed var(--fl-blocked-border);
+  /* Fix #3: use a visible colour for the dashed swatch */
+  border: 2px dashed rgba(255,255,255,0.4);
   border-radius: 50%;
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
 }
 
 @media (max-width: 599px) {
@@ -297,12 +299,13 @@
   box-shadow: inset 0 0 80px rgba(0,0,0,0.55);
 }
 
+/* Fix #2: remove width:100% so the canvas can exceed the viewport width
+   and .fl-canvas-wrap (overflow:auto) will scroll both axes on small screens.
+   min-width/min-height enforce a canvas large enough to hold all table chips. */
 .fl-canvas {
   position: relative;
   min-width: 800px;
   min-height: 600px;
-  width: 100%;
-  height: 100%;
 }
 
 /* ── Table chips ─────────────────────────────────────────────────────────── */
@@ -442,22 +445,39 @@
   letter-spacing: 0.03em;
 }
 
-.fl-table-badge {
-  position: absolute;
-  bottom: 3px;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
+/* ── Fix #1: Detail chip for reserved / seated tables ─────────────────────
+   When a table carries reservation info (time, pax, VIP) we switch from
+   an absolutely-positioned badge (which overlaps content in a small circle)
+   to a natural flex-column layout inside a rounded-rect chip.
+   The chip enforces min 72×72 px (enforced in JS too) and uses a readable
+   font size with enough gap between rows.
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* Tables with detail: rounded-rect instead of circle / square,
+   flex-column so all content stacks naturally with gap. */
+.fl-table.fl-has-detail {
+  border-radius: 12px !important;
   justify-content: center;
-  gap: 3px;
-  font-size: 9px;
-  font-weight: 600;
-  flex-wrap: wrap;
-  padding: 0 4px;
+  gap: 2px;
+  padding: 6px 6px 6px;
+  overflow: visible; /* VIP badge may overlap border */
 }
 
-/* VIP badge — amber pill */
+/* Suppress the round override so fl-has-detail wins */
+.fl-table.fl-round.fl-has-detail {
+  border-radius: 12px !important;
+}
+
+/* Detail block: stacks time + pax (and any extra rows) */
+.fl-table-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+/* VIP badge — amber pill — pinned to top-right corner overlapping the border */
 .fl-vip {
   background: rgba(194,138,26,0.35);
   color: #f5c045;
@@ -469,13 +489,28 @@
   letter-spacing: 0.06em;
 }
 
+/* When inside a detail-bearing chip, absolutely pin to top-right */
+.fl-vip.fl-vip-corner {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 2;
+  line-height: 1.4;
+}
+
 .fl-next-time {
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
   opacity: 0.9;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .fl-party {
-  opacity: 0.75;
+  font-size: 10px;
+  opacity: 0.78;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .fl-blocked-label {
@@ -484,6 +519,22 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.7;
+}
+
+/* Legacy: tables WITHOUT detail still use the old badge position (open/dirty/blocked) */
+.fl-table:not(.fl-has-detail) .fl-table-detail {
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  right: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 0 4px;
+  margin-top: 0;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */

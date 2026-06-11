@@ -21,8 +21,10 @@
     s.id = 'cov-settings-css';
     s.textContent = [
       /* settings layout */
-      '.set-page{max-width:760px;margin:0 auto}',
-      '.set-section{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);margin-bottom:var(--space-5);overflow:hidden}',
+      '.set-page{max-width:1200px;margin:0 auto}',
+      '.set-cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);align-items:start}',
+      '@media(max-width:900px){.set-cards-grid{grid-template-columns:1fr}}',
+      '.set-section{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);margin-bottom:0;overflow:hidden}',
       '.set-section-head{padding:var(--space-5) var(--space-6);border-bottom:1px solid var(--color-border);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap}',
       '.set-section-title{font-size:16px;font-weight:600;color:var(--color-text-primary);letter-spacing:-0.01em}',
       '.set-section-body{padding:var(--space-5) var(--space-6)}',
@@ -122,10 +124,31 @@
      DRAW — full page HTML
   ====================================================================== */
   var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  /* Each entry: [IANA id, friendly label] */
   var TIMEZONES = [
-    'America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
-    'Europe/London','Europe/Paris','Europe/Amsterdam','Asia/Dubai','Asia/Riyadh',
-    'Australia/Sydney','Asia/Singapore','UTC',
+    /* Gulf / Middle East */
+    ['Asia/Kuwait',    'Kuwait (GMT+3)'],
+    ['Asia/Riyadh',    'Riyadh (GMT+3)'],
+    ['Asia/Qatar',     'Qatar (GMT+3)'],
+    ['Asia/Bahrain',   'Bahrain (GMT+3)'],
+    ['Asia/Dubai',     'Dubai / Abu Dhabi (GMT+4)'],
+    ['Asia/Muscat',    'Muscat (GMT+4)'],
+    /* Europe */
+    ['Europe/London',  'London (GMT+0/+1)'],
+    ['Europe/Paris',   'Paris / Berlin (GMT+1/+2)'],
+    ['Europe/Amsterdam','Amsterdam (GMT+1/+2)'],
+    ['Europe/Istanbul','Istanbul (GMT+3)'],
+    /* Asia-Pacific */
+    ['Asia/Singapore', 'Singapore (GMT+8)'],
+    ['Asia/Tokyo',     'Tokyo (GMT+9)'],
+    ['Australia/Sydney','Sydney (GMT+10/+11)'],
+    /* Americas */
+    ['America/New_York',   'New York (GMT-5/-4)'],
+    ['America/Chicago',    'Chicago (GMT-6/-5)'],
+    ['America/Denver',     'Denver (GMT-7/-6)'],
+    ['America/Los_Angeles','Los Angeles (GMT-8/-7)'],
+    /* Neutral */
+    ['UTC', 'UTC (GMT+0)'],
   ];
 
   function drawPage(sectionEl) {
@@ -135,98 +158,120 @@
     var slug       = r.slug || '';
     var bookingUrl = window.location.origin + window.location.pathname.replace(/\/index\.html$/, '/').replace(/\/[^/]*$/, '/') + 'book.html?r=' + encodeURIComponent(slug);
 
-    /* --- tz options --- */
-    var tzOpts = TIMEZONES.map(function (tz) {
-      return '<option value="' + esc(tz) + '"' + (r.timezone === tz ? ' selected' : '') + '>' + esc(tz) + '</option>';
+    /* --- tz options ---
+         Build options from the known list, then inject the stored value if it
+         isn't already in the list (prevents browser silently falling back to
+         the first option when the stored timezone is unknown).              */
+    var storedTz = r.timezone || 'UTC';
+    var knownTzIds = TIMEZONES.map(function (pair) { return pair[0]; });
+    var tzOptsList = TIMEZONES.slice(); // copy
+    if (knownTzIds.indexOf(storedTz) === -1) {
+      /* Inject the unknown stored value at the top so it is selected */
+      tzOptsList.unshift([storedTz, storedTz + ' (current)']);
+    }
+    var tzOpts = tzOptsList.map(function (pair) {
+      var id    = pair[0];
+      var label = pair[1];
+      return '<option value="' + esc(id) + '">' + esc(label) + '</option>';
     }).join('');
 
     sectionEl.innerHTML = '<div class="set-page" id="set-root">' +
 
-      /* ======== RESTAURANT PROFILE ======== */
-      '<section class="set-section" aria-labelledby="set-h-profile">' +
-        '<div class="set-section-head"><h2 class="set-section-title" id="set-h-profile">Restaurant profile</h2></div>' +
-        '<div class="set-section-body">' +
-          '<div class="set-grid-2">' +
-            field('set-name',    'Restaurant name',  '<input id="set-name" class="input" type="text" autocomplete="organization" value="' + esc(r.name||'') + '" required>') +
-            field('set-slug',    'URL slug',         '<input id="set-slug" class="input" type="text" pattern="[a-z0-9-]+" placeholder="my-restaurant" value="' + esc(r.slug||'') + '" aria-describedby="set-slug-hint">') +
+      /* ======== 2-COLUMN CARD GRID ======== */
+      '<div class="set-cards-grid">' +
+
+        /* ---- RESTAURANT PROFILE ---- */
+        '<section class="set-section" aria-labelledby="set-h-profile">' +
+          '<div class="set-section-head"><h2 class="set-section-title" id="set-h-profile">Restaurant profile</h2></div>' +
+          '<div class="set-section-body">' +
+            '<div class="set-grid-2">' +
+              field('set-name',    'Restaurant name',  '<input id="set-name" class="input" type="text" autocomplete="organization" value="' + esc(r.name||'') + '" required>') +
+              field('set-slug',    'Booking page address',
+                '<input id="set-slug" class="input" type="text" pattern="[a-z0-9-]+" placeholder="my-restaurant" value="' + esc(r.slug||'') + '" aria-describedby="set-slug-hint">') +
+            '</div>' +
+            '<p id="set-slug-hint" style="font-size:13px;color:var(--color-text-muted);margin-top:-12px;margin-bottom:var(--space-4)">The short name in your booking link (letters, numbers, hyphens). Changing it breaks your current link.</p>' +
+            '<div class="set-grid-2">' +
+              field('set-phone',   'Phone number',     '<input id="set-phone" class="input" type="tel" autocomplete="tel" value="' + esc(r.phone||'') + '">') +
+              field('set-tz',      'Timezone',         '<select id="set-tz" class="input select">' + tzOpts + '</select>') +
+            '</div>' +
+            field('set-address',  'Address',          '<input id="set-address" class="input" type="text" autocomplete="street-address" value="' + esc(r.address||'') + '">') +
+            '<div class="field">' +
+              '<label for="set-brand-color">Brand colour</label>' +
+              '<div class="set-color-wrap">' +
+                '<input type="color" id="set-brand-color" value="' + esc(r.brand_color||'#C4522A') + '" style="width:40px;height:40px;padding:0;border:none;border-radius:var(--radius-md);cursor:pointer;background:none" aria-label="Brand colour picker">' +
+                '<input id="set-brand-color-text" class="input" type="text" value="' + esc(r.brand_color||'#C4522A') + '" placeholder="#C4522A" style="max-width:140px" aria-label="Brand colour hex">' +
+              '</div>' +
+            '</div>' +
+            field('set-logo', 'Logo URL',
+              '<input id="set-logo" class="input" type="url" placeholder="https://example.com/logo.png" value="' + esc(r.logo_url||'') + '" autocomplete="url" aria-describedby="set-logo-hint">') +
+            '<p id="set-logo-hint" style="font-size:13px;color:var(--color-text-muted);margin-top:-12px;margin-bottom:var(--space-4)">Paste a web address of your logo image (PNG/JPG).</p>' +
+            '<div class="set-save-row"><button id="set-save-profile" class="btn btn-primary" style="min-height:40px;font-size:14px;padding:0 var(--space-5);border-radius:var(--radius-md)">Save profile</button></div>' +
           '</div>' +
-          '<p id="set-slug-hint" style="font-size:13px;color:var(--color-text-muted);margin-top:-12px;margin-bottom:var(--space-4)">Lowercase letters, numbers and hyphens only.</p>' +
-          '<div class="set-grid-2">' +
-            field('set-phone',   'Phone number',     '<input id="set-phone" class="input" type="tel" autocomplete="tel" value="' + esc(r.phone||'') + '">') +
-            field('set-tz',      'Timezone',         '<select id="set-tz" class="input select">' + tzOpts + '</select>') +
+        '</section>' +
+
+        /* ---- BOOKING RULES ---- */
+        '<section class="set-section" aria-labelledby="set-h-rules">' +
+          '<div class="set-section-head"><h2 class="set-section-title" id="set-h-rules">Booking rules</h2></div>' +
+          '<div class="set-section-body">' +
+            '<div class="set-grid-2">' +
+              numField('set-turn',   'Default turn time (min)',  r.default_turn_minutes || 90,  1, 360) +
+              numFieldHint('set-buffer', 'Gap between seatings (minutes)', r.buffer_minutes || 15, 0, 120,
+                'Time between one party leaving and the next being seated.') +
+            '</div>' +
+            '<div class="set-grid-2" style="margin-top:var(--space-1)">' +
+              numField('set-maxparty', 'Max online party size', r.max_party_online || 10, 1, 50) +
+              numFieldHint('set-vip-threshold', 'VIP after this many visits', r.vip_visit_threshold || 5, 1, 100,
+                'Guests with this many visits are automatically tagged VIP.') +
+            '</div>' +
+            '<div class="toggle-wrap" style="margin-top:var(--space-3)">' +
+              '<div><div class="toggle-label">Online booking enabled</div><div class="toggle-sub">Turn off to pause all new online bookings.</div></div>' +
+              '<label class="toggle" aria-label="Toggle online booking">' +
+                '<input type="checkbox" id="set-booking-enabled"' + (r.booking_enabled ? ' checked' : '') + '>' +
+                '<span class="toggle-slider"></span>' +
+              '</label>' +
+            '</div>' +
+            '<div class="set-save-row"><button id="set-save-rules" class="btn btn-primary" style="min-height:40px;font-size:14px;padding:0 var(--space-5);border-radius:var(--radius-md)">Save rules</button></div>' +
           '</div>' +
-          field('set-address',  'Address',          '<input id="set-address" class="input" type="text" autocomplete="street-address" value="' + esc(r.address||'') + '">') +
-          '<div class="field">' +
-            '<label for="set-brand-color">Brand colour</label>' +
-            '<div class="set-color-wrap">' +
-              '<input type="color" id="set-brand-color" value="' + esc(r.brand_color||'#C4522A') + '" style="width:40px;height:40px;padding:0;border:none;border-radius:var(--radius-md);cursor:pointer;background:none" aria-label="Brand colour picker">' +
-              '<input id="set-brand-color-text" class="input" type="text" value="' + esc(r.brand_color||'#C4522A') + '" placeholder="#C4522A" style="max-width:140px" aria-label="Brand colour hex">' +
+        '</section>' +
+
+        /* ---- BOOKING LINK ---- */
+        '<section class="set-section" aria-labelledby="set-h-link">' +
+          '<div class="set-section-head"><h2 class="set-section-title" id="set-h-link">Public booking link</h2></div>' +
+          '<div class="set-section-body">' +
+            '<div class="set-link-box">' +
+              '<span class="set-link-text" id="set-link-display" aria-label="Booking link">' + esc(bookingUrl) + '</span>' +
+              '<button id="set-copy-link" class="btn btn-secondary" style="min-height:36px;font-size:13px;padding:0 var(--space-4);border-radius:var(--radius-full);flex-shrink:0" aria-label="Copy booking link">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+                ' Copy' +
+              '</button>' +
             '</div>' +
           '</div>' +
-          field('set-logo', 'Logo URL', '<input id="set-logo" class="input" type="url" placeholder="https://example.com/logo.png" value="' + esc(r.logo_url||'') + '" autocomplete="url">') +
-          '<div class="set-save-row"><button id="set-save-profile" class="btn btn-primary" style="min-height:40px;font-size:14px;padding:0 var(--space-5);border-radius:var(--radius-md)">Save profile</button></div>' +
-        '</div>' +
-      '</section>' +
+        '</section>' +
 
-      /* ======== BOOKING LINK ======== */
-      '<section class="set-section" aria-labelledby="set-h-link">' +
-        '<div class="set-section-head"><h2 class="set-section-title" id="set-h-link">Public booking link</h2></div>' +
-        '<div class="set-section-body">' +
-          '<div class="set-link-box">' +
-            '<span class="set-link-text" id="set-link-display" aria-label="Booking link">' + esc(bookingUrl) + '</span>' +
-            '<button id="set-copy-link" class="btn btn-secondary" style="min-height:36px;font-size:13px;padding:0 var(--space-4);border-radius:var(--radius-full);flex-shrink:0" aria-label="Copy booking link">' +
-              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
-              ' Copy' +
-            '</button>' +
+        /* ---- DEPOSITS ---- */
+        '<section class="set-section" aria-labelledby="set-h-deposit">' +
+          '<div class="set-section-head"><h2 class="set-section-title" id="set-h-deposit">Deposit settings</h2></div>' +
+          '<div class="set-section-body">' +
+            '<div class="toggle-wrap">' +
+              '<div><div class="toggle-label">Require deposit</div><div class="toggle-sub">Guests must pay a deposit at booking time.</div></div>' +
+              '<label class="toggle" aria-label="Toggle deposit requirement">' +
+                '<input type="checkbox" id="set-deposit-req"' + (r.deposit_required ? ' checked' : '') + '>' +
+                '<span class="toggle-slider"></span>' +
+              '</label>' +
+            '</div>' +
+            '<div class="deposit-amount-row" id="set-deposit-amt-row"' + (!r.deposit_required ? ' style="display:none"' : '') + '>' +
+              '<label for="set-deposit-amt" style="font-size:14px;font-weight:500;flex-shrink:0">Deposit amount (in cents):</label>' +
+              '<input id="set-deposit-amt" class="input" type="number" min="0" max="99900" step="100" value="' + esc(String(r.deposit_cents||0)) + '" aria-describedby="set-deposit-hint">' +
+            '</div>' +
+            '<p id="set-deposit-hint" style="font-size:12px;color:var(--color-text-muted);margin-top:var(--space-2)">Example: 1000 = 10.00 KWD/USD. Real payments come with the Stripe integration.</p>' +
+            '<div class="set-save-row"><button id="set-save-deposit" class="btn btn-primary" style="min-height:40px;font-size:14px;padding:0 var(--space-5);border-radius:var(--radius-md)">Save deposit</button></div>' +
           '</div>' +
-        '</div>' +
-      '</section>' +
+        '</section>' +
 
-      /* ======== BOOKING RULES ======== */
-      '<section class="set-section" aria-labelledby="set-h-rules">' +
-        '<div class="set-section-head"><h2 class="set-section-title" id="set-h-rules">Booking rules</h2></div>' +
-        '<div class="set-section-body">' +
-          '<div class="set-grid-2">' +
-            numField('set-turn',   'Default turn time (min)',  r.default_turn_minutes || 90,  1, 360) +
-            numField('set-buffer', 'Buffer between turns (min)', r.buffer_minutes || 15, 0, 120) +
-          '</div>' +
-          '<div class="set-grid-2" style="margin-top:var(--space-1)">' +
-            numField('set-maxparty', 'Max online party size', r.max_party_online || 10, 1, 50) +
-            numField('set-vip-threshold', 'VIP visit threshold', r.vip_visit_threshold || 5, 1, 100) +
-          '</div>' +
-          '<div class="toggle-wrap" style="margin-top:var(--space-3)">' +
-            '<div><div class="toggle-label">Online booking enabled</div><div class="toggle-sub">Turn off to pause all new online bookings.</div></div>' +
-            '<label class="toggle" aria-label="Toggle online booking">' +
-              '<input type="checkbox" id="set-booking-enabled"' + (r.booking_enabled ? ' checked' : '') + '>' +
-              '<span class="toggle-slider"></span>' +
-            '</label>' +
-          '</div>' +
-          '<div class="set-save-row"><button id="set-save-rules" class="btn btn-primary" style="min-height:40px;font-size:14px;padding:0 var(--space-5);border-radius:var(--radius-md)">Save rules</button></div>' +
-        '</div>' +
-      '</section>' +
+      '</div>' + /* /set-cards-grid */
 
-      /* ======== DEPOSITS ======== */
-      '<section class="set-section" aria-labelledby="set-h-deposit">' +
-        '<div class="set-section-head"><h2 class="set-section-title" id="set-h-deposit">Deposit settings</h2></div>' +
-        '<div class="set-section-body">' +
-          '<div class="toggle-wrap">' +
-            '<div><div class="toggle-label">Require deposit</div><div class="toggle-sub">Guests must pay a deposit at booking time.</div></div>' +
-            '<label class="toggle" aria-label="Toggle deposit requirement">' +
-              '<input type="checkbox" id="set-deposit-req"' + (r.deposit_required ? ' checked' : '') + '>' +
-              '<span class="toggle-slider"></span>' +
-            '</label>' +
-          '</div>' +
-          '<div class="deposit-amount-row" id="set-deposit-amt-row"' + (!r.deposit_required ? ' style="display:none"' : '') + '>' +
-            '<label for="set-deposit-amt" style="font-size:14px;font-weight:500;flex-shrink:0">Amount (pence/cents):</label>' +
-            '<input id="set-deposit-amt" class="input" type="number" min="0" max="99900" step="100" value="' + esc(String(r.deposit_cents||0)) + '" aria-describedby="set-deposit-hint">' +
-          '</div>' +
-          '<p id="set-deposit-hint" style="font-size:12px;color:var(--color-text-muted);margin-top:var(--space-2)">Enter amount in lowest currency unit (e.g. 1000 = £10.00). Stripe integration is stubbed.</p>' +
-          '<div class="set-save-row"><button id="set-save-deposit" class="btn btn-primary" style="min-height:40px;font-size:14px;padding:0 var(--space-5);border-radius:var(--radius-md)">Save deposit</button></div>' +
-        '</div>' +
-      '</section>' +
-
-      /* ======== SERVICE PERIODS ======== */
-      '<section class="set-section" aria-labelledby="set-h-periods">' +
+      /* ======== SERVICE PERIODS (full-width, below the 2-col grid) ======== */
+      '<section class="set-section" style="margin-top:var(--space-5)" aria-labelledby="set-h-periods">' +
         '<div class="set-section-head">' +
           '<h2 class="set-section-title" id="set-h-periods">Service periods</h2>' +
           '<button id="set-add-period" class="btn btn-secondary" style="min-height:36px;font-size:13px;padding:0 var(--space-4);border-radius:var(--radius-md)" aria-label="Add service period">' +
@@ -248,6 +293,13 @@
   function numField(id, label, val, min, max) {
     return '<div class="field"><label for="' + id + '">' + esc(label) + '</label>' +
       '<input id="' + id + '" class="input" type="number" min="' + min + '" max="' + max + '" value="' + esc(String(val)) + '"></div>';
+  }
+
+  function numFieldHint(id, label, val, min, max, hint) {
+    return '<div class="field"><label for="' + id + '">' + esc(label) + '</label>' +
+      '<input id="' + id + '" class="input" type="number" min="' + min + '" max="' + max + '" value="' + esc(String(val)) + '" aria-describedby="' + id + '-hint">' +
+      '<p id="' + id + '-hint" style="font-size:12px;color:var(--color-text-muted);margin-top:4px;margin-bottom:0">' + esc(hint) + '</p>' +
+      '</div>';
   }
 
   function renderPeriodsHTML() {
@@ -278,6 +330,22 @@
      WIRE — event handlers
   ====================================================================== */
   function wireSettings(sectionEl) {
+    /* timezone select: set value explicitly after DOM insertion so the browser
+       selects the correct option even if it wasn't marked `selected` in HTML   */
+    var tzSel = sectionEl.querySelector('#set-tz');
+    if (tzSel) {
+      var storedTzWire = (_rest && _rest.timezone) ? _rest.timezone : 'UTC';
+      tzSel.value = storedTzWire;
+      /* Fallback: if the value didn't stick (unknown zone not injected), add it */
+      if (tzSel.value !== storedTzWire) {
+        var opt = document.createElement('option');
+        opt.value = storedTzWire;
+        opt.textContent = storedTzWire + ' (current)';
+        tzSel.insertBefore(opt, tzSel.firstChild);
+        tzSel.value = storedTzWire;
+      }
+    }
+
     /* colour sync */
     var colorPicker = sectionEl.querySelector('#set-brand-color');
     var colorText   = sectionEl.querySelector('#set-brand-color-text');

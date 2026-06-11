@@ -39,11 +39,13 @@
   gap: var(--space-4);\
   min-height: 400px;\
   align-items: flex-start;\
+  min-width: 0;\
 }\
 \
 /* ====== CATEGORY PANEL ====== */\
 .mesa-cat-panel {\
-  width: 280px;\
+  width: 240px;\
+  min-width: 200px;\
   flex-shrink: 0;\
   background: var(--color-surface);\
   border: 1px solid var(--color-border);\
@@ -138,10 +140,11 @@
 .mesa-items-panel {\
   flex: 1;\
   min-width: 0;\
+  /* prevent flex child from blowing past container width */\
+  overflow: hidden;\
   background: var(--color-surface);\
   border: 1px solid var(--color-border);\
   border-radius: var(--radius-lg);\
-  overflow: hidden;\
 }\
 .mesa-items-panel-head {\
   padding: var(--space-4);\
@@ -170,7 +173,8 @@
 .mesa-table {\
   width: 100%;\
   border-collapse: collapse;\
-  min-width: 520px;\
+  min-width: 460px;\
+  table-layout: fixed;\
 }\
 .mesa-table th {\
   font-size: 11px;\
@@ -328,6 +332,8 @@
   display: flex;\
   gap: var(--space-1);\
   align-items: center;\
+  width: 80px;\
+  flex-shrink: 0;\
 }\
 \
 /* ====== EMPTY & ERROR STATES ====== */\

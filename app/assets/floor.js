@@ -420,33 +420,48 @@
     var y    = t.pos_y  || 0;
     var isRound = t.shape === 'round';
 
-    // Build badge HTML
+    // Determine if this table has reservation detail to show (reserved or seated with data)
+    var hasDetail = (s === 'reserved' || s === 'seated') && !!res;
+
+    // Build badge / detail HTML
     var badgeHtml = '';
+    var vipBadge  = '';
     if (s === 'reserved' && res) {
       var timeStr = fmtTime(res.starts_at, tz);
-      var guest = res.cov_guests || {};
-      var isVip = Array.isArray(guest.tags) && guest.tags.some(function (g) { return /vip/i.test(g); });
-      badgeHtml = '<div class="fl-table-badge">' +
-        (isVip ? '<span class="fl-vip" aria-label="VIP guest">VIP</span>' : '') +
+      var guest   = res.cov_guests || {};
+      var isVip   = Array.isArray(guest.tags) && guest.tags.some(function (g) { return /vip/i.test(g); });
+      if (isVip) {
+        vipBadge = '<span class="fl-vip fl-vip-corner" aria-label="VIP guest">VIP</span>';
+      }
+      badgeHtml = '<div class="fl-table-detail">' +
         '<span class="fl-next-time">' + esc(timeStr) + '</span>' +
         '<span class="fl-party">' + esc(String(res.party_size)) + ' pax</span>' +
       '</div>';
     } else if (s === 'seated' && res) {
-      var guest2 = res.cov_guests || {};
-      var isVip2 = Array.isArray(guest2.tags) && guest2.tags.some(function (g) { return /vip/i.test(g); });
-      badgeHtml = '<div class="fl-table-badge">' +
-        (isVip2 ? '<span class="fl-vip" aria-label="VIP guest">VIP</span>' : '') +
+      var guest2  = res.cov_guests || {};
+      var isVip2  = Array.isArray(guest2.tags) && guest2.tags.some(function (g) { return /vip/i.test(g); });
+      if (isVip2) {
+        vipBadge = '<span class="fl-vip fl-vip-corner" aria-label="VIP guest">VIP</span>';
+      }
+      badgeHtml = '<div class="fl-table-detail">' +
         '<span class="fl-party">' + esc(String(res.party_size)) + ' pax</span>' +
       '</div>';
     } else if (s === 'blocked' && t._blackout) {
-      badgeHtml = '<div class="fl-table-badge"><span class="fl-blocked-label">Blocked</span></div>';
+      badgeHtml = '<div class="fl-table-detail"><span class="fl-blocked-label">Blocked</span></div>';
     }
 
     var ariaLabel = 'Table ' + t.label + ', ' + s +
       (res ? ', ' + (res.party_size || '') + ' guests' : '') +
       ', seats ' + (t.seats_min || 1) + '-' + (t.seats_max || 2);
 
-    return '<div class="fl-table fl-s-' + s + (isRound ? ' fl-round' : '') + (_editMode ? ' fl-draggable' : '') + '" ' +
+    // When a table has detail, enforce minimum readable size
+    var styleW = hasDetail ? Math.max(w, 72) : w;
+    var styleH = hasDetail ? Math.max(h, 72) : h;
+
+    return '<div class="fl-table fl-s-' + s +
+      (isRound ? ' fl-round' : '') +
+      (hasDetail ? ' fl-has-detail' : '') +
+      (_editMode ? ' fl-draggable' : '') + '" ' +
       'id="fl-tbl-' + esc(t.id) + '" ' +
       'data-id="' + esc(t.id) + '" ' +
       'tabindex="0" ' +
@@ -455,9 +470,10 @@
       'style="' +
         'left:' + x + 'px;' +
         'top:' + y + 'px;' +
-        'width:' + w + 'px;' +
-        'height:' + h + 'px;' +
+        'width:' + styleW + 'px;' +
+        'height:' + styleH + 'px;' +
       '">' +
+      vipBadge +
       '<div class="fl-table-label">' + esc(t.label || '?') + '</div>' +
       '<div class="fl-table-seats">' + (t.seats_max || '?') + '</div>' +
       badgeHtml +

@@ -769,6 +769,32 @@
     return '';
   }
 
+  /* ---- tag display formatter ----
+     Turns "seating:window" → "Seating · window", "allergy:nuts" → "Allergy · nuts".
+     Known prefix map keeps display consistent; unknown tags are title-cased as-is.
+     The underlying stored value is NEVER changed — only the display label differs.  */
+  var TAG_PREFIX_MAP = {
+    seating:  'Seating',
+    allergy:  'Allergy',
+    diet:     'Diet',
+    pref:     'Preference',
+  };
+
+  function formatTagDisplay(tag) {
+    var t = String(tag);
+    var colonIdx = t.indexOf(':');
+    if (colonIdx > 0) {
+      var prefix = t.slice(0, colonIdx).toLowerCase();
+      var value  = t.slice(colonIdx + 1);
+      var label  = TAG_PREFIX_MAP[prefix] || (prefix.charAt(0).toUpperCase() + prefix.slice(1));
+      /* Capitalise first letter of value */
+      var valDisplay = value.charAt(0).toUpperCase() + value.slice(1);
+      return label + ' · ' + valDisplay;
+    }
+    /* No colon — title-case the whole tag */
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+
   function isVip(guest) {
     return Array.isArray(guest.tags) && guest.tags.some(function (t) { return t === 'VIP'; });
   }
@@ -992,7 +1018,7 @@
     var noShowRate = (g.total_visits > 0) ? Math.round((g.no_show_count || 0) / g.total_visits * 100) : 0;
 
     var chipHtml = tags.slice(0, 4).map(function (t) {
-      return '<span class="gcr-chip ' + tagClass(t) + '">' + esc(t) + '</span>';
+      return '<span class="gcr-chip ' + tagClass(t) + '">' + esc(formatTagDisplay(t)) + '</span>';
     }).join('');
 
     return [

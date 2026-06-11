@@ -64,8 +64,9 @@
   color: var(--color-text-primary);\n\
 }\n\
 .mesa-seg-btn.active {\n\
-  background: var(--color-surface);\n\
-  color: var(--color-text-primary);\n\
+  background: var(--shell-copper, var(--color-primary));\n\
+  color: #fff;\n\
+  font-weight: 600;\n\
   box-shadow: var(--shadow-sm);\n\
 }\n\
 .mesa-seg-btn:focus-visible {\n\
@@ -106,15 +107,17 @@
 /* ---- Floor grid ---- */\n\
 .mesa-floor-grid {\n\
   display: grid;\n\
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));\n\
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));\n\
   gap: var(--space-4);\n\
+  /* cap to content height — no blank scroll area below cards */\n\
+  align-content: start;\n\
 }\n\
 \n\
 /* ---- Table cards ---- */\n\
 .mesa-table-card {\n\
   background: var(--color-surface);\n\
   border-radius: var(--radius-lg);\n\
-  padding: var(--space-4);\n\
+  padding: var(--space-3) var(--space-3);\n\
   border: 2px solid var(--color-border);\n\
   box-shadow: var(--shadow-sm);\n\
   cursor: pointer;\n\
@@ -145,21 +148,24 @@
 \n\
 .mesa-card-header {\n\
   display: flex;\n\
-  align-items: center;\n\
+  align-items: flex-start;\n\
   justify-content: space-between;\n\
   margin-bottom: var(--space-2);\n\
   gap: var(--space-2);\n\
   min-width: 0;\n\
+  flex-wrap: wrap;\n\
 }\n\
 \n\
 .mesa-card-name {\n\
-  font-size: 18px;\n\
+  font-size: 13px;\n\
   font-weight: 600;\n\
   color: var(--color-text-primary);\n\
-  overflow: hidden;\n\
-  text-overflow: ellipsis;\n\
-  white-space: nowrap;\n\
+  /* wrap at word boundaries; never break mid-letter */\n\
+  overflow-wrap: break-word;\n\
+  word-break: normal;\n\
   min-width: 0;\n\
+  line-height: 1.3;\n\
+  flex: 1 1 auto;\n\
 }\n\
 \n\
 .mesa-card-meta {\n\
@@ -189,16 +195,17 @@
 .mesa-badge {\n\
   display: inline-flex;\n\
   align-items: center;\n\
-  gap: 4px;\n\
-  padding: 3px 10px;\n\
+  gap: 3px;\n\
+  padding: 2px 7px;\n\
   border-radius: var(--radius-full);\n\
-  font-size: 11px;\n\
+  font-size: 10px;\n\
   font-weight: 600;\n\
-  letter-spacing: 0.06em;\n\
+  letter-spacing: 0.05em;\n\
   text-transform: uppercase;\n\
   border: 1px solid;\n\
   white-space: nowrap;\n\
   flex-shrink: 0;\n\
+  align-self: flex-start;\n\
 }\n\
 .mesa-badge-seated    { background: var(--color-surface-raised); color: var(--color-text-secondary); border-color: var(--color-border); }\n\
 .mesa-badge-scanning  { background: #EBF4FF; color: #2B6CB0; border-color: #2B6CB0; }\n\
@@ -291,11 +298,17 @@
   flex-direction: column;\n\
   overflow-y: auto;\n\
   overflow-x: hidden;\n\
+  /* use visibility:hidden when closed so the left border does not bleed into viewport */\n\
   transform: translateX(100%);\n\
-  transition: transform var(--duration-normal) var(--easing-decelerate);\n\
+  visibility: hidden;\n\
+  transition: transform var(--duration-normal) var(--easing-decelerate),\n\
+              visibility 0s linear var(--duration-normal);\n\
 }\n\
 .mesa-drawer.open {\n\
   transform: translateX(0);\n\
+  visibility: visible;\n\
+  transition: transform var(--duration-normal) var(--easing-decelerate),\n\
+              visibility 0s linear 0s;\n\
 }\n\
 \n\
 .mesa-drawer-head {\n\
@@ -484,18 +497,26 @@
     bottom: 0;\n\
     height: 92vh;\n\
     transform: translateY(100%);\n\
+    visibility: hidden;\n\
+    transition: transform var(--duration-normal) var(--easing-decelerate),\n\
+                visibility 0s linear var(--duration-normal);\n\
   }\n\
-  .mesa-drawer.open { transform: translateY(0); }\n\
-  .mesa-floor-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }\n\
+  .mesa-drawer.open {\n\
+    transform: translateY(0);\n\
+    visibility: visible;\n\
+    transition: transform var(--duration-normal) var(--easing-decelerate),\n\
+                visibility 0s linear 0s;\n\
+  }\n\
+  .mesa-floor-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }\n\
 }\n\
 @media (max-width: 599px) {\n\
-  .mesa-floor-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }\n\
+  .mesa-floor-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }\n\
   .mesa-filter-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: var(--space-2); }\n\
   .mesa-seg-control { flex-shrink: 0; }\n\
   .mesa-seg-btn { padding: 5px 10px; font-size: 12px; }\n\
 }\n\
 @media (max-width: 374px) {\n\
-  .mesa-floor-grid { grid-template-columns: 1fr; }\n\
+  .mesa-floor-grid { grid-template-columns: 1fr 1fr; }\n\
 }\n\
 ';
 
@@ -622,6 +643,22 @@
   }
 
   /* --------------------------------------------------------------------------
+     HUMANIZE MINUTES — A4 fix
+     <60 min → "X min"
+     <1440 min (24 h) → "X h Y min" (or "X h" when remainder is 0)
+     else → "X days"
+  -------------------------------------------------------------------------- */
+  function humanizeMins(mins) {
+    var m = Math.round(mins || 0);
+    if (m < 60) return m + ' min';
+    var h = Math.floor(m / 60);
+    var rem = m % 60;
+    if (h < 24) return rem > 0 ? (h + ' h ' + rem + ' min') : (h + ' h');
+    var days = Math.floor(h / 24);
+    return days + ' day' + (days !== 1 ? 's' : '');
+  }
+
+  /* --------------------------------------------------------------------------
      STATUS HELPERS
   -------------------------------------------------------------------------- */
   function resolveStatus(row) {
@@ -634,10 +671,10 @@
   function badgeHtml(status) {
     var labels = {
       seated:     'Seated',
-      scanning:   'Scanning',
+      scanning:   'Guest browsing bill',
       paying:     'Paying',
       paid:       'Paid',
-      idle_alert: 'Idle alert',
+      idle_alert: 'No scan yet',
       available:  'Available',
     };
     var cls = {
@@ -705,12 +742,13 @@
       var mins   = Math.round(r.minutes_open || 0);
       var timeStr = '';
       if (r.session_id) {
+        var humanTime = humanizeMins(mins);
         if (status === 'paid') {
-          timeStr = 'Paid ' + mins + ' min ago';
+          timeStr = 'Paid ' + humanTime + ' ago';
         } else if (status === 'idle_alert') {
-          timeStr = '<span style="color:var(--color-destructive)">Seated ' + mins + '+ min · No scan yet</span>';
+          timeStr = '<span style="color:var(--color-destructive)">Seated ' + humanTime + ' · No scan yet</span>';
         } else {
-          timeStr = 'Seated ' + mins + ' min ago';
+          timeStr = 'Seated ' + humanTime + ' ago';
         }
       }
 

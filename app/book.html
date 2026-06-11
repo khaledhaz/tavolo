@@ -8,6 +8,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#c2703d">
 <title>Reserve a Table — Tavolo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2703d'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23fff'%3ET%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -87,9 +88,9 @@ body{
 }
 .bk-header-badge{
   flex-shrink:0;
-  background:rgba(194,112,61,0.15);
-  color:var(--bk-copper);
-  border:1px solid rgba(194,112,61,0.25);
+  background:var(--bk-copper);
+  color:#fff;
+  border:1px solid var(--bk-copper-dim);
   font-size:11px;font-weight:600;padding:4px 12px;border-radius:9999px;
   white-space:nowrap;letter-spacing:0.03em;
 }
@@ -99,6 +100,8 @@ body{
   flex:1;display:flex;flex-direction:column;align-items:center;
   padding:36px 20px 64px;
   min-width:0;
+  /* Cards sit at natural height — no stretch */
+  justify-content:flex-start;
 }
 .bk-card{
   background:var(--bk-surface);
@@ -449,16 +452,84 @@ body{
 /* ===== FOOTER ===== */
 .bk-footer{
   text-align:center;padding:24px 20px;
-  font-size:12px;color:var(--bk-text-3);
+  font-size:12px;color:rgba(255,255,255,0.6);
   border-top:1px solid var(--bk-border);
 }
-.bk-footer a{color:var(--bk-text-3);text-decoration:none;transition:color var(--duration-fast)}
+.bk-footer a{color:rgba(255,255,255,0.6);text-decoration:none;transition:color var(--duration-fast)}
 .bk-footer a:hover{color:var(--bk-copper)}
 .bk-footer strong{color:var(--bk-copper)}
 
 /* ===== DECORATIVE SEPARATOR LINE IN STEP BODY ===== */
 .bk-step-sep{
   height:1px;background:var(--bk-border);margin:20px 0;border:none;
+}
+
+/* ===== HOW-IT-WORKS HINT (Step 1, below card) ===== */
+.bk-how-it-works{
+  width:100%;max-width:480px;
+  margin-top:20px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+}
+.bk-hiw-item{
+  background:var(--bk-surface);
+  border:1px solid var(--bk-border);
+  border-radius:12px;
+  padding:12px 10px;
+  text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.bk-hiw-num{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--bk-copper-glow);
+  border:1px solid rgba(194,112,61,0.3);
+  font-size:11px;font-weight:700;color:var(--bk-copper);
+  display:flex;align-items:center;justify-content:center;
+}
+.bk-hiw-label{
+  font-size:11px;font-weight:500;color:var(--bk-text-2);line-height:1.35;
+}
+@media(max-width:374px){
+  .bk-how-it-works{grid-template-columns:1fr}
+  .bk-hiw-item{flex-direction:row;gap:10px;text-align:left;padding:10px 12px}
+}
+
+/* ===== STICKY CONFIRM BUTTON (mobile, step 4) ===== */
+.bk-sticky-confirm-wrap{
+  position:sticky;
+  bottom:0;
+  left:0;right:0;
+  padding:12px 0 0;
+  /* gradient fade from transparent to surface so content below isn't abruptly cut */
+  background:linear-gradient(to bottom, transparent 0%, var(--bk-surface) 38%);
+  margin:16px -24px -28px;
+  padding:20px 24px 24px;
+  pointer-events:none;
+}
+.bk-sticky-confirm-wrap .bk-btn-primary{
+  pointer-events:all;
+}
+@media(min-width:600px){
+  /* On tablet+ the card is constrained width — no need for sticky chrome */
+  .bk-sticky-confirm-wrap{
+    position:static;
+    background:none;
+    margin:0;
+    padding:0;
+    margin-top:22px;
+  }
+}
+
+/* ===== FIELD-LEVEL INLINE ERRORS ===== */
+.bk-field-error{
+  font-size:12px;font-weight:500;
+  color:var(--bk-error);
+  margin-top:5px;
+  display:none;
+}
+.bk-field-error.show{display:block}
+.bk-form-row input.invalid,.bk-form-row textarea.invalid{
+  border-color:var(--bk-error);
+  box-shadow:0 0 0 2px rgba(224,82,82,0.15);
 }
 
 /* ===== SLOT DATE/PARTY META LINE ===== */
@@ -534,6 +605,22 @@ body{
       <!-- Step body (dynamically populated) -->
       <div class="bk-body" id="bk-step-body">
         <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- How it works hint — shown only on step 1 -->
+    <div class="bk-how-it-works" id="bk-how-it-works" aria-hidden="true">
+      <div class="bk-hiw-item">
+        <div class="bk-hiw-num">1</div>
+        <div class="bk-hiw-label">Pick a date</div>
+      </div>
+      <div class="bk-hiw-item">
+        <div class="bk-hiw-num">2</div>
+        <div class="bk-hiw-label">Choose a time</div>
+      </div>
+      <div class="bk-hiw-item">
+        <div class="bk-hiw-num">3</div>
+        <div class="bk-hiw-label">Your details</div>
       </div>
     </div>
 
@@ -638,6 +725,19 @@ function todayInTz(tz) {
     return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'UTC' }).format(new Date());
   } catch(e) {
     return new Date().toISOString().slice(0, 10);
+  }
+}
+
+// Tomorrow's local date in YYYY-MM-DD for the given tz
+function tomorrowInTz(tz) {
+  try {
+    var tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'UTC' }).format(tomorrow);
+  } catch(e) {
+    var t = new Date();
+    t.setDate(t.getDate() + 1);
+    return t.toISOString().slice(0, 10);
   }
 }
 
@@ -754,8 +854,8 @@ async function bootBooking(slug) {
     hide('page-loading');
     show('booking-app');
 
-    // Default date to today
-    state.date = todayInTz(state.restaurant.timezone);
+    // Default date to tomorrow (Fix 8)
+    state.date = tomorrowInTz(state.restaurant.timezone);
     renderStep(1);
   } catch (err) {
     console.error('[coverly/book] boot error', err);
@@ -804,6 +904,10 @@ function renderStep(step) {
   setProgress(step);
   var body = el('bk-step-body');
   if (!body) return;
+
+  // Show "how it works" hint only on step 1
+  var hiw = el('bk-how-it-works');
+  if (hiw) hiw.style.display = step === 1 ? 'grid' : 'none';
 
   switch (step) {
     case 1: body.innerHTML = renderDateStep(); wireDateStep(); break;
@@ -1031,6 +1135,7 @@ function buildSlotsHTML(slots) {
       '</div>',
     ].join(''));
   } else {
+    parts.push('<p style="font-size:13px;color:var(--bk-text-2);margin-bottom:14px;margin-top:-4px">Tap a time to continue.</p>');
     parts.push('<div class="bk-slots-grid" role="group" aria-label="Available time slots">');
     slots.forEach(function(s) {
       var timeStr = fmtTime(s.slot_start, state.restaurant.timezone);
@@ -1138,29 +1243,62 @@ function renderFormStep() {
     '<div class="bk-form-row">',
       '<label for="bk-phone">Phone<span class="bk-required" aria-hidden="true">*</span></label>',
       '<input id="bk-phone" class="bk-date-input" type="tel" autocomplete="tel" placeholder="+44 7700 900123" aria-required="true" maxlength="30" required>',
+      '<div class="bk-field-error" id="bk-phone-error" role="alert"></div>',
     '</div>',
     '<div class="bk-form-row">',
       '<label for="bk-email">Email<span class="bk-opt">(optional)</span></label>',
       '<input id="bk-email" class="bk-date-input" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120">',
+      '<div class="bk-field-error" id="bk-email-error" role="alert"></div>',
     '</div>',
     '<div class="bk-form-row">',
       '<label for="bk-requests">Special requests<span class="bk-opt">(optional)</span></label>',
       '<textarea id="bk-requests" class="bk-date-input" rows="3" maxlength="300" placeholder="Allergies, dietary needs, high chair, anniversary…" style="min-height:80px;resize:vertical"></textarea>',
       '<div class="bk-char" id="bk-requests-char" aria-live="polite">0 / 300</div>',
     '</div>',
-    '<div class="bk-actions">',
+    '<p style="font-size:12px;color:var(--bk-text-2);margin-top:0;margin-bottom:4px;line-height:1.5;text-align:center">',
+      'By confirming you agree that the restaurant may contact you about this reservation.',
+    '</p>',
+    '<div class="bk-actions" style="margin-top:8px">',
       '<button class="bk-btn-back" id="form-back" aria-label="Back to time selection">',
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
         'Back',
       '</button>',
-      '<button class="bk-btn-primary" id="form-submit" aria-label="Confirm reservation">',
-        'Confirm reservation',
-      '</button>',
+      '<div class="bk-sticky-confirm-wrap" style="flex:1;min-width:0">',
+        '<button class="bk-btn-primary" id="form-submit" style="width:100%" aria-label="Confirm reservation">',
+          'Confirm reservation',
+        '</button>',
+      '</div>',
     '</div>',
-    '<p style="font-size:12px;color:var(--color-text-muted);margin-top:var(--space-4);line-height:1.5;text-align:center">',
-      'By confirming you agree that the restaurant may contact you about this reservation.',
-    '</p>',
   ].join('');
+}
+
+function setFieldError(inputEl, errEl, msg) {
+  if (!inputEl || !errEl) return;
+  if (msg) {
+    inputEl.classList.add('invalid');
+    inputEl.setAttribute('aria-describedby', errEl.id);
+    errEl.textContent = msg;
+    errEl.classList.add('show');
+  } else {
+    inputEl.classList.remove('invalid');
+    inputEl.removeAttribute('aria-describedby');
+    errEl.textContent = '';
+    errEl.classList.remove('show');
+  }
+}
+
+// Phone: allow digits, spaces, dashes, parens, leading +; reject letters
+function validatePhone(val) {
+  if (!val) return 'Please enter your phone number.';
+  if (/[a-zA-Z]/.test(val)) return 'Phone number must not contain letters.';
+  if (val.replace(/[\s\-()+ ]/g, '').length < 5) return 'Please enter a valid phone number.';
+  return '';
+}
+
+function validateEmail(val) {
+  if (!val) return ''; // optional
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return 'Please enter a valid email address.';
+  return '';
 }
 
 function wireFormStep() {
@@ -1171,6 +1309,34 @@ function wireFormStep() {
   if (reqTA && charCount) {
     reqTA.addEventListener('input', function() {
       charCount.textContent = this.value.length + ' / 300';
+    });
+  }
+
+  // Blur validation — Fix 7
+  var phoneEl = el('bk-phone');
+  var phoneErrEl = el('bk-phone-error');
+  if (phoneEl && phoneErrEl) {
+    phoneEl.addEventListener('blur', function() {
+      setFieldError(phoneEl, phoneErrEl, validatePhone(phoneEl.value.trim()));
+    });
+    phoneEl.addEventListener('input', function() {
+      // Clear error eagerly once user starts correcting
+      if (phoneErrEl.classList.contains('show')) {
+        setFieldError(phoneEl, phoneErrEl, validatePhone(phoneEl.value.trim()));
+      }
+    });
+  }
+
+  var emailEl = el('bk-email');
+  var emailErrEl = el('bk-email-error');
+  if (emailEl && emailErrEl) {
+    emailEl.addEventListener('blur', function() {
+      setFieldError(emailEl, emailErrEl, validateEmail(emailEl.value.trim()));
+    });
+    emailEl.addEventListener('input', function() {
+      if (emailErrEl.classList.contains('show')) {
+        setFieldError(emailEl, emailErrEl, validateEmail(emailEl.value.trim()));
+      }
     });
   }
 
@@ -1193,9 +1359,20 @@ async function submitBooking() {
   // Client-side validation
   hideInlineError(errEl);
   if (!name) { showInlineError(errEl, 'Please enter your name.'); if(nameEl) nameEl.focus(); return; }
-  if (!phone) { showInlineError(errEl, 'Please enter your phone number.'); if(phoneEl) phoneEl.focus(); return; }
-  if (phone.length < 7) { showInlineError(errEl, 'Please enter a valid phone number.'); if(phoneEl) phoneEl.focus(); return; }
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showInlineError(errEl, 'Please enter a valid email address, or leave it blank.'); if(emailEl) emailEl.focus(); return; }
+  var phoneErr = validatePhone(phone);
+  if (phoneErr) {
+    setFieldError(phoneEl, el('bk-phone-error'), phoneErr);
+    showInlineError(errEl, phoneErr);
+    if(phoneEl) phoneEl.focus();
+    return;
+  }
+  var emailErr = validateEmail(email);
+  if (emailErr) {
+    setFieldError(emailEl, el('bk-email-error'), emailErr);
+    showInlineError(errEl, emailErr);
+    if(emailEl) emailEl.focus();
+    return;
+  }
 
   var slot = state.selectedSlot;
   if (!slot) { showInlineError(errEl, 'No time slot selected. Please go back and choose a time.'); return; }
@@ -1311,7 +1488,7 @@ function renderConfirmation(result, guestInfo) {
       '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     '</div>',
     '<h2 class="bk-confirm-title">You\'re booked!</h2>',
-    '<p class="bk-confirm-sub">We look forward to seeing you, ' + esc(guestInfo.name.split(' ')[0]) + '.</p>',
+    '<p class="bk-confirm-sub">We look forward to seeing you, ' + esc(guestInfo.name) + '.</p>',
     '<div class="bk-confirm-detail" aria-label="Booking details">',
       '<div class="bk-confirm-row"><span class="bk-confirm-label">Restaurant</span><span class="bk-confirm-val">' + esc(rest.name) + '</span></div>',
       '<div class="bk-confirm-row"><span class="bk-confirm-label">Date</span><span class="bk-confirm-val">' + esc(dateStr) + '</span></div>',
@@ -1391,15 +1568,17 @@ function renderManageView(result, token) {
   var isCompleted = status === 'completed' || status === 'seated' || status === 'no_show';
 
   var guestName = (res.cov_guests && res.cov_guests.name) || res.guest_name || 'Guest';
-
   var timeStr = fmtDateTime(res.starts_at, tz);
-
   var statusChipClass = { booked:'booked', confirmed:'confirmed', cancelled:'cancelled', seated:'seated', completed:'completed' }[status] || 'booked';
+
+  // Derive slug for "Book a new table" link — prefer rest.slug, fall back to URL param
+  var restSlug = rest.slug || getSlug() || '';
+  var rebookHref = restSlug ? ('book.html?r=' + encodeURIComponent(restSlug)) : '';
 
   body.innerHTML = [
     '<div style="margin-bottom:20px;display:flex;align-items:center;gap:12px">',
       '<h2 style="font-family:\'Cormorant Garamond\',Georgia,serif;font-size:22px;font-weight:700;letter-spacing:0;color:#f0ede8;flex:1;min-width:0;line-height:1.2">Your booking</h2>',
-      '<span class="bk-status-chip ' + statusChipClass + '">' + esc(status) + '</span>',
+      '<span class="bk-status-chip ' + statusChipClass + '" id="manage-status-chip">' + esc(status) + '</span>',
     '</div>',
     '<div class="bk-confirm-detail" aria-label="Booking details">',
       (rest.name ? '<div class="bk-confirm-row"><span class="bk-confirm-label">Restaurant</span><span class="bk-confirm-val">' + esc(rest.name) + '</span></div>' : ''),
@@ -1417,17 +1596,46 @@ function renderManageView(result, token) {
         '<button class="bk-btn-danger" id="cancel-btn" aria-label="Cancel this reservation">Cancel reservation</button>',
       '</div>',
     ].join('') : ''),
-    (isCancelled ? '<div class="bk-status-chip cancelled" style="width:100%;justify-content:center;padding:12px;margin-top:8px">This reservation has been cancelled.</div>' : ''),
+    (isCancelled ? [
+      '<div class="bk-status-chip cancelled" style="width:100%;justify-content:center;padding:12px;margin-top:8px">This reservation has been cancelled.</div>',
+      (rebookHref ? '<a class="bk-cal-btn" href="' + esc(rebookHref) + '" style="margin-top:12px;text-decoration:none">Book a new table</a>' : ''),
+    ].join('') : ''),
     (isCompleted ? '<div class="bk-status-chip completed" style="width:100%;justify-content:center;padding:12px;margin-top:8px">This reservation is complete — thank you for visiting!</div>' : ''),
   ].join('');
 
   var cancelBtn = el('cancel-btn');
   if (cancelBtn) {
-    cancelBtn.addEventListener('click', function() { doManageCancel(token, res); });
+    // Two-step cancel: first click arms the button; second click (within 5 s) confirms
+    var cancelArmed = false;
+    var cancelRevertTimer = null;
+
+    cancelBtn.addEventListener('click', function() {
+      var errEl = el('cancel-error');
+      if (!cancelArmed) {
+        // Arm it
+        cancelArmed = true;
+        cancelBtn.textContent = 'Tap again to confirm cancellation';
+        cancelBtn.style.background = '#8b1c1c';
+        cancelBtn.setAttribute('aria-label', 'Confirm cancellation — tap again');
+        cancelRevertTimer = setTimeout(function() {
+          cancelArmed = false;
+          cancelBtn.textContent = 'Cancel reservation';
+          cancelBtn.style.background = '';
+          cancelBtn.setAttribute('aria-label', 'Cancel this reservation');
+        }, 5000);
+      } else {
+        // Confirmed — proceed
+        clearTimeout(cancelRevertTimer);
+        cancelArmed = false;
+        cancelBtn.textContent = 'Cancel reservation';
+        cancelBtn.style.background = '';
+        doManageCancel(token, res, rebookHref);
+      }
+    });
   }
 }
 
-async function doManageCancel(token, res) {
+async function doManageCancel(token, res, rebookHref) {
   var cancelBtn = el('cancel-btn');
   var errEl = el('cancel-error');
   if (errEl) hideInlineError(errEl);
@@ -1444,19 +1652,25 @@ async function doManageCancel(token, res) {
       return;
     }
 
-    // Success — show cancelled state
-    var body = el('manage-body');
-    if (body) {
-      var section = el('cancel-section');
-      if (section) {
-        section.innerHTML = '<div class="bk-status" role="status" aria-live="polite">' +
+    // Success — update status chip (Fix 4b)
+    var chip = el('manage-status-chip');
+    if (chip) {
+      chip.className = 'bk-status-chip cancelled';
+      chip.textContent = 'cancelled';
+    }
+
+    // Replace cancel section with success message + rebook link (Fix 4b + 4c)
+    var section = el('cancel-section');
+    if (section) {
+      section.innerHTML =
+        '<div class="bk-status" role="status" aria-live="polite">' +
           '<div class="bk-status-icon success" aria-hidden="true">' +
             '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
           '</div>' +
           '<p class="bk-status-title">Reservation cancelled</p>' +
           '<p class="bk-status-desc">Your reservation has been cancelled successfully. We hope to see you another time.</p>' +
+          (rebookHref ? '<a class="bk-cal-btn" href="' + esc(rebookHref) + '" style="margin-top:4px;text-decoration:none">Book a new table</a>' : '') +
         '</div>';
-      }
     }
   } catch (err) {
     console.error('[coverly/book] manage_cancel error', err);

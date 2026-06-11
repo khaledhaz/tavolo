@@ -64,8 +64,9 @@
   outline-offset: 1px;\n\
 }\n\
 .mesa-seg-btn.active {\n\
-  background: var(--color-surface);\n\
-  color: var(--color-text-primary);\n\
+  background: var(--shell-copper, var(--color-primary));\n\
+  color: #fff;\n\
+  font-weight: 600;\n\
   box-shadow: var(--shadow-sm);\n\
 }\n\
 \n\
@@ -266,7 +267,7 @@
 }\n\
 .mesa-empty-body {\n\
   font-size: 14px;\n\
-  color: var(--color-text-secondary);\n\
+  color: #666;\n\
   max-width: 320px;\n\
   line-height: 1.6;\n\
 }\n\

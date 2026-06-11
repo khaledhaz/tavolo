@@ -8,6 +8,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#c2703d">
 <title>Tavolo — Restaurant Platform</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2703d'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23fff'%3ET%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,7 +40,7 @@ body{background:var(--color-bg);min-height:100vh}
 
 /* ===== AUTH SCREEN ===== */
 #auth-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--space-5);
+  height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--space-5);
 }
 .auth-card{
   background:var(--color-surface);border-radius:var(--radius-xl);
@@ -162,7 +163,7 @@ body{background:var(--color-bg);min-height:100vh}
 
 .sidebar-section-label{
   font-size:10px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;
-  color:rgba(255,255,255,.3);padding:var(--space-4) var(--space-4) var(--space-2);
+  color:rgba(255,255,255,.55);padding:var(--space-4) var(--space-4) var(--space-2);
   flex-shrink:0;
 }
 .sidebar-nav{flex:1;padding:var(--space-3);display:flex;flex-direction:column;overflow-y:auto;min-height:0}
@@ -190,9 +191,6 @@ body{background:var(--color-bg);min-height:100vh}
   background:var(--shell-copper);color:#fff;font-size:10px;font-weight:700;
   display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;
 }
-/* stub items — slightly dimmer */
-.nav-item.stub{opacity:.65}
-.nav-item.stub:hover{opacity:1}
 
 .sidebar-bottom{
   padding:var(--space-4);border-top:1px solid var(--shell-border);
@@ -208,8 +206,9 @@ body{background:var(--color-bg);min-height:100vh}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .sidebar-signout{
-  width:28px;height:28px;border-radius:var(--radius-sm);background:none;border:none;
-  color:rgba(255,255,255,.35);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  min-height:44px;padding:0 var(--space-3);border-radius:var(--radius-sm);background:none;border:none;
+  color:rgba(255,255,255,.45);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  gap:6px;font-size:13px;font-weight:500;
   transition:color var(--duration-fast),background var(--duration-fast);flex-shrink:0;
 }
 .sidebar-signout:hover{color:#fff;background:rgba(255,255,255,.1)}
@@ -351,25 +350,6 @@ body{background:var(--color-bg);min-height:100vh}
 .skel-card{border-radius:var(--radius-lg);background:linear-gradient(90deg,var(--color-surface-raised) 25%,var(--color-border) 50%,var(--color-surface-raised) 75%);background-size:800px 100%;animation:shimmer 1.4s infinite linear}
 .skeleton-card{height:96px;border-radius:var(--radius-lg)}
 
-/* ===== STUB SECTIONS (QR Pay Phase 3) ===== */
-.stub-section{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-height:400px;text-align:center;gap:var(--space-4);
-}
-.stub-icon{
-  width:72px;height:72px;border-radius:var(--radius-xl);
-  background:var(--color-surface-raised);border:1px solid var(--color-border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--color-text-muted);
-}
-.stub-title{font-size:20px;font-weight:600;color:var(--color-text-primary)}
-.stub-body{font-size:15px;color:var(--color-text-secondary);max-width:400px;line-height:1.6}
-.stub-badge-qr{
-  font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;
-  background:rgba(240,181,29,.10);color:#a87500;
-  border:1px solid rgba(240,181,29,.3);border-radius:var(--radius-full);
-  padding:4px 12px;
-}
 
 /* ===== MODAL ===== */
 .modal-overlay{
@@ -491,7 +471,7 @@ body{background:var(--color-bg);min-height:100vh}
         </div>
       </div>
       <button id="signin-btn" class="btn btn-primary btn-block btn-lg" style="border-radius:var(--radius-full)">Sign in</button>
-      <button id="signin-demo-btn" type="button" class="btn btn-block" style="margin-top:10px;border-radius:var(--radius-full);background:transparent;border:1px solid var(--color-border);color:var(--color-text-muted)">Use demo credentials</button>
+      <button id="signin-demo-btn" type="button" class="btn btn-block" style="margin-top:10px;border-radius:var(--radius-full);background:transparent;border:1px solid var(--color-border);color:#444">Use demo credentials</button>
     </div>
 
     <!-- Sign up panel -->
@@ -677,23 +657,23 @@ body{background:var(--color-bg);min-height:100vh}
       <!-- QR PAY group — hidden if modules.qr_pay is false -->
       <div id="nav-group-qr-pay">
         <div class="sidebar-section-label" aria-hidden="true">QR Pay</div>
-        <button class="nav-item stub" data-section="qr-pay-floor" role="listitem">
+        <button class="nav-item" data-section="qr-pay-floor" role="listitem">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span class="nav-item-label">Pay Floor</span>
         </button>
-        <button class="nav-item stub" data-section="qr-menu" role="listitem">
+        <button class="nav-item" data-section="qr-menu" role="listitem">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           <span class="nav-item-label">Menu</span>
         </button>
-        <button class="nav-item stub" data-section="qr-tables" role="listitem">
+        <button class="nav-item" data-section="qr-tables" role="listitem">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="10" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/></svg>
           <span class="nav-item-label">Tables &amp; QR</span>
         </button>
-        <button class="nav-item stub" data-section="qr-analytics" role="listitem">
+        <button class="nav-item" data-section="qr-analytics" role="listitem">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           <span class="nav-item-label">Analytics</span>
         </button>
-        <button class="nav-item stub" data-section="qr-staff" role="listitem">
+        <button class="nav-item" data-section="qr-staff" role="listitem">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span class="nav-item-label">Staff</span>
         </button>
@@ -716,6 +696,7 @@ body{background:var(--color-bg);min-height:100vh}
         <span class="sidebar-rest-name" id="sidebar-rest-name">Loading...</span>
         <button class="sidebar-signout" id="signout-btn" aria-label="Sign out" title="Sign out">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span aria-hidden="true">Sign out</span>
         </button>
       </div>
       <div id="sidebar-module-badge" class="sidebar-module-badge" style="display:none" aria-label="Active modules"></div>
@@ -786,7 +767,7 @@ body{background:var(--color-bg);min-height:100vh}
                 <h2 class="panel-title">Booking link</h2>
               </div>
               <div class="panel-body">
-                <div id="booking-link-display" style="font-size:13px;color:var(--color-text-muted);word-break:break-all"></div>
+                <div id="booking-link-display" style="font-size:12px;color:var(--color-text-muted);overflow-wrap:anywhere;word-break:break-all"></div>
                 <button id="copy-booking-link" class="btn btn-secondary" style="min-height:36px;font-size:13px;padding:0 var(--space-4);border-radius:var(--radius-full);margin-top:var(--space-3)">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   Copy link
@@ -807,60 +788,15 @@ body{background:var(--color-bg);min-height:100vh}
       <section id="section-settings"     class="section" aria-label="Settings"             style="display:none"></section>
 
       <!-- QR PAY Phase-3 stubs -->
-      <section id="section-qr-pay-floor" class="section" aria-label="Pay Floor" style="display:none">
-        <div class="stub-section">
-          <div class="stub-icon" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          </div>
-          <span class="stub-badge-qr">Coming - Phase 3</span>
-          <h2 class="stub-title">Pay Floor</h2>
-          <p class="stub-body">This screen lands shortly. Live table payment status - open bills, split-pay claims, and session closures.</p>
-        </div>
-      </section>
+      <section id="section-qr-pay-floor" class="section" aria-label="Pay Floor" style="display:none"></section>
 
-      <section id="section-qr-menu" class="section" aria-label="Menu" style="display:none">
-        <div class="stub-section">
-          <div class="stub-icon" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </div>
-          <span class="stub-badge-qr">Coming - Phase 3</span>
-          <h2 class="stub-title">Menu</h2>
-          <p class="stub-body">This screen lands shortly. Build and publish your digital menu - categories, items, modifiers, and pricing.</p>
-        </div>
-      </section>
+      <section id="section-qr-menu" class="section" aria-label="Menu" style="display:none"></section>
 
-      <section id="section-qr-tables" class="section" aria-label="Tables and QR" style="display:none">
-        <div class="stub-section">
-          <div class="stub-icon" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="10" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/></svg>
-          </div>
-          <span class="stub-badge-qr">Coming - Phase 3</span>
-          <h2 class="stub-title">Tables &amp; QR</h2>
-          <p class="stub-body">This screen lands shortly. Generate and print QR codes for each table - guests scan to view the menu and pay.</p>
-        </div>
-      </section>
+      <section id="section-qr-tables" class="section" aria-label="Tables and QR" style="display:none"></section>
 
-      <section id="section-qr-analytics" class="section" aria-label="Analytics" style="display:none">
-        <div class="stub-section">
-          <div class="stub-icon" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <span class="stub-badge-qr">Coming - Phase 3</span>
-          <h2 class="stub-title">Analytics</h2>
-          <p class="stub-body">This screen lands shortly. Revenue, tips, service charge, and payment-method breakdown with daily and weekly trends.</p>
-        </div>
-      </section>
+      <section id="section-qr-analytics" class="section" aria-label="Analytics" style="display:none"></section>
 
-      <section id="section-qr-staff" class="section" aria-label="Staff" style="display:none">
-        <div class="stub-section">
-          <div class="stub-icon" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <span class="stub-badge-qr">Coming - Phase 3</span>
-          <h2 class="stub-title">Staff</h2>
-          <p class="stub-body">This screen lands shortly. Manage staff profiles, PINs, and per-server order visibility and tip tracking.</p>
-        </div>
-      </section>
+      <section id="section-qr-staff" class="section" aria-label="Staff" style="display:none"></section>
 
     </main><!-- /content-area -->
   </div><!-- /main-area -->

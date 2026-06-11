@@ -62,6 +62,8 @@
     '.mesa-staff-name-cell { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }\n' +
     '.mesa-staff-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }\n' +
     '.mesa-role-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; background: var(--color-surface-raised); border: 1px solid var(--color-border); color: var(--color-text-secondary); margin-left: var(--space-2); flex-shrink: 0; }\n' +
+    '.mesa-role-badge[data-role="manager"] { background: #fef3c7; border-color: #d97706; color: #92400e; }\n' +
+    '.mesa-role-badge[data-role="server"], .mesa-role-badge[data-role="bartender"] { background: var(--color-surface-raised); border-color: var(--color-border); color: var(--color-text-secondary); }\n' +
 
     /* Icon buttons */
     '.mesa-icon-btn { width: 32px; height: 32px; min-width: 44px; min-height: 44px; border-radius: var(--radius-sm); background: none; border: 1px solid var(--color-border); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text-secondary); transition: color var(--duration-fast), background var(--duration-fast); }\n' +
@@ -454,7 +456,7 @@
           + '<div class="mesa-staff-name-cell">'
             + '<span class="mesa-avatar" aria-hidden="true">' + esc(init) + '</span>'
             + '<span class="mesa-staff-name-text">' + esc(s.name || '—') + '</span>'
-            + '<span class="mesa-role-badge">' + esc(s.role || 'server') + '</span>'
+            + '<span class="mesa-role-badge" data-role="' + esc((s.role || 'server').toLowerCase()) + '">' + esc(s.role || 'server') + '</span>'
           + '</div>'
         + '</td>'
         + '<td class="mesa-num">' + esc(String(td.sessions)) + '</td>'

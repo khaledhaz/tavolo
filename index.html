@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0d0f14">
 <meta name="description" content="Tavolo — Reservations and QR Pay-at-Table for restaurants. One platform, two powerful modules. Book tables online, manage your floor, and let guests pay in seconds.">
 <title>Tavolo — Reservations + Pay-at-Table</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2703d'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23fff'%3ET%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -277,6 +278,14 @@ button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
   /* Visual above text on mobile for the reverse module */
   .module-grid.reverse .module-visual{order:-1}
 }
+/* Fix 5: at <480px stack mock below bullets full-width with top margin */
+@media(max-width:479px){
+  .module-grid .module-visual,
+  .module-grid.reverse .module-visual{
+    width:100%;
+    margin-top:32px;
+  }
+}
 
 /* Feature bullet list */
 .feature-list{
@@ -513,6 +522,11 @@ button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
 @media(max-width:767px){
   .modules-cards{grid-template-columns:1fr}
 }
+/* Fix 9: when cards stack at <640px the weak rgba border can look absent;
+   strengthen to border-mid so all four sides are clearly visible */
+@media(max-width:639px){
+  .module-card{border-color:var(--border-mid)}
+}
 .module-card{
   background:var(--surface);
   border:1px solid var(--border);
@@ -602,8 +616,11 @@ button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
   font-size:clamp(36px,6vw,64px);
   font-weight:700;color:var(--text);line-height:1;
   margin-bottom:8px;
+  /* Fix 10: prevent "about" orphaning alone on a new line */
+  text-wrap:balance;
 }
-.pricing-amount span{font-size:clamp(18px,3vw,28px);color:var(--muted);font-weight:400}
+/* Fix 6: same weight as parent so "Talk to us about pricing" is one consistent weight */
+.pricing-amount span{font-size:clamp(18px,3vw,28px);color:var(--muted);font-weight:700}
 .pricing-note{font-size:14px;color:var(--muted);margin-bottom:28px}
 .pricing-cta{
   display:inline-flex;align-items:center;gap:8px;
@@ -653,7 +670,8 @@ button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;background:var(--surface-raised);
   transition:transform 0.2s,background 0.15s;
-  color:var(--muted);
+  /* Fix 8: chevron must be ≥ #888 so it's visible on the dark surface */
+  color:#9a9ba6;
 }
 .faq-question[aria-expanded="true"] .faq-icon{
   transform:rotate(45deg);background:var(--copper-glow);color:var(--copper);
@@ -697,12 +715,13 @@ button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
   display:inline-flex;align-items:center;gap:6px;
   min-height:44px;padding:0 16px;
   border-radius:var(--radius-full);
-  border:1px solid var(--border);
-  color:var(--muted);font-size:13px;font-weight:500;
+  border:1px solid var(--border-mid);
+  /* Fix 4: ≥14px and ≥#a0a0a0 on dark bg → #b2b4bf gives ~5.2:1 on #13161d */
+  color:#b2b4bf;font-size:14px;font-weight:500;
   text-decoration:none;
   transition:color 0.15s,border-color 0.15s,background 0.15s;
 }
-.footer-link:hover{color:var(--text);border-color:var(--border-mid);background:rgba(255,255,255,0.04)}
+.footer-link:hover{color:var(--text);border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.04)}
 .footer-copy{font-size:12px;color:var(--faint)}
 
 /* =====================================================
@@ -968,7 +987,7 @@ button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
     <p class="pricing-statement">One price covers your whole venue — no per-cover fees, no module upsells, no annual lock-in. <strong>Early access partners set the price with us.</strong></p>
     <div class="pricing-card reveal">
       <p class="pricing-card-label">Early access — all modules included</p>
-      <div class="pricing-amount">Talk to us <span>about pricing</span></div>
+      <div class="pricing-amount">Talk to us&nbsp;<span>about pricing</span></div>
       <p class="pricing-note">No per-cover fees &middot; No long-term contracts &middot; Cancel any time</p>
       <a href="app/" class="pricing-cta">
         Get early access
