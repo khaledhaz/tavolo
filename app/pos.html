@@ -177,6 +177,12 @@ input  { font-family: inherit; }
   text-align: center;
   min-height: 18px;
 }
+.login-hint {
+  font-size: 12.5px;
+  color: rgba(240,239,242,0.45);
+  text-align: center;
+  margin-top: -18px;
+}
 
 /* ============================================================
    POS SHELL (home/order/payment/manager)
@@ -1465,10 +1471,11 @@ input  { font-family: inherit; }
       </button>
     </div>
 
-    <button class="login-submit" id="btn-login-submit" type="button" disabled aria-label="Sign in">
+    <button class="login-submit" id="btn-login-submit" type="button" aria-label="Sign in">
       Sign In
     </button>
     <p class="login-error" id="login-error" role="alert" aria-live="assertive"></p>
+    <p class="login-hint">Enter your 4-digit staff PIN</p>
   </div>
 
 </div><!-- /#screen-login -->

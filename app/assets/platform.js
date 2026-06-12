@@ -628,9 +628,11 @@
       }
     }
 
+    /* Live sessions only — a settled ('paid') session must NOT surface to the
+       next guest who scans this table (they'd see the previous guest's bill). */
     var rSess = await sb.from('mesa_sessions')
       .select('id,status,party_size,server_staff_id,opened_at')
-      .eq('table_id', table.id).neq('status', 'closed')
+      .eq('table_id', table.id).in('status', ['open', 'seated', 'scanned', 'paying'])
       .order('opened_at', { ascending: false }).limit(1).maybeSingle();
     if (rSess.error) throw rSess.error;
     var session = rSess.data;

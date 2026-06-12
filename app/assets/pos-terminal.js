@@ -125,7 +125,8 @@
       var dots = '';
       for (var i = 0; i < 4; i++) dots += (i < buf.length ? '●' : '·');
       display.textContent = dots;
-      submit.disabled = buf.length < 4;
+      /* Sign In stays ENABLED at all times — a disabled button is a silent
+         dead-end (no click handler, no feedback); doLogin explains instead. */
       errEl.textContent = '';
       loginCard.querySelector('.login-display').classList.remove('error');
     }
@@ -170,7 +171,13 @@
     });
 
     function doLogin() {
-      if (buf.length < 4) return;
+      if (buf.length < 4) {
+        /* Feedback instead of a silent no-op — automation/users tapping Sign In
+           with an empty/partial PIN were left stranded with no error. */
+        errEl.textContent = 'Enter your 4-digit PIN first';
+        loginCard.querySelector('.login-display').classList.add('error');
+        return;
+      }
       submit.disabled = true;
       submit.textContent = 'Checking…';
       errEl.textContent = '';
@@ -188,7 +195,6 @@
           var dots = '';
           for (var i = 0; i < 4; i++) dots += '·';
           display.textContent = dots;
-          submit.disabled = true; /* re-disable; re-enabled once 4 digits entered */
           loginCard.querySelector('.login-display').classList.add('error');
           errEl.textContent = msg;
           submit.disabled = false;
