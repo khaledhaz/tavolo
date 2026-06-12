@@ -580,6 +580,19 @@ input  { font-family: inherit; }
 }
 .ticket-item-row.voided { opacity: 0.4; }
 .ticket-item-row.voided .ti-name { text-decoration: line-through; }
+.ticket-item-row.is-paid { opacity: 0.55; }
+.ti-paid-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: #4cd48a;
+  background: rgba(76,212,138,0.12);
+  border: 1px solid rgba(76,212,138,0.3);
+  vertical-align: 1px;
+}
 .ti-name {
   flex: 1; min-width: 0;
   font-size: 13px; font-weight: 600;
@@ -1604,6 +1617,10 @@ input  { font-family: inherit; }
             <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;">Tap the items this guest is paying for:</div>
             <div id="split-item-list" role="group" aria-label="Select items to pay for"></div>
           </div>
+          <div id="split-seat-wrap" class="hidden" style="margin-top:10px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;">Tap the seat this guest is paying for:</div>
+            <div id="split-seat-list" role="group" aria-label="Select seat to pay for"></div>
+          </div>
           <div id="split-custom-wrap" class="hidden" style="margin-top:10px;display:flex;align-items:center;gap:8px;">
             <label for="split-custom-input" style="font-size:13px;color:rgba(255,255,255,0.5);">$</label>
             <input id="split-custom-input" class="pay-custom-input" type="number" min="0.01" step="0.01" placeholder="0.00" aria-label="Custom split amount in dollars">
@@ -1617,9 +1634,9 @@ input  { font-family: inherit; }
         <div>
           <div class="pay-section-title">Tip</div>
           <div class="tip-options" role="group" aria-label="Tip options">
-            <button class="tip-btn" data-tip="0"  type="button">No tip</button>
+            <button class="tip-btn active" data-tip="0"  type="button">No tip</button>
             <button class="tip-btn" data-tip="15" type="button">15%</button>
-            <button class="tip-btn active" data-tip="18" type="button">18%</button>
+            <button class="tip-btn" data-tip="18" type="button">18%</button>
             <button class="tip-btn" data-tip="20" type="button">20%</button>
             <button class="tip-btn" data-tip="custom" type="button">Custom</button>
           </div>

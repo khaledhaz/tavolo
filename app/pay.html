@@ -1199,6 +1199,10 @@ body{
         <span>Items</span>
         <span id="bill-subtotal" class="amount"></span>
       </div>
+      <div class="bill-totals__row" id="bill-tax-row" style="display:none">
+        <span>Tax</span>
+        <span id="bill-tax" class="amount"></span>
+      </div>
       <div class="bill-totals__row" id="bill-service-row" style="display:none">
         <span>Service charge</span>
         <span id="bill-service" class="amount"></span>
@@ -1582,8 +1586,13 @@ function formatTime(d){
 }
 function initials(name){ if(!name) return '?'; var p=name.trim().split(/\s+/); return p.length>1?p[0][0]+p[p.length-1][0]:name[0]; }
 function billTotal(){
-  var math = MESA.billMath(state.items, state.restaurant ? state.restaurant.service_charge_pct : 0);
+  var r = state.restaurant;
+  var math = MESA.billMath(state.items, r ? r.service_charge_pct : 0, r ? r.tax_pct : 0);
   return math;
+}
+function taxShareOf(cents){
+  var pct = state.restaurant ? Number(state.restaurant.tax_pct || 0) / 100 : 0;
+  return Math.round(cents * pct);
 }
 function myItems(){ return state.items.filter(function(it){ return it.claimed_by === state.myLabel; }); }
 function mySubtotal(){ return myItems().reduce(function(s,it){ return s + it.unit_price_cents * it.qty; }, 0); }
@@ -1985,6 +1994,10 @@ function renderBill(){
   var sl = $('#bill-summary-line'); if(sl) sl.textContent = state.items.length+' items · '+unclaimed+' unclaimed';
   // totals
   var bsub = $('#bill-subtotal'); if(bsub) bsub.textContent = m(math.subtotal_cents,cur);
+  var btax = $('#bill-tax-row');
+  if(math.tax_cents>0 && btax){
+    btax.style.display=''; var btaxamt = $('#bill-tax'); if(btaxamt) btaxamt.textContent = m(math.tax_cents,cur);
+  }
   var bsvc = $('#bill-service-row');
   if(math.service_cents>0 && bsvc){
     bsvc.style.display=''; var bsvcamt = $('#bill-service'); if(bsvcamt) bsvcamt.textContent = m(math.service_cents,cur);
@@ -2117,10 +2130,10 @@ function getSelectedSplitAmt(){
   if(state.splitMode==='full') return billTotal().total_before_tip_cents;
   if(state.splitMode==='even') return Math.ceil(billTotal().total_before_tip_cents / state.splitN);
   if(state.splitMode==='claim'){
-    // Fix 4: include proportional service charge so amount matches tip screen
+    // Fix 4: include proportional tax + service so amount matches tip screen
     var mySub = mySubtotal();
     var svcPct = state.restaurant ? Number(state.restaurant.service_charge_pct || 0) / 100 : 0;
-    return mySub + Math.round(mySub * svcPct);
+    return mySub + taxShareOf(mySub) + Math.round(mySub * svcPct);
   }
   if(state.splitMode==='custom'){
     var v = parseFloat($('#custom-amount-input').value)||0;
@@ -2133,7 +2146,7 @@ function getSelectedSplitAmt(){
 function openTipScreen(){
   closeAllSheets();
   var rest = state.restaurant, cur = rest?rest.currency:'GBP';
-  var math = MESA.billMath(state.items, rest?rest.service_charge_pct:0);
+  var math = MESA.billMath(state.items, rest?rest.service_charge_pct:0, rest?rest.tax_pct:0);
   var pfx = currencySym(cur);
   // figure out diner's base total
   if(state.splitMode==='full') state.totalCents = math.total_before_tip_cents;
@@ -2141,7 +2154,7 @@ function openTipScreen(){
   else if(state.splitMode==='claim'){
     var mySub = mySubtotal();
     var mySvc = Math.round(mySub * (rest?Number(rest.service_charge_pct||0)/100:0));
-    state.totalCents = mySub + mySvc;
+    state.totalCents = mySub + taxShareOf(mySub) + mySvc;
   } else if(state.splitMode==='custom') state.totalCents = getSelectedSplitAmt();
 
   // logo
@@ -2156,8 +2169,8 @@ function openTipScreen(){
   if(bbody){
     bbody.innerHTML='';
     function brow(l,v){ var d=document.createElement('div');d.className='breakdown-row';d.innerHTML='<span>'+l+'</span><span class="amount">'+v+'</span>';bbody.appendChild(d); }
-    if(state.splitMode==='claim'){ brow('My items', m(mySubtotal(),cur)); if(math.service_cents>0) brow('Service charge (my share)', m(Math.round(mySubtotal()*(rest?Number(rest.service_charge_pct||0)/100:0)),cur)); }
-    else { brow('Items', m(math.subtotal_cents,cur)); if(math.service_cents>0) brow('Service charge', m(math.service_cents,cur)); if(state.splitMode==='even') brow('Your share (÷'+state.splitN+')',m(state.totalCents,cur)); }
+    if(state.splitMode==='claim'){ brow('My items', m(mySubtotal(),cur)); if(math.tax_cents>0) brow('Tax (my share)', m(taxShareOf(mySubtotal()),cur)); if(math.service_cents>0) brow('Service charge (my share)', m(Math.round(mySubtotal()*(rest?Number(rest.service_charge_pct||0)/100:0)),cur)); }
+    else { brow('Items', m(math.subtotal_cents,cur)); if(math.tax_cents>0) brow('Tax', m(math.tax_cents,cur)); if(math.service_cents>0) brow('Service charge', m(math.service_cents,cur)); if(state.splitMode==='even') brow('Your share (÷'+state.splitN+')',m(state.totalCents,cur)); }
     brow('Your total',m(state.totalCents,cur));
   }
 
@@ -2246,7 +2259,7 @@ function openCheckoutSheet(){
 async function doPayment(method){
   var rest = state.restaurant, session = state.session;
   var cur = rest?rest.currency:'GBP';
-  var math = MESA.billMath(state.items, rest?rest.service_charge_pct:0);
+  var math = MESA.billMath(state.items, rest?rest.service_charge_pct:0, rest?rest.tax_pct:0);
   var svcCents = 0;
   if(state.splitMode==='full') svcCents = math.service_cents;
   else if(state.splitMode==='even') svcCents = Math.ceil(math.service_cents/state.splitN);
@@ -2257,7 +2270,9 @@ async function doPayment(method){
       session_id: session.id,
       restaurant_id: rest.id,
       payer_label: state.myLabel || 'Guest',
-      amount_cents: state.totalCents + state.tipCents,
+      /* amount_cents = bill principal ONLY (tip rides separately) — same
+         convention as pos_pay, so pos_session_bill's paid-calc covers both */
+      amount_cents: state.totalCents,
       tip_cents: state.tipCents,
       service_charge_cents: svcCents,
       method: method,
@@ -2309,7 +2324,7 @@ function showSuccess(){
   var rest = state.restaurant;
   var cur = rest?rest.currency:'GBP';
   var total = state.totalCents + state.tipCents;
-  var math = MESA.billMath(state.items, rest?rest.service_charge_pct:0);
+  var math = MESA.billMath(state.items, rest?rest.service_charge_pct:0, rest?rest.tax_pct:0);
 
   // sr title
   var srT = $('#success-sr-title'); if(srT) srT.textContent='Payment confirmed — '+m(total,cur)+' paid to '+(rest?rest.name:'restaurant');
@@ -2335,12 +2350,13 @@ function showSuccess(){
     rt.innerHTML='';
     var subtotal = state.splitMode==='claim' ? mySubtotal() : math.subtotal_cents;
     var svcRow='', tipRow='', totalRow='';
-    var svcCents=0;
-    if(state.splitMode==='full') svcCents=math.service_cents;
-    else if(state.splitMode==='even') svcCents=Math.ceil(math.service_cents/state.splitN);
-    else if(state.splitMode==='claim') svcCents=Math.round(subtotal*(rest?Number(rest.service_charge_pct||0)/100:0));
+    var svcCents=0, taxCents=0;
+    if(state.splitMode==='full'){ svcCents=math.service_cents; taxCents=math.tax_cents; }
+    else if(state.splitMode==='even'){ svcCents=Math.ceil(math.service_cents/state.splitN); taxCents=Math.ceil(math.tax_cents/state.splitN); }
+    else if(state.splitMode==='claim'){ svcCents=Math.round(subtotal*(rest?Number(rest.service_charge_pct||0)/100:0)); taxCents=taxShareOf(subtotal); }
     function addRow(l,v,strong){var d=document.createElement('div');d.className='receipt-total-row'+(strong?' strong':'');d.innerHTML='<span>'+l+'</span><span class="amount">'+v+'</span>';rt.appendChild(d);}
     addRow('Items', m(subtotal,cur));
+    if(taxCents>0) addRow('Tax', m(taxCents,cur));
     if(svcCents>0) addRow('Service charge', m(svcCents,cur));
     if(state.tipCents>0) addRow('Tip'+(state.server?' · '+state.server:''), m(state.tipCents,cur));
     else addRow('Tip','No tip');

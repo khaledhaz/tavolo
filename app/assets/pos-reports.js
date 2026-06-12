@@ -803,8 +803,11 @@
      X-Report KPIs
   ========================================================================== */
   function renderXReport(kpiEl, rid) {
-    kpiEl.innerHTML = kpiSkels(5);
-    window.PLAT.client.rpc('pos_x_report', { p_restaurant: rid })
+    /* skeletons only on first paint — silent refresh after that (30s auto-poll) */
+    if (!kpiEl.querySelector('.posr-kpi-card')) kpiEl.innerHTML = kpiSkels(5);
+    /* p_since = LOCAL midnight so the headline and the breakdowns below share
+       one definition of "today" (they used to disagree across the UTC boundary) */
+    window.PLAT.client.rpc('pos_x_report', { p_restaurant: rid, p_since: rangeISO('today') })
       .then(function (res) {
         if (res.error || !res.data) {
           kpiEl.innerHTML = errBar('Could not load live report.', 'posr-xrpt-retry');
@@ -1274,23 +1277,30 @@
                 + ' type="button" aria-label="View Z-report for ' + esc(staffName) + '\'s shift">'
                 + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
                 + 'Z-Report</button>'
-              : '')
+              : '<button class="posr-z-btn posr-close-shift-btn" data-shift-id="' + esc(sh.id)
+                + '" data-staff-name="' + esc(staffName)
+                + '" data-started-at="' + esc(sh.started_at || '') + '"'
+                + ' type="button" aria-label="Close ' + esc(staffName) + '\'s shift and run the Z-report">'
+                + 'Close shift</button>')
             + '</div>'
             + '</div>';
         }).join('');
 
-        // Wire Z-report buttons
+        // Wire Z-report buttons (closed shifts) and Close-shift buttons (open shifts)
         var btns = shiftEl.querySelectorAll('.posr-z-btn');
         for (var i = 0; i < btns.length; i++) {
           (function (btn) {
-            btn.addEventListener('click', function () {
-              openZModal(btn.dataset.shiftId, btn.dataset.staffName, btn.dataset.startedAt);
-            });
-            btn.addEventListener('keydown', function (e) {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
+            var isClose = btn.classList.contains('posr-close-shift-btn');
+            function act() {
+              if (isClose) {
+                closeShiftFlow(btn.dataset.shiftId, btn.dataset.staffName, btn.dataset.startedAt, sectionEl, rest);
+              } else {
                 openZModal(btn.dataset.shiftId, btn.dataset.staffName, btn.dataset.startedAt);
               }
+            }
+            btn.addEventListener('click', act);
+            btn.addEventListener('keydown', function (e) {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); }
             });
           })(btns[i]);
         }
@@ -1303,6 +1313,34 @@
           if (btn) btn.addEventListener('click', function () { loadShifts(sectionEl, rest); });
         }, 0);
       });
+  }
+
+  /* End-of-night from the back office: count the drawer, close the shift, get the Z. */
+  function closeShiftFlow(shiftId, staffName, startedAt, sectionEl, rest) {
+    var cashStr = window.prompt('Close ' + (staffName || 'this') + " shift\n\nCounted cash in drawer ($):", '');
+    if (cashStr === null) return; // cancelled
+    var closingCash = Math.round(parseFloat(cashStr || '0') * 100);
+    if (!isFinite(closingCash) || closingCash < 0) { window.alert('Enter a valid cash amount.'); return; }
+    var tipsStr = window.prompt('Declared cash tips ($) — optional:', '0');
+    if (tipsStr === null) return;
+    var declaredTips = Math.round(parseFloat(tipsStr || '0') * 100);
+    if (!isFinite(declaredTips) || declaredTips < 0) declaredTips = 0;
+
+    window.PLAT.client.rpc('pos_close_shift', {
+      p_shift:         shiftId,
+      p_closing_cash:  closingCash,
+      p_declared_tips: declaredTips,
+    }).then(function (r) {
+      if (r.error) {
+        window.alert('Could not close the shift: ' + (r.error.message || 'unknown error'));
+        return;
+      }
+      loadShifts(sectionEl, rest);                       // row flips to Closed
+      openZModal(shiftId, staffName, startedAt);          // straight into the Z-report
+    }).catch(function (err) {
+      console.error('[pos-reports] close shift error', err);
+      window.alert('Connection error — the shift was not closed.');
+    });
   }
 
   /* ==========================================================================
@@ -1444,6 +1482,20 @@
 
     // Close any stale Z-report modal from previous render
     closeZModal();
+
+    // Live X-report: auto-refresh every 30s while the section stays visible
+    if (_state.refreshTimer) clearInterval(_state.refreshTimer);
+    _state.refreshTimer = setInterval(function () {
+      if (!sectionEl.isConnected || sectionEl.style.display === 'none') {
+        clearInterval(_state.refreshTimer);
+        _state.refreshTimer = null;
+        return;
+      }
+      var rest = _state.restaurant;
+      if (!rest) return;
+      var kpiEl = sectionEl.querySelector('#posr-xrpt-kpi');
+      if (kpiEl) renderXReport(kpiEl, rest.id);
+    }, 30000);
 
     // If scaffold is already present, just reload data (don't rebuild DOM)
     if (sectionEl.querySelector('.posr-root')) {

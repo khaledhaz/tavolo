@@ -617,12 +617,13 @@
     var table = rTable.data;
 
     var rRest = await sb.from('mesa_restaurants')
-      .select('id,name,slug,brand_logo_url,brand_primary,brand_accent,currency,service_charge_pct,tip_presets')
+      .select('id,name,slug,brand_logo_url,brand_primary,brand_accent,currency,service_charge_pct,tax_pct,tip_presets')
       .eq('id', table.restaurant_id).maybeSingle();
     if (rRest.error) throw rRest.error;
     var rest = rRest.data;
     if (rest) {
       rest.service_charge_pct = parseFloat(rest.service_charge_pct) || 0;
+      rest.tax_pct = parseFloat(rest.tax_pct) || 0;
       if (typeof rest.tip_presets === 'string') {
         try { rest.tip_presets = JSON.parse(rest.tip_presets); } catch (e) { rest.tip_presets = null; }
       }
@@ -652,12 +653,20 @@
     return { table: table, restaurant: rest, session: session, items: items, server: server };
   }
 
-  function billMath(items, serviceChargePct) {
+  function billMath(items, serviceChargePct, taxPct) {
+    /* Mirrors pos_session_bill: total = items + tax + service. The QR flow used
+       to omit tax entirely, so QR and POS disagreed on the same items. */
     var subtotal = (items || []).reduce(function (s, it) {
       return s + it.unit_price_cents * it.qty;
     }, 0);
     var service = Math.round(subtotal * (Number(serviceChargePct || 0) / 100));
-    return { subtotal_cents: subtotal, service_cents: service, total_before_tip_cents: subtotal + service };
+    var tax     = Math.round(subtotal * (Number(taxPct || 0) / 100));
+    return {
+      subtotal_cents: subtotal,
+      service_cents: service,
+      tax_cents: tax,
+      total_before_tip_cents: subtotal + tax + service,
+    };
   }
 
   async function claimItem(itemId, label) {

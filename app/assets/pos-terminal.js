@@ -48,9 +48,13 @@
     paySplitMode: 'whole',
     paySplitCustomCents: 0,
     paySplitEvenWays: 2,
-    payTipPct:    18,
+    paySplitSeat: null,    /* seat key ('1','2','shared') for split-by-seat */
+    paySplitItemIds: {},   /* order_item_id → true (split-by-item selection) */
+    payPaidItemIds:  {},   /* order_item_id → true (covered by a prior split payment this session) */
+    payTipPct:    0,       /* m3: default to No tip (QR flow parity) */
     payTipCents:  0,
     payMethod:    'cash',
+    pendingDiscounts: [],  /* m2: check-level discounts held as {id,kind,value,…} until pay */
   };
 
   /* ---- PLAT helpers ---- */
@@ -203,6 +207,8 @@
         }
         var staff = r.data;
         state.staff = {id: staff.id, name: staff.name, role: staff.role};
+        /* M3b: survive a page refresh — sessionStorage so closing the tab still logs out */
+        try { sessionStorage.setItem('tavolo-pos-staff', JSON.stringify(state.staff)); } catch (e) {}
         buf = '';
         state.loginBuf = '';
         updateDisplay();
@@ -237,6 +243,7 @@
     state.staff = null;
     state.sessionId = null;
     state.orderId = null;
+    try { sessionStorage.removeItem('tavolo-pos-staff'); } catch (e) {}
     el('btn-mgr').classList.add('hidden');
     showScreen('screen-login');
   });
@@ -320,6 +327,8 @@
       state.orderType   = existingSession.order_type;
       state.guestCount  = existingSession.guest_count || 1;
       state.tabName     = existingSession.tab_name || '';
+      state.payPaidItemIds = {};
+      loadPendingDiscounts();
       buildSeatBar();
       showScreen('screen-order');
       loadMenuAndBill();
@@ -381,6 +390,8 @@
       state.tabName     = tabName || '';
       state.currentSeat = 1;
       state.currentCourse = 1;
+      state.payPaidItemIds = {};
+      loadPendingDiscounts();
       /* Expose for test cleanup */
       window.__pos_last_session = d.session_id;
       buildSeatBar();
@@ -414,6 +425,8 @@
         state.tabName     = sess.tab_name || tabName || '';
         state.currentSeat = 1;
         state.currentCourse = 1;
+        state.payPaidItemIds = {};
+        loadPendingDiscounts();
         window.__pos_last_session = sess.id;
         buildSeatBar();
         showScreen('screen-order');
@@ -865,6 +878,92 @@
   });
 
   /* ============================================================
+     PENDING DISCOUNTS (m2)
+     pos_applied_discounts rows freeze amount_cents at apply time and the
+     anon client has no UPDATE/DELETE path (RLS is SELECT-only; re-applying
+     the RPC stacks a second row). So check-level discounts are held
+     client-side as {id, kind, value} and recomputed from the CURRENT bill
+     on every render; they are persisted via pos_apply_discount (which
+     computes from the live subtotal server-side) only when Pay is opened
+     and the check is final.
+     ============================================================ */
+  function pendingDiscKey() { return 'tavolo-pos-pending-disc:' + state.sessionId; }
+
+  function savePendingDiscounts() {
+    if (!state.sessionId) return;
+    try {
+      if (state.pendingDiscounts && state.pendingDiscounts.length) {
+        sessionStorage.setItem(pendingDiscKey(), JSON.stringify(state.pendingDiscounts));
+      } else {
+        sessionStorage.removeItem(pendingDiscKey());
+      }
+    } catch (e) {}
+  }
+
+  function loadPendingDiscounts() {
+    state.pendingDiscounts = [];
+    if (!state.sessionId) return;
+    try {
+      state.pendingDiscounts = JSON.parse(sessionStorage.getItem(pendingDiscKey()) || '[]') || [];
+    } catch (e) { state.pendingDiscounts = []; }
+  }
+
+  function pendingDiscCents(bill) {
+    var sub = (bill && bill.subtotal_cents) || 0;
+    var total = 0;
+    (state.pendingDiscounts || []).forEach(function(d) {
+      if (d.kind === 'percent' || d.kind === 'pct') {
+        total += Math.round(sub * Number(d.value) / 100);
+      } else {
+        /* 'amount' — server treats value as cents, capped at subtotal */
+        total += Math.min(Math.round(Number(d.value)), sub);
+      }
+    });
+    return Math.min(total, sub);
+  }
+
+  /* Overlay pending discounts on the server bill, recomputing tax/service/
+     total with the same rounding the server uses (ROUND on the discounted base). */
+  function effectiveBill(raw) {
+    if (!raw) return raw;
+    var pend = pendingDiscCents(raw);
+    if (!pend) return raw;
+    var b = Object.assign({}, raw);
+    b.discounts_cents = (raw.discounts_cents || 0) + pend;
+    var base = Math.max((raw.subtotal_cents || 0) - b.discounts_cents, 0);
+    b.tax_cents = raw.tax_pct != null ? Math.round(base * raw.tax_pct / 100) : (raw.tax_cents || 0);
+    b.service_charge_cents = raw.service_pct != null ? Math.round(base * raw.service_pct / 100) : (raw.service_charge_cents || 0);
+    b.total_cents = base + b.tax_cents + b.service_charge_cents;
+    b.remaining_cents = Math.max(b.total_cents - (raw.paid_cents || 0), 0);
+    return b;
+  }
+
+  /* Persist held discounts through the RPC (server recomputes from the live
+     subtotal) — called when the check is finalised for payment. */
+  function persistPendingDiscounts() {
+    var pend = (state.pendingDiscounts || []).slice();
+    if (!pend.length) return Promise.resolve();
+    var chain = Promise.resolve();
+    pend.forEach(function(d) {
+      chain = chain.then(function() {
+        return sb.rpc('pos_apply_discount', {
+          p_session:    state.sessionId,
+          p_order_item: null,
+          p_discount:   d.id,
+          p_staff:      d.staffId || (state.staff && state.staff.id),
+          p_reason:     d.reason || d.name,
+        }).then(function(r) {
+          if (r.error) toast(d.name + ' could not be applied', 'error');
+        });
+      });
+    });
+    return chain.then(function() {
+      state.pendingDiscounts = [];
+      savePendingDiscounts();
+    });
+  }
+
+  /* ============================================================
      BILL / TICKET
      ============================================================ */
   function refreshBill() {
@@ -966,15 +1065,17 @@
           : '';
         var noteStr   = item.notes || '';
         var hasNote   = noteStr.length > 0;
-        var canRemove = item.kitchen_status === 'new';
+        /* n3: items covered by a split payment are marked and locked */
+        var isPaid    = !!(state.payPaidItemIds && state.payPaidItemIds[item.id]);
+        var canRemove = item.kitchen_status === 'new' && !isPaid;
         var noteBtnCls = 'ti-note-btn' + (hasNote ? ' has-note' : '');
         var noteBtnLabel = hasNote ? 'Edit note' : 'Add note';
         /* pencil svg */
         var pencilSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
         html += [
-          '<div class="ticket-item-row" data-item-id="' + localEsc(item.id) + '" role="listitem">',
+          '<div class="ticket-item-row' + (isPaid ? ' is-paid' : '') + '" data-item-id="' + localEsc(item.id) + '" role="listitem">',
             '<div style="flex:1;min-width:0;">',
-              '<div class="ti-name">' + localEsc(item.qty + '× ' + item.name) + '</div>',
+              '<div class="ti-name">' + localEsc(item.qty + '× ' + item.name) + (isPaid ? ' <span class="ti-paid-tag">paid</span>' : '') + '</div>',
               modsStr ? '<div class="ti-mods">' + localEsc(modsStr) + '</div>' : '',
               hasNote ? '<div class="ti-note">' + localEsc(noteStr) + '</div>' : '',
             '</div>',
@@ -1024,7 +1125,9 @@
   }
 
   function updateTotals() {
-    var bill = state.bill;
+    /* m2: overlay pending (client-held) discounts so percent discounts always
+       reflect the current subtotal */
+    var bill = effectiveBill(state.bill);
     if (!bill) {
       el('tot-subtotal').textContent = localMoney(0);
       el('tot-discounts-row').classList.add('hidden');
@@ -1082,27 +1185,54 @@
      TICKET ACTIONS
      ============================================================ */
 
-  /* Fire course */
   /* Close/cancel the current order. Empty (total 0) → pos_cancel_session frees the
-     table; with items → leave it open (resumable) and return home. (Fixes stuck-table bug.) */
+     table; with items → leave it open (resumable) and return home.
+     M3a: the old handler had no .catch (a failed bill fetch hung silently), no
+     re-entry guard, and a blocking window.confirm that froze the page under
+     automation. Every path below restores the button and never blocks. */
+  var closeOrderBusy = false;
   el('btn-close-order').addEventListener('click', function() {
-    var bill = state.payBill || {};
-    var total = bill.total_cents != null ? bill.total_cents : null;
-    var refresh = sb.rpc('pos_session_bill', { p_session: state.sessionId });
-    refresh.then(function(r) {
-      var t = (r.data && r.data.total_cents != null) ? r.data.total_cents : (total || 0);
+    if (closeOrderBusy) return;
+    var btn = el('btn-close-order');
+    if (!state.sessionId) {
+      /* Nothing to close — just return to the floor */
+      showScreen('screen-home'); loadHomeData();
+      return;
+    }
+    closeOrderBusy = true;
+    btn.disabled = true;
+    btn.textContent = 'Closing…';
+    function closeDone() {
+      closeOrderBusy = false;
+      btn.disabled = false;
+      btn.textContent = 'Close';
+    }
+    sb.rpc('pos_session_bill', { p_session: state.sessionId }).then(function(r) {
+      if (r.error || !r.data) {
+        closeDone();
+        toast('Could not check order — try again', 'error');
+        return;
+      }
+      var t = r.data.total_cents || 0;
       if (t <= 0) {
-        sb.rpc('pos_cancel_session', { p_session: state.sessionId }).then(function(cr) {
+        return sb.rpc('pos_cancel_session', { p_session: state.sessionId }).then(function(cr) {
+          closeDone();
           if (cr.error) { toast('Could not close order', 'error'); return; }
-          toast('Empty order closed', 'ok');
+          toast('Empty order closed', 'success');
+          try { sessionStorage.removeItem(pendingDiscKey()); } catch (e) {}
           state.sessionId = null;
+          state.pendingDiscounts = [];
           showScreen('screen-home'); loadHomeData();
         });
-      } else {
-        if (window.confirm('Leave this order open? It will stay on the floor and you can resume it later.')) {
-          showScreen('screen-home'); loadHomeData();
-        }
       }
+      /* Items on the ticket — leave the order open on the floor (non-blocking) */
+      closeDone();
+      toast('Order left open — resume it from the floor', 'success');
+      showScreen('screen-home'); loadHomeData();
+    }).catch(function(err) {
+      console.error('[POS] close order error', err);
+      closeDone();
+      toast('Connection error — try again', 'error');
     });
   });
 
@@ -1125,11 +1255,27 @@
     });
   });
 
-  /* Pay button */
+  /* Pay button — m2: persist held discounts first (server recomputes them from
+     the live subtotal), then open payment on a fresh bill */
   el('btn-pay').addEventListener('click', function() {
     if (!state.sessionId || !state.bill) { toast('No active ticket', 'error'); return; }
-    state.payBill = state.bill;
-    openPaymentScreen();
+    var btn = el('btn-pay');
+    btn.disabled = true;
+    persistPendingDiscounts().then(function() {
+      return sb.rpc('pos_session_bill', { p_session: state.sessionId });
+    }).then(function(r) {
+      btn.disabled = false;
+      if (r.error || !r.data) { toast('Could not load bill', 'error'); return; }
+      state.bill    = r.data;
+      state.payBill = r.data;
+      renderTicket();
+      updateTotals();
+      openPaymentScreen();
+    }).catch(function(err) {
+      console.error('[POS] open payment error', err);
+      btn.disabled = false;
+      toast('Connection error', 'error');
+    });
   });
 
   /* Discount */
@@ -1191,7 +1337,10 @@
       btn.type = 'button';
       btn.className = 'discount-option';
       btn.setAttribute('role','listitem');
-      var valStr = disc.kind === 'pct' ? disc.value + '%' : localMoney(disc.value * 100);
+      /* m1: DB kind is 'percent' (the old 'pct' check never matched, so 15%
+         rendered as $15.00); 'amount' values are cents (see pos_apply_discount). */
+      var isPct  = disc.kind === 'percent' || disc.kind === 'pct';
+      var valStr = isPct ? Number(disc.value) + '%' : localMoney(Math.round(Number(disc.value)));
       var mgrTag = disc.requires_manager ? '<span class="disc-mgr">Mgr</span>' : '';
       btn.innerHTML = [
         '<span>' + localEsc(disc.name) + '</span>',
@@ -1215,20 +1364,36 @@
 
   function applyDiscount(disc) {
     var doApply = function(staffId) {
-      sb.rpc('pos_apply_discount', {
-        p_session:    state.sessionId,
-        p_order_item: null,
-        p_discount:   disc.id,
-        p_staff:      staffId,
-        p_reason:     disc.name,
-      }).then(function(r) {
-        if (r.error) { toast(r.error.message || 'Discount failed', 'error'); return; }
-        toast(disc.name + ' applied', 'success');
-        refreshBill();
-      }).catch(function(err) {
-        console.error('[POS] discount error', err);
-        toast('Connection error', 'error');
+      if (disc.scope === 'item') {
+        /* Item-scope discounts go straight to the RPC (server validates) */
+        sb.rpc('pos_apply_discount', {
+          p_session:    state.sessionId,
+          p_order_item: null,
+          p_discount:   disc.id,
+          p_staff:      staffId,
+          p_reason:     disc.name,
+        }).then(function(r) {
+          if (r.error) { toast(r.error.message || 'Discount failed', 'error'); return; }
+          toast(disc.name + ' applied', 'success');
+          refreshBill();
+        }).catch(function(err) {
+          console.error('[POS] discount error', err);
+          toast('Connection error', 'error');
+        });
+        return;
+      }
+      /* m2: hold check-level discounts client-side so percent values track the
+         CURRENT subtotal (voids, qty changes); persisted when Pay is opened. */
+      state.pendingDiscounts = state.pendingDiscounts || [];
+      var dup = state.pendingDiscounts.some(function(p) { return p.id === disc.id; });
+      if (dup) { toast(disc.name + ' is already on this check', 'error'); return; }
+      state.pendingDiscounts.push({
+        id: disc.id, kind: disc.kind, value: disc.value,
+        name: disc.name, staffId: staffId, reason: disc.name,
       });
+      savePendingDiscounts();
+      toast(disc.name + ' applied', 'success');
+      updateTotals();
     };
 
     if (disc.requires_manager) {
@@ -1326,18 +1491,21 @@
     showScreen('screen-payment');
     var bill = state.payBill;
 
-    /* Reset state */
+    /* Reset state (payPaidItemIds intentionally survives — it tracks split
+       coverage across multiple payments on the same check) */
     state.paySplitMode     = 'whole';
     state.paySplitCustomCents = 0;
     state.paySplitEvenWays = 2;
     state.paySplitItemIds  = {};
-    state.payTipPct        = 18;
+    state.paySplitSeat     = null;
+    state.payTipPct        = 0;   /* m3: default No tip */
     state.payMethod        = 'cash';
     el('split-item-wrap').classList.add('hidden');
+    el('split-seat-wrap').classList.add('hidden');
 
     /* Mark split/tip UI */
     qsa('.split-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.split === 'whole'); });
-    qsa('.tip-btn').forEach(function(b)   { b.classList.toggle('active', b.dataset.tip === '18'); });
+    qsa('.tip-btn').forEach(function(b)   { b.classList.toggle('active', b.dataset.tip === '0'); });
     el('split-custom-wrap').classList.add('hidden');
     el('split-even-wrap').classList.add('hidden');
     el('tip-custom-wrap').classList.add('hidden');
@@ -1361,33 +1529,125 @@
       el('split-custom-wrap').classList.toggle('hidden', state.paySplitMode !== 'custom');
       el('split-even-wrap').classList.toggle('hidden', state.paySplitMode !== 'even');
       el('split-item-wrap').classList.toggle('hidden', state.paySplitMode !== 'item');
+      el('split-seat-wrap').classList.toggle('hidden', state.paySplitMode !== 'seat');
       if (state.paySplitMode === 'item') renderSplitItems();
+      if (state.paySplitMode === 'seat') renderSplitSeats();
       updatePaymentAmounts();
     });
   });
 
-  /* Split-by-item: render the bill's unpaid line items as toggleable rows */
+  /* ---- Split helpers (M2/M4/n3) ---- */
+  function seatKeyOf(it) { return it.seat == null ? 'shared' : String(it.seat); }
+
+  function isItemPaid(id) { return !!(state.payPaidItemIds && state.payPaidItemIds[id]); }
+
+  function seatItemsOf(seatKey) {
+    var bill = state.payBill;
+    return ((bill && bill.items) || []).filter(function(it) {
+      return !it.voided && seatKeyOf(it) === String(seatKey);
+    });
+  }
+
+  function seatUnpaidCents(seatKey) {
+    var sum = 0;
+    seatItemsOf(seatKey).forEach(function(it) {
+      if (!isItemPaid(it.id)) sum += (it.line_total_cents || 0);
+    });
+    return sum;
+  }
+
+  function selectedItemsCents() {
+    var bill = state.payBill;
+    var sel  = state.paySplitItemIds || {};
+    var sum  = 0;
+    ((bill && bill.items) || []).forEach(function(it) {
+      if (sel[it.id] && !it.voided && !isItemPaid(it.id)) sum += (it.line_total_cents || 0);
+    });
+    return sum;
+  }
+
+  /* Split-by-item: render the bill's line items as toggleable rows;
+     items already covered by a split payment are dimmed + tagged (n3) */
   function renderSplitItems() {
     var bill = state.payBill;
     var listEl = el('split-item-list');
     if (!bill || !bill.items || !bill.items.length) { listEl.innerHTML = '<div style="font-size:13px;color:rgba(255,255,255,0.45);">No items to split.</div>'; return; }
     state.paySplitItemIds = state.paySplitItemIds || {};
     listEl.innerHTML = bill.items.filter(function(it){ return !it.voided; }).map(function(it) {
-      var on = !!state.paySplitItemIds[it.id];
-      return '<button type="button" class="split-item-row" data-item-id="' + esc(it.id) + '"'
+      var paid = isItemPaid(it.id);
+      var on   = !paid && !!state.paySplitItemIds[it.id];
+      return '<button type="button" class="split-item-row" data-item-id="' + localEsc(it.id) + '"'
+        + (paid ? ' disabled' : '')
         + ' aria-pressed="' + on + '" style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:10px;'
-        + 'padding:10px 12px;margin-bottom:6px;border-radius:8px;min-height:44px;cursor:pointer;text-align:left;'
+        + 'padding:10px 12px;margin-bottom:6px;border-radius:8px;min-height:44px;text-align:left;'
+        + 'cursor:' + (paid ? 'default' : 'pointer') + ';opacity:' + (paid ? '0.45' : '1') + ';'
         + 'border:1px solid ' + (on ? '#c2703d' : 'rgba(255,255,255,0.12)') + ';'
         + 'background:' + (on ? 'rgba(194,112,61,0.18)' : 'rgba(255,255,255,0.04)') + ';color:#fff;">'
-        + '<span>' + (on ? '✓ ' : '') + esc(it.qty + '× ' + it.name) + '</span>'
-        + '<span style="font-variant-numeric:tabular-nums;">' + money(it.line_total_cents) + '</span>'
+        + '<span>' + (on ? '✓ ' : '') + localEsc(it.qty + '× ' + it.name)
+        + (paid ? ' <span class="ti-paid-tag">paid</span>' : '') + '</span>'
+        + '<span style="font-variant-numeric:tabular-nums;">' + localMoney(it.line_total_cents) + '</span>'
         + '</button>';
     }).join('');
-    qsa('#split-item-list .split-item-row').forEach(function(row) {
+    qsa('#split-item-list .split-item-row:not([disabled])').forEach(function(row) {
       row.addEventListener('click', function() {
         var id = row.dataset.itemId;
         if (state.paySplitItemIds[id]) delete state.paySplitItemIds[id]; else state.paySplitItemIds[id] = true;
         renderSplitItems();
+        updatePaymentAmounts();
+      });
+    });
+  }
+
+  /* M2: split-by-seat — one button per distinct seat on the check (plus
+     "Shared" for items without a seat); tapping a seat charges that seat's
+     items, mirroring the by-item flow. */
+  function renderSplitSeats() {
+    var bill = state.payBill;
+    var listEl = el('split-seat-list');
+    var items = ((bill && bill.items) || []).filter(function(it) { return !it.voided; });
+    if (!items.length) { listEl.innerHTML = '<div style="font-size:13px;color:rgba(255,255,255,0.45);">No items to split.</div>'; return; }
+
+    var seen = {}, seats = [];
+    items.forEach(function(it) {
+      var k = seatKeyOf(it);
+      if (!seen[k]) { seen[k] = true; seats.push(k); }
+    });
+    seats.sort(function(a, b) {
+      if (a === 'shared') return 1;
+      if (b === 'shared') return -1;
+      return Number(a) - Number(b);
+    });
+
+    /* Default to the first seat that still has something to pay */
+    var sel = state.paySplitSeat != null ? String(state.paySplitSeat) : null;
+    if (!sel || !seen[sel] || seatUnpaidCents(sel) <= 0) {
+      state.paySplitSeat = null;
+      for (var i = 0; i < seats.length; i++) {
+        if (seatUnpaidCents(seats[i]) > 0) { state.paySplitSeat = seats[i]; break; }
+      }
+    }
+
+    listEl.innerHTML = seats.map(function(k) {
+      var label  = k === 'shared' ? 'Shared' : 'Seat ' + k;
+      var unpaid = seatUnpaidCents(k);
+      var paid   = unpaid <= 0;
+      var on     = !paid && String(state.paySplitSeat) === String(k);
+      return '<button type="button" class="split-seat-btn" data-seat="' + localEsc(k) + '"'
+        + (paid ? ' disabled' : '')
+        + ' aria-pressed="' + on + '" style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:10px;'
+        + 'padding:10px 12px;margin-bottom:6px;border-radius:8px;min-height:44px;text-align:left;'
+        + 'cursor:' + (paid ? 'default' : 'pointer') + ';opacity:' + (paid ? '0.45' : '1') + ';'
+        + 'border:1px solid ' + (on ? '#c2703d' : 'rgba(255,255,255,0.12)') + ';'
+        + 'background:' + (on ? 'rgba(194,112,61,0.18)' : 'rgba(255,255,255,0.04)') + ';color:#fff;">'
+        + '<span>' + (on ? '✓ ' : '') + localEsc(label)
+        + (paid ? ' <span class="ti-paid-tag">paid</span>' : '') + '</span>'
+        + '<span style="font-variant-numeric:tabular-nums;">' + localMoney(unpaid) + '</span>'
+        + '</button>';
+    }).join('');
+    qsa('#split-seat-list .split-seat-btn:not([disabled])').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        state.paySplitSeat = btn.dataset.seat;
+        renderSplitSeats();
         updatePaymentAmounts();
       });
     });
@@ -1438,30 +1698,60 @@
     updateCashChange();
   });
 
-  function computeChargeAmount() {
+  /* M4: a split payment covering items worth X out of the check's item
+     subtotal S owes X − disc·(X/S) + tax·(X/S) + service·(X/S), rounded to
+     the cent; the last payer absorbs the ±1-2¢ residue via remaining_cents. */
+  function apportionBreakdown(itemsCents) {
     var bill = state.payBill;
-    if (!bill) return 0;
-    var remaining = bill.remaining_cents != null ? bill.remaining_cents : bill.total_cents;
+    var S = (bill && bill.subtotal_cents) || 0;
+    var remaining = bill && bill.remaining_cents != null ? bill.remaining_cents : ((bill && bill.total_cents) || 0);
+    if (S <= 0 || itemsCents <= 0) return { sub: 0, disc: 0, tax: 0, svc: 0, charge: 0 };
+    var f    = itemsCents / S;
+    var disc = Math.round((bill.discounts_cents || 0) * f);
+    var tax  = Math.round((bill.tax_cents || 0) * f);
+    var svc  = Math.round((bill.service_charge_cents || 0) * f);
+    return { sub: itemsCents, disc: disc, tax: tax, svc: svc,
+             charge: Math.min(itemsCents - disc + tax + svc, remaining) };
+  }
+
+  /* Charge + the tax/service/discount shares belonging to THIS payment —
+     the charge panel shows these, not the whole check's (M4). */
+  function computeChargeBreakdown() {
+    var bill = state.payBill;
+    if (!bill) return { sub: 0, disc: 0, tax: 0, svc: 0, charge: 0 };
+    var remaining = bill.remaining_cents != null ? bill.remaining_cents : (bill.total_cents || 0);
+    var whole = {
+      sub:  bill.subtotal_cents || 0,
+      disc: bill.discounts_cents || 0,
+      tax:  bill.tax_cents || 0,
+      svc:  bill.service_charge_cents || 0,
+      charge: remaining,
+    };
 
     switch (state.paySplitMode) {
-      case 'whole':  return remaining;
-      case 'custom': return Math.min(state.paySplitCustomCents, remaining);
-      case 'even':   return Math.ceil(remaining / Math.max(state.paySplitEvenWays, 2));
+      case 'whole':  return whole;
+      case 'custom':
+        whole.charge = Math.min(state.paySplitCustomCents, remaining);
+        return whole;
+      case 'even': {
+        /* charge already divides the grand total (incl. tax+service); the
+           panel rows show this share's portion and sum exactly to the charge */
+        var ways   = Math.max(state.paySplitEvenWays, 2);
+        var charge = Math.ceil(remaining / ways);
+        var disc   = Math.round((bill.discounts_cents || 0) / ways);
+        var tax    = Math.round((bill.tax_cents || 0) / ways);
+        var svc    = Math.round((bill.service_charge_cents || 0) / ways);
+        return { sub: charge - tax - svc + disc, disc: disc, tax: tax, svc: svc, charge: charge };
+      }
       case 'seat':
-        /* sum items for current seat */
-        if (bill.by_seat && state.currentSeat && bill.by_seat[state.currentSeat]) {
-          return bill.by_seat[state.currentSeat].subtotal_cents || 0;
-        }
-        return remaining;
+        return apportionBreakdown(state.paySplitSeat != null ? seatUnpaidCents(state.paySplitSeat) : 0);
       case 'item':
-        /* sum the selected line items (capped at remaining) */
-        var sel = state.paySplitItemIds || {};
-        var sum = 0;
-        (bill.items || []).forEach(function(it) { if (sel[it.id] && !it.voided) sum += (it.line_total_cents || 0); });
-        return Math.min(sum, remaining);
-      default: return remaining;
+        return apportionBreakdown(selectedItemsCents());
+      default: return whole;
     }
   }
+
+  function computeChargeAmount() { return computeChargeBreakdown().charge; }
 
   function computeTipCents(chargeSubtotal) {
     if (state.payTipPct === 0) return 0;
@@ -1478,40 +1768,38 @@
     var bill = state.payBill;
     if (!bill) return;
 
-    var chargeSub  = computeChargeAmount();
-    var tipCents   = computeTipCents(chargeSub);
-    var total      = chargeSub + tipCents;
+    /* M4: panel rows show THIS payment's share of tax/service/discounts */
+    var bd         = computeChargeBreakdown();
+    var tipCents   = computeTipCents(bd.charge);
+    var total      = bd.charge + tipCents;
     state.payTipCents = tipCents;
 
-    el('pay-sub').textContent = localMoney(bill.subtotal_cents || 0);
+    el('pay-sub').textContent = localMoney(bd.sub);
 
     /* Discounts */
-    var payDiscCents = bill.discounts_cents || 0;
-    if (payDiscCents > 0) {
+    if (bd.disc > 0) {
       el('pay-discounts-row').classList.remove('hidden');
-      el('pay-discounts').textContent = '−' + localMoney(payDiscCents);
+      el('pay-discounts').textContent = '−' + localMoney(bd.disc);
     } else {
       el('pay-discounts-row').classList.add('hidden');
     }
 
     /* Tax */
-    var payTaxCents = bill.tax_cents || 0;
-    var payTaxPct   = bill.tax_pct   != null ? bill.tax_pct : null;
-    if (payTaxCents > 0) {
+    var payTaxPct = bill.tax_pct != null ? bill.tax_pct : null;
+    if (bd.tax > 0) {
       el('pay-tax-row').classList.remove('hidden');
       el('pay-tax-label').textContent = payTaxPct != null ? 'Tax (' + payTaxPct + '%)' : 'Tax';
-      el('pay-tax').textContent = localMoney(payTaxCents);
+      el('pay-tax').textContent = localMoney(bd.tax);
     } else {
       el('pay-tax-row').classList.add('hidden');
     }
 
     /* Service charge */
-    var paySvcCents = bill.service_charge_cents || 0;
-    var paySvcPct   = bill.service_pct != null ? bill.service_pct : null;
-    if (paySvcCents > 0) {
+    var paySvcPct = bill.service_pct != null ? bill.service_pct : null;
+    if (bd.svc > 0) {
       el('pay-service-row').classList.remove('hidden');
       el('pay-service-label').textContent = paySvcPct != null ? 'Service charge (' + paySvcPct + '%)' : 'Service charge';
-      el('pay-service').textContent = localMoney(paySvcCents);
+      el('pay-service').textContent = localMoney(bd.svc);
     } else {
       el('pay-service-row').classList.add('hidden');
     }
@@ -1544,6 +1832,20 @@
     var tipCents       = state.payTipCents || 0;
     var chargeTotal    = chargeSubtotal + tipCents;
     var method         = state.payMethod;
+
+    if (chargeSubtotal <= 0) {
+      toast(state.paySplitMode === 'item' ? 'Select the items to pay for first' : 'Nothing to charge', 'error');
+      return;
+    }
+
+    /* n3: remember which items this split payment covers so they can be
+       marked paid in the lists (the backend has no per-item coverage) */
+    var coveredIds = [];
+    if (state.paySplitMode === 'item') {
+      coveredIds = Object.keys(state.paySplitItemIds || {}).filter(function(id) { return !isItemPaid(id); });
+    } else if (state.paySplitMode === 'seat' && state.paySplitSeat != null) {
+      coveredIds = seatItemsOf(state.paySplitSeat).map(function(it) { return it.id; });
+    }
 
     /* Validate cash received */
     if (method === 'cash') {
@@ -1579,6 +1881,11 @@
         btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Process Payment';
 
         if (r.error) { toast(r.error.message || 'Payment failed', 'error'); return; }
+
+        /* n3: mark covered items paid for the rest of this check */
+        coveredIds.forEach(function(id) { state.payPaidItemIds[id] = true; });
+        if (state.paySplitMode === 'item') state.paySplitItemIds = {};
+
         var change = r.data && r.data.change_cents ? r.data.change_cents : 0;
 
         if (change > 0) {
@@ -1785,7 +2092,15 @@
     updateClock();
     setInterval(updateClock, 30000);
     setupLogin();
-    showScreen('screen-login');
+    /* M3b: restore staff from sessionStorage so a reload doesn't force re-login */
+    var savedStaff = null;
+    try { savedStaff = JSON.parse(sessionStorage.getItem('tavolo-pos-staff') || 'null'); } catch (e) { savedStaff = null; }
+    if (savedStaff && savedStaff.id && savedStaff.name) {
+      state.staff = savedStaff;
+      onLoginSuccess();
+    } else {
+      showScreen('screen-login');
+    }
   }
 
   if (window.PLAT) {

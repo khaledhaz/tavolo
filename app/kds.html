@@ -447,6 +447,14 @@ body {
   background: rgba(99,179,237,0.08);
   color: #63b3ed;
 }
+/* Start (sent→preparing) — amber, the cook's first action on a fresh ticket */
+.ticket__start-all {
+  border-color: rgba(240,181,29,0.5);
+  background: rgba(240,181,29,0.08);
+  color: #f0b51d;
+}
+.ticket__start-all:hover { background: rgba(240,181,29,0.16); }
+.ticket__start-all:focus-visible { outline: 2px solid #f0b51d; outline-offset: 2px; }
 
 /* ---- Status labels in footer ---- */
 .ticket__status-summary {
@@ -1196,6 +1204,13 @@ body {
         itemsHTML,
       '</div>',
       '<footer class="ticket__footer">',
+        /* Cook flow: Start (sent→preparing) appears while un-started items exist */
+        (counts.sent > 0
+          ? '<button class="ticket__bump-all ticket__start-all" type="button" data-action="start-all"' +
+            '  aria-label="Start cooking all new items for ' + esc(ticket.table_label) + '">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20"/></svg> Start' +
+            '</button>'
+          : ''),
         '<button class="ticket__bump-all" type="button"',
         '  data-state="' + (allReady ? 'all-ready' : 'bump-all') + '"',
         '  aria-label="' + (allReady ? 'Mark all items as served for ' + esc(ticket.table_label) : 'Mark all items as ready for ' + esc(ticket.table_label)) + '">',
@@ -1258,20 +1273,20 @@ body {
       });
     });
 
-    /* Bump all button */
-    var bumpAllBtn = card.querySelector('.ticket__bump-all');
-    if (bumpAllBtn) {
-      var fresh = bumpAllBtn.cloneNode(true);
-      bumpAllBtn.parentNode.replaceChild(fresh, bumpAllBtn);
+    /* Footer buttons: Start (sent→preparing) and Bump-all/Served */
+    card.querySelectorAll('.ticket__bump-all').forEach(function(btn) {
+      var fresh = btn.cloneNode(true);
+      btn.parentNode.replaceChild(fresh, btn);
       fresh.addEventListener('click', function() {
-        var state = fresh.dataset.state;
-        if (state === 'all-ready') {
+        if (fresh.dataset.action === 'start-all') {
+          bumpAllItems(ticket.session_id, 'sent', 'preparing');
+        } else if (fresh.dataset.state === 'all-ready') {
           bumpAllItems(ticket.session_id, 'ready', 'served');
         } else {
           bumpAllItems(ticket.session_id, ['sent','preparing'], 'ready');
         }
       });
-    }
+    });
   }
 
   /* ---- Status progression ---- */

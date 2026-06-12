@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 48" width="300" height="48" fill="none" role="img" aria-label="The Copper Table">
+  <!-- table mark -->
+  <g stroke="#c2703d" stroke-width="3" stroke-linecap="round">
+    <line x1="8"  y1="16" x2="36" y2="16"/>
+    <line x1="13" y1="16" x2="13" y2="36"/>
+    <line x1="31" y1="16" x2="31" y2="36"/>
+    <line x1="13" y1="28" x2="31" y2="28" stroke-width="2" opacity="0.55"/>
+  </g>
+  <text x="46" y="23" font-family="Georgia, 'Times New Roman', serif" font-size="13" font-weight="500" letter-spacing="0.18em" fill="#c2703d">THE</text>
+  <text x="46" y="41" font-family="Georgia, 'Times New Roman', serif" font-size="20" font-weight="600" letter-spacing="0.02em" fill="#2C1810">Copper Table</text>
+</svg>
