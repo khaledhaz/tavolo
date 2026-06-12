@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<title>POS Terminal — Tavolo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2703d'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23fff'%3ET%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+/* ============================================================
+   POS Terminal — Midnight & Copper
+   Touch-optimised: 44px+ targets, dark high-contrast
+   ============================================================ */
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: #0a0c10;
+  color: #f0eff2;
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input  { font-family: inherit; }
+
+/* ---- Screen switching ---- */
+.pos-screen { display: none !important; }
+.pos-screen.active { display: flex !important; }
+
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+#screen-login {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  background: #0a0c10;
+  padding: 24px;
+  gap: 0;
+}
+
+.login-card {
+  background: #13161d;
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 20px;
+  padding: 40px 36px 36px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.login-logo-mark {
+  width: 60px; height: 60px;
+  background: #c2703d;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.login-logo h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #f0eff2;
+  letter-spacing: -0.03em;
+}
+.login-logo p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  text-align: center;
+}
+
+.login-display {
+  width: 100%;
+  background: rgba(0,0,0,0.35);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.25em;
+  color: #f0eff2;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 150ms;
+}
+.login-display.error {
+  border-color: rgba(240,82,82,0.6);
+  color: #fc8181;
+  animation: shake 0.35s ease;
+}
+@keyframes shake {
+  0%,100%{ transform:translateX(0); }
+  20%    { transform:translateX(-6px); }
+  40%    { transform:translateX(6px); }
+  60%    { transform:translateX(-4px); }
+  80%    { transform:translateX(4px); }
+}
+
+.login-numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.np-btn {
+  min-height: 60px;
+  border-radius: 12px;
+  font-size: 22px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.09);
+  color: #f0eff2;
+  transition: background 100ms, transform 80ms, border-color 100ms;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.np-btn:hover  { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.18); }
+.np-btn:active { background: rgba(255,255,255,0.18); transform: scale(0.95); }
+.np-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+.np-btn.np-0   { grid-column: span 2; }
+.np-btn.np-del {
+  background: rgba(194,112,61,0.12);
+  border-color: rgba(194,112,61,0.25);
+  color: #c2703d;
+  font-size: 18px;
+}
+.np-btn.np-del:hover { background: rgba(194,112,61,0.22); }
+
+.login-submit {
+  width: 100%;
+  min-height: 56px;
+  border-radius: 14px;
+  background: #c2703d;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: none;
+  transition: background 150ms, transform 80ms, opacity 150ms;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.login-submit:hover:not(:disabled)  { background: #d4804d; }
+.login-submit:active:not(:disabled) { transform: scale(0.98); }
+.login-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+.login-submit:focus-visible { outline: 2px solid #f0b51d; outline-offset: 3px; }
+
+.login-error {
+  font-size: 13px;
+  color: #fc8181;
+  text-align: center;
+  min-height: 18px;
+}
+
+/* ============================================================
+   POS SHELL (home/order/payment/manager)
+   ============================================================ */
+#pos-shell {
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ---- Top bar ---- */
+#pos-topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 16px;
+  background: #13161d;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  gap: 12px;
+  z-index: 200;
+}
+
+.pos-logo {
+  display: flex; align-items: center; gap: 8px;
+  color: #c2703d; font-size: 17px; font-weight: 800;
+  letter-spacing: -0.03em; flex-shrink: 0;
+  text-decoration: none;
+}
+.pos-topbar-sep {
+  width: 1px; height: 20px;
+  background: rgba(255,255,255,0.12);
+  flex-shrink: 0;
+}
+#pos-staff-name {
+  font-size: 13px; font-weight: 600;
+  color: rgba(255,255,255,0.65);
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+#pos-staff-role {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: #f0b51d;
+  flex-shrink: 0;
+}
+.pos-topbar-flex { flex: 1; }
+#pos-clock {
+  font-size: 14px; font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+#btn-logout {
+  min-height: 36px; padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.55);
+  font-size: 13px; font-weight: 600;
+  flex-shrink: 0;
+  transition: background 150ms, color 150ms;
+}
+#btn-logout:hover { background: rgba(255,255,255,0.10); color: #f0eff2; }
+#btn-logout:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* ============================================================
+   HOME SCREEN
+   ============================================================ */
+#screen-home {
+  flex-direction: column;
+  height: calc(100dvh - 56px);
+  overflow-y: auto;
+  background: #0d0f14;
+}
+
+.home-body {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.home-section-title {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 12px;
+}
+
+.home-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .home-action-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.home-action-btn {
+  min-height: 88px;
+  border-radius: 16px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  font-size: 14px; font-weight: 700;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: #13161d;
+  color: #f0eff2;
+  transition: background 150ms, border-color 150ms, transform 80ms;
+  padding: 12px;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.home-action-btn:hover  { background: #1a1e28; border-color: rgba(255,255,255,0.18); }
+.home-action-btn:active { transform: scale(0.97); }
+.home-action-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 3px; }
+.home-action-btn .btn-icon {
+  font-size: 28px; line-height: 1;
+}
+.home-action-btn.primary {
+  background: rgba(194,112,61,0.15);
+  border-color: rgba(194,112,61,0.4);
+  color: #e8905d;
+}
+.home-action-btn.primary:hover { background: rgba(194,112,61,0.22); }
+
+/* Table grid */
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px,1fr));
+  gap: 10px;
+}
+
+.table-btn {
+  min-height: 72px;
+  border-radius: 12px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px;
+  font-size: 16px; font-weight: 700;
+  border: 2px solid rgba(255,255,255,0.1);
+  background: #13161d;
+  color: #f0eff2;
+  transition: background 150ms, border-color 150ms, transform 80ms;
+  padding: 8px 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.table-btn:hover  { background: #1a1e28; border-color: rgba(255,255,255,0.2); }
+.table-btn:active { transform: scale(0.96); }
+.table-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+.table-btn .table-code { font-size: 18px; font-weight: 800; }
+.table-btn .table-seats { font-size: 11px; color: rgba(255,255,255,0.4); }
+.table-btn.occupied {
+  border-color: rgba(194,112,61,0.55);
+  background: rgba(194,112,61,0.12);
+}
+.table-btn.occupied .table-code { color: #e8905d; }
+.table-btn.occupied .table-meta { font-size: 11px; color: #c2703d; }
+
+.home-loading, .home-error, .home-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: rgba(255,255,255,0.4);
+  font-size: 14px;
+}
+.home-error { color: #fc8181; }
+
+/* ============================================================
+   ORDER SCREEN — two-column layout
+   ============================================================ */
+#screen-order {
+  flex-direction: row;
+  height: calc(100dvh - 56px);
+  overflow: hidden;
+}
+
+/* ---- Left: menu pane ---- */
+#order-menu-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  overflow: hidden;
+  background: #0d0f14;
+}
+
+/* Category tab bar */
+#order-cats {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #13161d;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+#order-cats::-webkit-scrollbar { display: none; }
+
+.cat-tab {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  transition: background 120ms, border-color 120ms, color 120ms;
+  white-space: nowrap;
+}
+.cat-tab:hover { background: rgba(255,255,255,0.10); color: #f0eff2; }
+.cat-tab.active {
+  background: rgba(194,112,61,0.18);
+  border-color: rgba(194,112,61,0.55);
+  color: #e8905d;
+}
+.cat-tab:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* Search bar */
+#order-search-wrap {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  background: #0d0f14;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+#order-search {
+  width: 100%;
+  min-height: 40px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 14px; color: #f0eff2;
+  outline: none;
+  transition: border-color 150ms;
+}
+#order-search::placeholder { color: rgba(255,255,255,0.3); }
+#order-search:focus { border-color: rgba(194,112,61,0.5); }
+
+/* Item grid */
+#order-items-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+  gap: 10px;
+  align-content: start;
+}
+#order-items-grid::-webkit-scrollbar { width: 5px; }
+#order-items-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+.item-card {
+  min-height: 88px;
+  border-radius: 14px;
+  padding: 12px 10px;
+  background: #13161d;
+  border: 1.5px solid rgba(255,255,255,0.08);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, transform 80ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.item-card:hover  { background: #1a1e28; border-color: rgba(255,255,255,0.16); }
+.item-card:active { transform: scale(0.97); }
+.item-card:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+.item-card.unavail { opacity: 0.4; cursor: not-allowed; }
+.item-card .item-name {
+  font-size: 13px; font-weight: 700;
+  color: #f0eff2; line-height: 1.3;
+  min-width: 0;
+}
+.item-card .item-price {
+  font-size: 14px; font-weight: 800;
+  color: #c2703d;
+  font-variant-numeric: tabular-nums;
+}
+.item-card .item-cat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Category color palette */
+.cat-color-0 { background:#c2703d; }
+.cat-color-1 { background:#4fa8d5; }
+.cat-color-2 { background:#6ab567; }
+.cat-color-3 { background:#9b72cb; }
+.cat-color-4 { background:#d4a44c; }
+.cat-color-5 { background:#d05c7a; }
+.cat-color-6 { background:#4ec9a8; }
+.cat-color-7 { background:#c97343; }
+
+.order-menu-empty {
+  grid-column: 1 / -1;
+  padding: 40px 16px;
+  text-align: center;
+  color: rgba(255,255,255,0.35);
+  font-size: 14px;
+}
+
+/* ============================================================
+   TICKET PANE (right)
+   ============================================================ */
+#order-ticket-pane {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  flex-shrink: 0;
+  background: #13161d;
+  overflow: hidden;
+}
+
+/* Ticket header */
+#ticket-header {
+  flex-shrink: 0;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; gap: 10px;
+}
+#ticket-session-label {
+  flex: 1; min-width: 0;
+  font-size: 16px; font-weight: 800;
+  color: #f0eff2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#ticket-guests-label {
+  font-size: 12px; color: rgba(255,255,255,0.45);
+  flex-shrink: 0;
+}
+
+/* Seat selector */
+#ticket-seat-bar {
+  flex-shrink: 0;
+  display: flex; gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: rgba(0,0,0,0.2);
+}
+#ticket-seat-bar::-webkit-scrollbar { display: none; }
+.seat-btn {
+  flex-shrink: 0;
+  min-height: 34px; padding: 0 14px;
+  border-radius: 8px;
+  font-size: 13px; font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  transition: background 120ms, border-color 120ms, color 120ms;
+}
+.seat-btn:hover { background: rgba(255,255,255,0.10); }
+.seat-btn.active {
+  background: rgba(240,181,29,0.16);
+  border-color: rgba(240,181,29,0.5);
+  color: #f0b51d;
+}
+.seat-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* Ticket items scroll */
+#ticket-items-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#ticket-items-list::-webkit-scrollbar { width: 4px; }
+#ticket-items-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.ticket-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  min-height: 48px;
+}
+.ticket-item-row.voided { opacity: 0.4; }
+.ticket-item-row.voided .ti-name { text-decoration: line-through; }
+.ti-name {
+  flex: 1; min-width: 0;
+  font-size: 13px; font-weight: 600;
+  color: #f0eff2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ti-mods {
+  font-size: 11px; color: rgba(255,255,255,0.45);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding-left: 2px;
+}
+.ti-price {
+  font-size: 12px; font-weight: 700;
+  color: rgba(255,255,255,0.65);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.ti-qty-wrap {
+  display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+.ti-qty-btn {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #f0eff2; font-size: 16px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 100ms;
+}
+.ti-qty-btn:hover { background: rgba(255,255,255,0.14); }
+.ti-qty-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 1px; }
+.ti-qty-num {
+  min-width: 20px; text-align: center;
+  font-size: 14px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #f0eff2;
+}
+
+.ti-course-label {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  padding: 6px 0 2px 2px;
+}
+
+.ticket-empty {
+  flex: 1; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; color: rgba(255,255,255,0.25);
+  font-size: 13px; text-align: center;
+  padding: 24px;
+}
+
+/* Ticket totals */
+#ticket-totals {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; flex-direction: column; gap: 4px;
+  background: rgba(0,0,0,0.2);
+}
+.totals-row {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: rgba(255,255,255,0.55);
+  font-variant-numeric: tabular-nums;
+}
+.totals-row.total {
+  font-size: 18px; font-weight: 800; color: #f0eff2;
+  margin-top: 4px;
+}
+.totals-row.remaining { color: #f0b51d; font-weight: 700; }
+
+/* Ticket actions */
+#ticket-actions {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  display: flex; gap: 8px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.tact-btn {
+  flex: 1; min-height: 44px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+  transition: background 150ms;
+}
+.tact-btn:hover { background: rgba(255,255,255,0.10); }
+.tact-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+.tact-btn.fire {
+  background: rgba(76,212,138,0.12);
+  border-color: rgba(76,212,138,0.4);
+  color: #4cd48a;
+}
+.tact-btn.fire:hover { background: rgba(76,212,138,0.2); }
+.tact-btn.pay {
+  background: rgba(194,112,61,0.18);
+  border-color: rgba(194,112,61,0.5);
+  color: #e8905d;
+}
+.tact-btn.pay:hover { background: rgba(194,112,61,0.28); }
+
+/* ============================================================
+   MODIFIER PICKER MODAL
+   ============================================================ */
+#modifier-modal {
+  position: fixed; inset: 0;
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+#modifier-modal.open { display: flex; }
+
+.modifier-card {
+  background: #13161d;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  width: 100%; max-width: 440px;
+  max-height: 90dvh;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.modifier-header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.modifier-header-info { flex: 1; min-width: 0; }
+.modifier-header-info h2 {
+  font-size: 18px; font-weight: 800; color: #f0eff2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.modifier-header-info p {
+  font-size: 14px; color: #c2703d; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+.modifier-close {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  font-size: 20px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 150ms;
+}
+.modifier-close:hover { background: rgba(255,255,255,0.14); }
+.modifier-close:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+.modifier-body {
+  flex: 1; overflow-y: auto; padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+.mod-group-title {
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 8px;
+}
+.mod-group-title .req-badge {
+  background: rgba(240,82,82,0.2);
+  border: 1px solid rgba(240,82,82,0.35);
+  color: #fc8181;
+  font-size: 10px; padding: 1px 7px; border-radius: 5px;
+  margin-left: 8px; vertical-align: middle;
+}
+
+.mod-option {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 48px; padding: 0 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.07);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+  margin-bottom: 6px;
+  user-select: none;
+}
+.mod-option:hover { background: rgba(255,255,255,0.08); }
+.mod-option.selected {
+  background: rgba(194,112,61,0.14);
+  border-color: rgba(194,112,61,0.5);
+}
+.mod-option:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+.mod-option input { position: absolute; opacity:0; width:0; height:0; }
+.mod-check {
+  width: 22px; height: 22px; flex-shrink: 0;
+  border-radius: 6px;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 120ms, border-color 120ms;
+}
+.mod-option.selected .mod-check {
+  background: #c2703d; border-color: #c2703d; color: #fff;
+}
+.mod-option-name { flex: 1; font-size: 15px; font-weight: 600; color: #f0eff2; }
+.mod-option-price { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5); font-variant-numeric: tabular-nums; }
+.mod-option.selected .mod-option-price { color: #c2703d; }
+
+.modifier-footer {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; gap: 10px;
+}
+#modifier-seat-wrap {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: rgba(255,255,255,0.5);
+}
+#modifier-seat-sel {
+  height: 38px; padding: 0 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0eff2; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+#modifier-seat-sel:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+#btn-mod-add {
+  flex: 1; min-height: 48px;
+  border-radius: 12px;
+  background: #c2703d; color: #fff;
+  font-size: 15px; font-weight: 800;
+  border: none;
+  transition: background 150ms, transform 80ms, opacity 150ms;
+}
+#btn-mod-add:hover:not(:disabled) { background: #d4804d; }
+#btn-mod-add:active:not(:disabled) { transform: scale(0.98); }
+#btn-mod-add:disabled { opacity: 0.4; cursor: not-allowed; }
+#btn-mod-add:focus-visible { outline: 2px solid #f0b51d; outline-offset: 3px; }
+.mod-validation-msg {
+  font-size: 12px; color: #fc8181;
+  text-align: center; padding: 0 20px 8px;
+  min-height: 18px;
+}
+
+/* ============================================================
+   MANAGER PIN MODAL
+   ============================================================ */
+#mgr-pin-modal {
+  position: fixed; inset: 0;
+  z-index: 600;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+#mgr-pin-modal.open { display: flex; }
+
+.mgr-pin-card {
+  background: #13161d;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  width: 100%; max-width: 360px;
+  padding: 28px 28px 24px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.7);
+}
+.mgr-pin-title {
+  font-size: 17px; font-weight: 800; color: #f0eff2;
+  text-align: center;
+}
+.mgr-pin-sub {
+  font-size: 13px; color: rgba(255,255,255,0.45);
+  text-align: center; margin-top: -14px;
+}
+.mgr-pin-display {
+  width: 100%;
+  background: rgba(0,0,0,0.35);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 28px; font-weight: 700;
+  letter-spacing: 0.3em; color: #f0eff2;
+  min-height: 56px;
+  display: flex; align-items: center; justify-content: center;
+}
+.mgr-pin-display.error { border-color: rgba(240,82,82,0.6); color: #fc8181; animation: shake 0.35s ease; }
+.mgr-pin-numpad {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 8px; width: 100%;
+}
+.mgr-pin-error {
+  font-size: 12px; color: #fc8181; text-align: center; min-height: 16px;
+}
+.mgr-pin-cancel {
+  width: 100%; min-height: 44px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.55);
+  font-size: 14px; font-weight: 600;
+  transition: background 150ms;
+}
+.mgr-pin-cancel:hover { background: rgba(255,255,255,0.10); }
+.mgr-pin-cancel:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* ============================================================
+   PAYMENT SCREEN
+   ============================================================ */
+#screen-payment {
+  flex-direction: column;
+  height: calc(100dvh - 56px);
+  overflow: hidden;
+  background: #0d0f14;
+}
+
+.payment-body {
+  flex: 1; overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 0;
+  min-height: 0;
+}
+@media (max-width: 768px) {
+  .payment-body { grid-template-columns: 1fr; }
+}
+
+/* Left: split + tip */
+.payment-left {
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 20px;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  overflow-y: auto;
+}
+
+.pay-section-title {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 10px;
+}
+
+.split-options {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.split-btn {
+  min-height: 44px; padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  transition: background 120ms, border-color 120ms, color 120ms;
+}
+.split-btn:hover { background: rgba(255,255,255,0.11); }
+.split-btn.active {
+  background: rgba(194,112,61,0.16);
+  border-color: rgba(194,112,61,0.5);
+  color: #e8905d;
+}
+.split-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+.tip-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.tip-btn {
+  min-height: 44px; padding: 0 18px;
+  border-radius: 10px;
+  font-size: 14px; font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  transition: background 120ms;
+}
+.tip-btn:hover { background: rgba(255,255,255,0.11); }
+.tip-btn.active {
+  background: rgba(240,181,29,0.14);
+  border-color: rgba(240,181,29,0.5);
+  color: #f0b51d;
+}
+.tip-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+.pay-custom-input {
+  height: 44px; padding: 0 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0eff2; font-size: 15px; font-weight: 700;
+  outline: none; width: 120px;
+  font-variant-numeric: tabular-nums;
+}
+.pay-custom-input:focus { border-color: rgba(194,112,61,0.5); }
+
+/* Payment right: amount + method */
+.payment-right {
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+  overflow-y: auto;
+}
+
+.pay-amount-display {
+  background: rgba(0,0,0,0.3);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+.pay-amount-label {
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 6px;
+}
+.pay-amount-total {
+  font-size: 40px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #f0eff2; letter-spacing: -0.02em;
+}
+.pay-amount-rows {
+  margin-top: 12px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.pay-amount-row {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: rgba(255,255,255,0.5);
+  font-variant-numeric: tabular-nums;
+}
+.pay-amount-row.tip-row { color: #f0b51d; }
+.pay-amount-row.charge-row { color: #f0eff2; font-weight: 700; font-size: 14px; }
+
+.method-tabs {
+  display: flex; gap: 8px;
+}
+.method-tab {
+  flex: 1; min-height: 52px;
+  border-radius: 12px;
+  font-size: 14px; font-weight: 800;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  transition: background 120ms, border-color 120ms, color 120ms;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.method-tab:hover { background: rgba(255,255,255,0.10); }
+.method-tab.active {
+  background: rgba(76,212,138,0.12);
+  border-color: rgba(76,212,138,0.45);
+  color: #4cd48a;
+}
+.method-tab:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+#cash-panel { display:flex; flex-direction:column; gap:10px; }
+#cash-panel.hidden { display:none; }
+.cash-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: rgba(255,255,255,0.6);
+}
+#cash-received-input {
+  flex: 1; min-height: 48px; padding: 0 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  color: #f0eff2; font-size: 18px; font-weight: 700;
+  outline: none; font-variant-numeric: tabular-nums;
+}
+#cash-received-input:focus { border-color: rgba(240,181,29,0.5); }
+#cash-change-display {
+  min-height: 48px; padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(76,212,138,0.08);
+  border: 1.5px solid rgba(76,212,138,0.2);
+  color: #4cd48a; font-size: 18px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+#btn-process-payment {
+  width: 100%; min-height: 56px;
+  border-radius: 14px;
+  background: #c2703d; color: #fff;
+  font-size: 17px; font-weight: 800;
+  border: none;
+  transition: background 150ms, transform 80ms, opacity 150ms;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+#btn-process-payment:hover:not(:disabled) { background: #d4804d; }
+#btn-process-payment:active:not(:disabled) { transform: scale(0.98); }
+#btn-process-payment:disabled { opacity: 0.4; cursor: not-allowed; }
+#btn-process-payment:focus-visible { outline: 2px solid #f0b51d; outline-offset: 3px; }
+
+.pay-back-btn {
+  min-height: 44px; padding: 0 20px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.55);
+  font-size: 14px; font-weight: 600;
+}
+.pay-back-btn:hover { background: rgba(255,255,255,0.09); }
+.pay-back-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* ============================================================
+   MANAGER SCREEN
+   ============================================================ */
+#screen-manager {
+  flex-direction: column;
+  height: calc(100dvh - 56px);
+  overflow-y: auto;
+  background: #0d0f14;
+}
+
+.manager-body {
+  flex: 1; padding: 24px;
+  max-width: 860px; margin: 0 auto;
+  width: 100%;
+  display: flex; flex-direction: column; gap: 28px;
+}
+
+.manager-section {
+  background: #13161d;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.manager-section-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.manager-section-head h2 {
+  font-size: 15px; font-weight: 800; color: #f0eff2;
+}
+.manager-section-body {
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.mgr-row {
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+}
+.mgr-label { font-size: 14px; color: rgba(255,255,255,0.6); flex-shrink: 0; }
+.mgr-input {
+  height: 44px; padding: 0 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0eff2; font-size: 15px; font-weight: 600;
+  outline: none; width: 160px;
+  font-variant-numeric: tabular-nums;
+}
+.mgr-input:focus { border-color: rgba(194,112,61,0.5); }
+.mgr-btn {
+  min-height: 44px; padding: 0 20px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06);
+  color: #f0eff2;
+  transition: background 150ms;
+}
+.mgr-btn:hover { background: rgba(255,255,255,0.11); }
+.mgr-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+.mgr-btn.copper {
+  background: rgba(194,112,61,0.16);
+  border-color: rgba(194,112,61,0.45);
+  color: #e8905d;
+}
+.mgr-btn.copper:hover { background: rgba(194,112,61,0.24); }
+.mgr-btn.danger {
+  background: rgba(240,82,82,0.1);
+  border-color: rgba(240,82,82,0.3);
+  color: #fc8181;
+}
+.mgr-btn.danger:hover { background: rgba(240,82,82,0.16); }
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
+  gap: 12px;
+}
+.report-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.report-card-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 6px;
+}
+.report-card-value {
+  font-size: 22px; font-weight: 800;
+  color: #f0eff2; font-variant-numeric: tabular-nums;
+}
+.report-card-value.copper { color: #c2703d; }
+.report-card-value.gold   { color: #f0b51d; }
+.report-card-value.red    { color: #fc8181; }
+
+/* ============================================================
+   DISCOUNT MODAL
+   ============================================================ */
+#discount-modal {
+  position: fixed; inset: 0;
+  z-index: 550;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+#discount-modal.open { display: flex; }
+.discount-card {
+  background: #13161d;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  width: 100%; max-width: 400px;
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 16px;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.7);
+}
+.discount-card h2 { font-size: 17px; font-weight: 800; color: #f0eff2; }
+.discount-option {
+  min-height: 52px; padding: 0 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.09);
+  color: #f0eff2;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14px; font-weight: 600;
+  transition: background 120ms, border-color 120ms;
+  cursor: pointer;
+}
+.discount-option:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.2); }
+.discount-option:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+.discount-option .disc-badge {
+  font-size: 12px; color: #f0b51d; font-weight: 700;
+}
+.discount-option .disc-mgr {
+  font-size: 11px; color: rgba(240,82,82,0.8);
+  border: 1px solid rgba(240,82,82,0.3);
+  border-radius: 5px; padding: 1px 7px;
+}
+.discount-cancel {
+  min-height: 44px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  font-size: 14px; font-weight: 600;
+}
+.discount-cancel:hover { background: rgba(255,255,255,0.09); }
+.discount-cancel:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* ============================================================
+   VOID REASON MODAL
+   ============================================================ */
+#void-modal {
+  position: fixed; inset: 0;
+  z-index: 550;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+#void-modal.open { display: flex; }
+.void-card {
+  background: #13161d;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  width: 100%; max-width: 380px;
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 16px;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.7);
+}
+.void-card h2 { font-size: 17px; font-weight: 800; color: #f0eff2; }
+.void-card p  { font-size: 13px; color: rgba(255,255,255,0.5); }
+#void-reason-input {
+  width: 100%; min-height: 44px; padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0eff2; font-size: 14px;
+  outline: none; resize: none;
+}
+#void-reason-input:focus { border-color: rgba(240,82,82,0.5); }
+.void-actions { display: flex; gap: 10px; }
+#btn-void-confirm {
+  flex: 1; min-height: 44px; border-radius: 10px;
+  background: rgba(240,82,82,0.16);
+  border: 1.5px solid rgba(240,82,82,0.4);
+  color: #fc8181; font-size: 14px; font-weight: 700;
+  transition: background 150ms;
+}
+#btn-void-confirm:hover { background: rgba(240,82,82,0.25); }
+#btn-void-confirm:focus-visible { outline: 2px solid #fc8181; outline-offset: 2px; }
+#btn-void-cancel {
+  min-height: 44px; padding: 0 20px; border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 14px; font-weight: 600;
+}
+#btn-void-cancel:hover { background: rgba(255,255,255,0.09); }
+#btn-void-cancel:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* ============================================================
+   GLOBAL UTILITIES
+   ============================================================ */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(255,255,255,0.10);
+  border-top-color: #c2703d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.hidden { display: none !important; }
+
+/* Toast */
+#plat-toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.plat-toast {
+  background: #1c2030;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0eff2; font-size: 14px; font-weight: 500;
+  padding: 10px 20px; border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  white-space: nowrap; opacity: 1;
+  transition: opacity 250ms;
+}
+.plat-toast.success { border-color: rgba(76,212,138,0.4); color: #4cd48a; }
+.plat-toast.error   { border-color: rgba(224,82,82,0.4);  color: #f56565; }
+
+/* Responsive narrow — collapse ticket pane below order pane */
+@media (max-width: 700px) {
+  #screen-order { flex-direction: column; }
+  #order-ticket-pane { width: 100%; height: 260px; border-right: none; border-top: 1px solid rgba(255,255,255,0.07); }
+  #order-items-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="screen-login" class="pos-screen active" role="main" aria-label="POS Terminal login">
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark" aria-hidden="true">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <line x1="5" y1="11" x2="27" y2="11" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="9"  y1="11" x2="9"  y2="27" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="23" y1="11" x2="23" y2="27" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="9"  y1="21" x2="23" y2="21" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+        </svg>
+      </div>
+      <h1>Tavolo POS</h1>
+      <p>The Copper Table</p>
+    </div>
+
+    <div id="login-display" class="login-display" aria-label="PIN entry" aria-live="polite" role="status">
+      <span id="login-dots">····</span>
+    </div>
+
+    <div class="login-numpad" role="group" aria-label="PIN numpad">
+      <button class="np-btn" type="button" data-digit="1" aria-label="1">1</button>
+      <button class="np-btn" type="button" data-digit="2" aria-label="2">2</button>
+      <button class="np-btn" type="button" data-digit="3" aria-label="3">3</button>
+      <button class="np-btn" type="button" data-digit="4" aria-label="4">4</button>
+      <button class="np-btn" type="button" data-digit="5" aria-label="5">5</button>
+      <button class="np-btn" type="button" data-digit="6" aria-label="6">6</button>
+      <button class="np-btn" type="button" data-digit="7" aria-label="7">7</button>
+      <button class="np-btn" type="button" data-digit="8" aria-label="8">8</button>
+      <button class="np-btn" type="button" data-digit="9" aria-label="9">9</button>
+      <button class="np-btn np-0" type="button" data-digit="0" aria-label="0">0</button>
+      <button class="np-btn np-del" type="button" id="btn-del-login" aria-label="Delete last digit">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </button>
+    </div>
+
+    <button class="login-submit" id="btn-login-submit" type="button" disabled aria-label="Sign in">
+      Sign In
+    </button>
+    <p class="login-error" id="login-error" role="alert" aria-live="assertive"></p>
+  </div>
+
+</div><!-- /#screen-login -->
+
+<!-- ===== POS SHELL (wraps home/order/payment/manager) ===== -->
+<div id="pos-shell" class="pos-screen" aria-label="POS Terminal">
+
+  <!-- Top bar -->
+  <header id="pos-topbar" role="banner">
+    <div class="pos-logo" aria-label="Tavolo POS">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect width="32" height="32" rx="7" fill="#c2703d"/>
+        <line x1="5" y1="11" x2="27" y2="11" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="9"  y1="11" x2="9"  y2="27" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="23" y1="11" x2="23" y2="27" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      POS
+    </div>
+    <span class="pos-topbar-sep" aria-hidden="true"></span>
+    <span id="pos-staff-name" aria-label="Logged-in staff name"></span>
+    <span id="pos-staff-role" aria-label="Staff role"></span>
+    <div class="pos-topbar-flex" aria-hidden="true"></div>
+    <time id="pos-clock" aria-label="Current time"></time>
+    <button id="btn-mgr" class="mgr-btn hidden" type="button" aria-label="Manager panel" style="min-height:36px;padding:0 14px;border-radius:8px;border:1px solid rgba(194,112,61,0.35);background:rgba(194,112,61,0.1);color:#c2703d;font-size:13px;font-weight:700;">Manager</button>
+    <button id="btn-logout" type="button" aria-label="Log out">Log out</button>
+  </header>
+
+  <!-- HOME screen -->
+  <section id="screen-home" class="pos-screen" aria-label="Home">
+    <div class="home-body">
+      <div>
+        <div class="home-section-title">New order</div>
+        <div class="home-action-grid">
+          <button class="home-action-btn primary" id="btn-new-dinein" type="button" aria-label="New dine-in order">
+            <span class="btn-icon" aria-hidden="true">🍽</span>
+            Dine-in
+          </button>
+          <button class="home-action-btn" id="btn-new-takeout" type="button" aria-label="New takeout order">
+            <span class="btn-icon" aria-hidden="true">🥡</span>
+            Takeout
+          </button>
+          <button class="home-action-btn" id="btn-new-bartab" type="button" aria-label="New bar tab">
+            <span class="btn-icon" aria-hidden="true">🍺</span>
+            Bar Tab
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="home-section-title">Tables — tap to open or resume</div>
+        <div id="table-grid" class="table-grid" role="list" aria-label="Dining tables" aria-live="polite">
+          <div class="home-loading" role="status" aria-label="Loading tables">
+            <span class="spinner" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section><!-- /#screen-home -->
+
+  <!-- ORDER screen -->
+  <section id="screen-order" class="pos-screen" aria-label="Order">
+    <!-- Left: menu -->
+    <div id="order-menu-pane" role="region" aria-label="Menu">
+      <nav id="order-cats" aria-label="Menu categories"></nav>
+      <div id="order-search-wrap">
+        <label for="order-search" class="sr-only">Search menu</label>
+        <input id="order-search" type="search" placeholder="Search menu…" autocomplete="off" aria-label="Search menu items">
+      </div>
+      <div id="order-items-grid" role="list" aria-label="Menu items" aria-live="polite"></div>
+    </div>
+
+    <!-- Right: ticket -->
+    <aside id="order-ticket-pane" aria-label="Current ticket">
+      <div id="ticket-header">
+        <span id="ticket-session-label">New order</span>
+        <span id="ticket-guests-label"></span>
+      </div>
+
+      <div id="ticket-seat-bar" role="group" aria-label="Seat selection"></div>
+
+      <div id="ticket-items-list" role="list" aria-label="Ticket items" aria-live="polite">
+        <div class="ticket-empty" role="status">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+          </svg>
+          <span>No items yet</span>
+        </div>
+      </div>
+
+      <div id="ticket-totals" aria-live="polite">
+        <div class="totals-row"><span>Subtotal</span><span id="tot-subtotal">$0.00</span></div>
+        <div class="totals-row"><span>Tax &amp; charges</span><span id="tot-charges">$0.00</span></div>
+        <div class="totals-row total"><span>Total</span><span id="tot-total">$0.00</span></div>
+        <div class="totals-row remaining hidden" id="tot-remaining-row"><span>Remaining</span><span id="tot-remaining">$0.00</span></div>
+      </div>
+
+      <div id="ticket-actions">
+        <button class="tact-btn" id="btn-discount" type="button" aria-label="Apply discount">Disc.</button>
+        <button class="tact-btn" id="btn-void-item" type="button" aria-label="Void item">Void</button>
+        <button class="tact-btn fire" id="btn-fire" type="button" aria-label="Fire course 1">Fire C1</button>
+        <button class="tact-btn pay" id="btn-pay" type="button" aria-label="Proceed to payment">Pay</button>
+      </div>
+    </aside>
+  </section><!-- /#screen-order -->
+
+  <!-- PAYMENT screen -->
+  <section id="screen-payment" class="pos-screen" aria-label="Payment">
+    <div class="payment-body">
+      <!-- Left: split + tip -->
+      <div class="payment-left">
+        <div>
+          <div class="pay-section-title">Split</div>
+          <div class="split-options" role="group" aria-label="Split options">
+            <button class="split-btn active" data-split="whole" type="button">Whole check</button>
+            <button class="split-btn" data-split="even" type="button">Split evenly</button>
+            <button class="split-btn" data-split="seat" type="button">By seat</button>
+            <button class="split-btn" data-split="custom" type="button">Custom amount</button>
+          </div>
+          <div id="split-custom-wrap" class="hidden" style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+            <label for="split-custom-input" style="font-size:13px;color:rgba(255,255,255,0.5);">$</label>
+            <input id="split-custom-input" class="pay-custom-input" type="number" min="0.01" step="0.01" placeholder="0.00" aria-label="Custom split amount in dollars">
+          </div>
+          <div id="split-even-wrap" class="hidden" style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+            <label for="split-even-count" style="font-size:13px;color:rgba(255,255,255,0.5);">Ways:</label>
+            <input id="split-even-count" class="pay-custom-input" type="number" min="2" max="20" value="2" style="width:80px;" aria-label="Number of ways to split evenly">
+          </div>
+        </div>
+
+        <div>
+          <div class="pay-section-title">Tip</div>
+          <div class="tip-options" role="group" aria-label="Tip options">
+            <button class="tip-btn" data-tip="0"  type="button">No tip</button>
+            <button class="tip-btn" data-tip="15" type="button">15%</button>
+            <button class="tip-btn active" data-tip="18" type="button">18%</button>
+            <button class="tip-btn" data-tip="20" type="button">20%</button>
+            <button class="tip-btn" data-tip="custom" type="button">Custom</button>
+          </div>
+          <div id="tip-custom-wrap" class="hidden" style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <label style="font-size:13px;color:rgba(255,255,255,0.5);">
+              <input id="tip-custom-pct" type="radio" name="tip-custom-kind" value="pct" checked style="margin-right:4px;">%
+            </label>
+            <label style="font-size:13px;color:rgba(255,255,255,0.5);">
+              <input id="tip-custom-amt" type="radio" name="tip-custom-kind" value="amt" style="margin-right:4px;">$
+            </label>
+            <input id="tip-custom-input" class="pay-custom-input" type="number" min="0" step="0.01" placeholder="0" aria-label="Custom tip value">
+          </div>
+        </div>
+
+        <button class="pay-back-btn" id="btn-pay-back" type="button" aria-label="Back to order">← Back to order</button>
+      </div>
+
+      <!-- Right: amount + method -->
+      <div class="payment-right">
+        <div class="pay-amount-display" aria-live="polite" aria-label="Payment amount breakdown">
+          <div class="pay-amount-label">Charge</div>
+          <div class="pay-amount-total" id="pay-charge-total">$0.00</div>
+          <div class="pay-amount-rows">
+            <div class="pay-amount-row"><span>Subtotal</span><span id="pay-sub">$0.00</span></div>
+            <div class="pay-amount-row"><span>Tax &amp; charges</span><span id="pay-charges">$0.00</span></div>
+            <div class="pay-amount-row tip-row" id="pay-tip-row"><span>Tip</span><span id="pay-tip">$0.00</span></div>
+            <div class="pay-amount-row charge-row"><span>Total to charge</span><span id="pay-charge-row">$0.00</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="pay-section-title">Method</div>
+          <div class="method-tabs" role="group" aria-label="Payment method">
+            <button class="method-tab active" data-method="cash" type="button" aria-pressed="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+              Cash
+            </button>
+            <button class="method-tab" data-method="card" type="button" aria-pressed="false">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Card
+            </button>
+          </div>
+        </div>
+
+        <div id="cash-panel">
+          <div class="cash-row">
+            <label for="cash-received-input" style="flex-shrink:0;font-size:14px;color:rgba(255,255,255,0.55);">Cash received $</label>
+            <input id="cash-received-input" type="number" min="0" step="0.01" placeholder="0.00" aria-label="Cash received in dollars">
+          </div>
+          <div id="cash-change-display" aria-live="polite" aria-label="Change due">Change: $0.00</div>
+        </div>
+
+        <button id="btn-process-payment" type="button" aria-label="Process payment">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          Process Payment
+        </button>
+      </div>
+    </div>
+  </section><!-- /#screen-payment -->
+
+  <!-- MANAGER screen -->
+  <section id="screen-manager" class="pos-screen" aria-label="Manager panel">
+    <div class="manager-body">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h1 style="font-size:20px;font-weight:800;color:#f0eff2;">Manager Panel</h1>
+        <button id="btn-mgr-back" class="mgr-btn" type="button" aria-label="Back to home">← Home</button>
+      </div>
+
+      <!-- Shift -->
+      <div class="manager-section">
+        <div class="manager-section-head">
+          <h2>Shift</h2>
+          <span id="shift-status-badge" style="font-size:12px;padding:3px 10px;border-radius:20px;background:rgba(76,212,138,0.12);border:1px solid rgba(76,212,138,0.3);color:#4cd48a;font-weight:700;"></span>
+        </div>
+        <div class="manager-section-body">
+          <div class="mgr-row">
+            <label class="mgr-label" for="shift-opening-cash">Opening cash $</label>
+            <input id="shift-opening-cash" class="mgr-input" type="number" min="0" step="0.01" placeholder="200.00" aria-label="Opening cash amount">
+            <button class="mgr-btn copper" id="btn-open-shift" type="button" aria-label="Open shift">Open Shift</button>
+          </div>
+          <div class="mgr-row">
+            <label class="mgr-label" for="shift-closing-cash">Closing cash $</label>
+            <input id="shift-closing-cash" class="mgr-input" type="number" min="0" step="0.01" placeholder="0.00" aria-label="Closing cash amount">
+            <label class="mgr-label" for="shift-declared-tips" style="margin-left:8px;">Tips $</label>
+            <input id="shift-declared-tips" class="mgr-input" type="number" min="0" step="0.01" placeholder="0.00" style="width:110px;" aria-label="Declared tips amount">
+            <button class="mgr-btn danger" id="btn-close-shift" type="button" aria-label="Close shift and run Z-report">Close Shift (Z)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cash events -->
+      <div class="manager-section">
+        <div class="manager-section-head">
+          <h2>Cash Drawer</h2>
+        </div>
+        <div class="manager-section-body">
+          <div class="mgr-row">
+            <label class="mgr-label" for="cash-event-amount">Amount $</label>
+            <input id="cash-event-amount" class="mgr-input" type="number" min="0.01" step="0.01" placeholder="0.00" aria-label="Cash drawer event amount">
+            <label class="mgr-label" for="cash-event-reason">Reason</label>
+            <input id="cash-event-reason" class="mgr-input" type="text" placeholder="Reason…" style="width:180px;" aria-label="Cash drawer event reason">
+          </div>
+          <div class="mgr-row">
+            <button class="mgr-btn copper" id="btn-cash-in" type="button" aria-label="Paid in cash">Paid In</button>
+            <button class="mgr-btn danger" id="btn-cash-out" type="button" aria-label="Paid out cash">Paid Out</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- X Report -->
+      <div class="manager-section">
+        <div class="manager-section-head">
+          <h2>X-Report (Live)</h2>
+          <button class="mgr-btn" id="btn-x-report" type="button" aria-label="Refresh X-report">Refresh</button>
+        </div>
+        <div class="manager-section-body">
+          <div class="report-grid" id="x-report-grid" aria-live="polite" aria-label="X-report data">
+            <div class="report-card">
+              <div class="report-card-label">Open Sessions</div>
+              <div class="report-card-value" id="xr-open-sessions">—</div>
+            </div>
+            <div class="report-card">
+              <div class="report-card-label">Sales Today (Net)</div>
+              <div class="report-card-value copper" id="xr-sales-net">—</div>
+            </div>
+            <div class="report-card">
+              <div class="report-card-label">Tips Today</div>
+              <div class="report-card-value gold" id="xr-tips">—</div>
+            </div>
+            <div class="report-card">
+              <div class="report-card-label">Cash Tendered</div>
+              <div class="report-card-value" id="xr-cash">—</div>
+            </div>
+            <div class="report-card">
+              <div class="report-card-label">Card Tendered</div>
+              <div class="report-card-value" id="xr-card">—</div>
+            </div>
+            <div class="report-card">
+              <div class="report-card-label">Voids Today</div>
+              <div class="report-card-value red" id="xr-voids">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section><!-- /#screen-manager -->
+
+</div><!-- /#pos-shell -->
+
+<!-- Modifier picker modal -->
+<div id="modifier-modal" role="dialog" aria-modal="true" aria-labelledby="mod-title">
+  <div class="modifier-card">
+    <div class="modifier-header">
+      <div class="modifier-header-info">
+        <h2 id="mod-title">Item modifiers</h2>
+        <p id="mod-price"></p>
+      </div>
+      <button class="modifier-close" id="btn-mod-close" type="button" aria-label="Close modifier picker">✕</button>
+    </div>
+    <div class="modifier-body" id="mod-groups-body"></div>
+    <p class="mod-validation-msg" id="mod-validation" role="alert" aria-live="assertive"></p>
+    <div class="modifier-footer">
+      <div id="modifier-seat-wrap">
+        <label for="modifier-seat-sel" style="font-size:13px;color:rgba(255,255,255,0.5);">Seat</label>
+        <select id="modifier-seat-sel" aria-label="Seat number for this item"></select>
+      </div>
+      <button id="btn-mod-add" type="button" aria-label="Add item to ticket">Add to ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manager PIN modal -->
+<div id="mgr-pin-modal" role="dialog" aria-modal="true" aria-labelledby="mgr-pin-title">
+  <div class="mgr-pin-card">
+    <h2 class="mgr-pin-title" id="mgr-pin-title">Manager Override</h2>
+    <p class="mgr-pin-sub">Enter manager PIN to continue</p>
+    <div class="mgr-pin-display" id="mgr-pin-display" aria-live="polite" role="status">····</div>
+    <div class="mgr-pin-numpad" role="group" aria-label="Manager PIN numpad">
+      <button class="np-btn" type="button" data-mpin="1" aria-label="1">1</button>
+      <button class="np-btn" type="button" data-mpin="2" aria-label="2">2</button>
+      <button class="np-btn" type="button" data-mpin="3" aria-label="3">3</button>
+      <button class="np-btn" type="button" data-mpin="4" aria-label="4">4</button>
+      <button class="np-btn" type="button" data-mpin="5" aria-label="5">5</button>
+      <button class="np-btn" type="button" data-mpin="6" aria-label="6">6</button>
+      <button class="np-btn" type="button" data-mpin="7" aria-label="7">7</button>
+      <button class="np-btn" type="button" data-mpin="8" aria-label="8">8</button>
+      <button class="np-btn" type="button" data-mpin="9" aria-label="9">9</button>
+      <button class="np-btn np-0" type="button" data-mpin="0" aria-label="0">0</button>
+      <button class="np-btn np-del" type="button" id="btn-del-mpin" aria-label="Delete last digit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </button>
+    </div>
+    <p class="mgr-pin-error" id="mgr-pin-error" role="alert" aria-live="assertive"></p>
+    <button class="mgr-pin-cancel" id="btn-mgr-pin-cancel" type="button" aria-label="Cancel manager override">Cancel</button>
+  </div>
+</div>
+
+<!-- Discount modal -->
+<div id="discount-modal" role="dialog" aria-modal="true" aria-labelledby="disc-title">
+  <div class="discount-card">
+    <h2 id="disc-title">Apply Discount</h2>
+    <div id="discount-options-list" role="list" aria-label="Available discounts"></div>
+    <button class="discount-cancel" id="btn-discount-cancel" type="button" aria-label="Cancel discount">Cancel</button>
+  </div>
+</div>
+
+<!-- Void modal -->
+<div id="void-modal" role="dialog" aria-modal="true" aria-labelledby="void-title">
+  <div class="void-card">
+    <h2 id="void-title">Void Item</h2>
+    <p>Select the item to void and provide a reason. Manager PIN required.</p>
+    <label for="void-reason-input" class="sr-only">Void reason</label>
+    <textarea id="void-reason-input" rows="2" placeholder="Reason (e.g. customer changed mind)…" aria-label="Void reason"></textarea>
+    <div class="void-actions">
+      <button id="btn-void-confirm" type="button" aria-label="Confirm void">Void Item</button>
+      <button id="btn-void-cancel"  type="button" aria-label="Cancel void">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="plat-toast" aria-live="assertive" role="status"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/platform.js"></script>
+<script src="assets/pos-terminal.js"></script>
+</body>
+</html>

@@ -679,6 +679,27 @@ body{background:var(--color-bg);min-height:100vh}
         </button>
       </div>
 
+      <!-- POS group — hidden unless modules.pos is true -->
+      <div id="nav-group-pos" style="display:none">
+        <div class="sidebar-section-label" aria-hidden="true">POS</div>
+        <a class="nav-item" href="pos.html" target="_blank" rel="noopener" role="listitem"
+           aria-label="Open POS Terminal in new tab" style="text-decoration:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span class="nav-item-label">POS Terminal</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:auto;opacity:.45;flex-shrink:0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="nav-item" href="kds.html" target="_blank" rel="noopener" role="listitem"
+           aria-label="Open Kitchen Display in new tab" style="text-decoration:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          <span class="nav-item-label">Kitchen Display</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:auto;opacity:.45;flex-shrink:0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <button class="nav-item" data-section="pos-reports" role="listitem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span class="nav-item-label">POS Reports</span>
+        </button>
+      </div>
+
       <!-- ACCOUNT group — always visible -->
       <div id="nav-group-account">
         <div class="sidebar-section-label" aria-hidden="true">Account</div>
@@ -798,6 +819,9 @@ body{background:var(--color-bg);min-height:100vh}
 
       <section id="section-qr-staff" class="section" aria-label="Staff" style="display:none"></section>
 
+      <!-- POS Reports section — populated by pos-reports.js -->
+      <section id="section-pos-reports" class="section" aria-label="POS Reports" style="display:none"></section>
+
     </main><!-- /content-area -->
   </div><!-- /main-area -->
 </div><!-- /app-shell -->
@@ -854,6 +878,7 @@ var SECTIONS = [
   'dashboard', 'floor', 'timeline', 'reservations', 'guests',
   'waitlist', 'blackouts', 'settings',
   'qr-pay-floor', 'qr-menu', 'qr-tables', 'qr-analytics', 'qr-staff',
+  'pos-reports',
 ];
 
 var SECTION_LABELS = {
@@ -870,6 +895,7 @@ var SECTION_LABELS = {
   'qr-tables':     'Tables & QR',
   'qr-analytics':  'Analytics',
   'qr-staff':      'Staff',
+  'pos-reports':   'POS Reports',
 };
 
 /* =====================================================================
@@ -878,17 +904,22 @@ var SECTION_LABELS = {
 function applyModuleFlags(modules) {
   var hasRes   = !modules || modules.reservations !== false;
   var hasQrPay = !modules || modules.qr_pay       !== false;
+  /* POS is OFF by default — only shown when modules.pos is explicitly true */
+  var hasPos   = modules  && modules.pos === true;
 
   var grpRes = $('#nav-group-reservations');
   var grpQr  = $('#nav-group-qr-pay');
+  var grpPos = $('#nav-group-pos');
   if (grpRes) grpRes.style.display = hasRes   ? '' : 'none';
   if (grpQr)  grpQr.style.display  = hasQrPay ? '' : 'none';
+  if (grpPos) grpPos.style.display = hasPos   ? '' : 'none';
 
   var badge = $('#sidebar-module-badge');
   if (badge) {
     var parts = [];
     if (hasRes)   parts.push('Reservations');
     if (hasQrPay) parts.push('QR Pay');
+    if (hasPos)   parts.push('POS');
     badge.textContent  = parts.join(' · ');
     badge.style.display = parts.length ? '' : 'none';
   }
@@ -1641,5 +1672,6 @@ $('#view-all-res-btn').addEventListener('click', function () {
 <script src="assets/mesa-tables.js"></script>
 <script src="assets/mesa-analytics.js"></script>
 <script src="assets/mesa-staff.js"></script>
+<script src="assets/pos-reports.js"></script>
 </body>
 </html>

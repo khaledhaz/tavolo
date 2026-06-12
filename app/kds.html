@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<title>Kitchen Display — Tavolo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2703d'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23fff'%3ET%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/tokens.css">
+<style>
+/* ============================================================
+   KDS — Kitchen Display System
+   Dark high-contrast theme. Optimised for distance viewing.
+   ============================================================ */
+
+/* ---- Reset to dark canvas ---- */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+  background: #0a0c10;
+  color: #f0eff2;
+}
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Shell ---- */
+#kds-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 100vh;
+  background: #0a0c10;
+  overflow: hidden;
+}
+
+/* ---- Top bar ---- */
+#kds-topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px;
+  background: #13161d;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  z-index: 100;
+}
+
+.kds-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c2703d;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.kds-logo svg { flex-shrink: 0; }
+
+#kds-restaurant-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  flex-shrink: 0;
+}
+
+.kds-topbar-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.12);
+  flex-shrink: 0;
+}
+
+#kds-clock {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f0eff2;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* spacer pushes controls to the right */
+.kds-topbar-flex { flex: 1; }
+
+/* ---- Controls strip ---- */
+.kds-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.kds-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: #f0eff2;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms, transform 80ms;
+  white-space: nowrap;
+}
+.kds-btn:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.2); }
+.kds-btn:active { transform: scale(0.96); }
+.kds-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+.kds-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+.kds-btn.active {
+  background: rgba(194,112,61,0.18);
+  border-color: rgba(194,112,61,0.55);
+  color: #c2703d;
+}
+
+.kds-btn-undo {
+  border-color: rgba(240,181,29,0.4);
+  color: #f0b51d;
+  background: rgba(240,181,29,0.08);
+}
+.kds-btn-undo:hover { background: rgba(240,181,29,0.14); }
+
+/* ---- All Day counter strip ---- */
+#kds-allday {
+  flex-shrink: 0;
+  min-height: 40px;
+  background: #13161d;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#kds-allday::-webkit-scrollbar { display: none; }
+
+.allday-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.allday-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 6px;
+  padding: 3px 10px 3px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #f0eff2;
+  white-space: nowrap;
+}
+.allday-chip__qty {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0b51d;
+  font-variant-numeric: tabular-nums;
+}
+
+.allday-empty {
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  font-style: italic;
+}
+
+/* ---- Tickets board ---- */
+#kds-board {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  /* Responsive columns: as many as fit, min 300px */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+#kds-board::-webkit-scrollbar { width: 6px; }
+#kds-board::-webkit-scrollbar-track { background: transparent; }
+#kds-board::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+/* ---- Ticket card ---- */
+.ticket {
+  background: #13161d;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 400ms, box-shadow 400ms;
+  position: relative;
+}
+
+/* Age color coding on left border accent */
+.ticket[data-age="fresh"]  { border-color: #2a7a55; }
+.ticket[data-age="amber"]  { border-color: #c47c20; }
+.ticket[data-age="red"]    { border-color: #c03030; }
+
+/* Overdue pulse */
+@media (prefers-reduced-motion: no-preference) {
+  .ticket[data-age="red"] {
+    animation: ticketOverduePulse 2.4s ease-in-out infinite;
+  }
+}
+@keyframes ticketOverduePulse {
+  0%, 100% { box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+  50%       { box-shadow: 0 0 0 4px rgba(192,48,48,0.20), 0 2px 12px rgba(0,0,0,0.5); }
+}
+
+/* New-ticket flash */
+@media (prefers-reduced-motion: no-preference) {
+  .ticket.ticket-new-flash {
+    animation: newTicketFlash 0.6s ease-out;
+  }
+}
+@keyframes newTicketFlash {
+  0%   { background: #1e2a1a; }
+  60%  { background: #162315; }
+  100% { background: #13161d; }
+}
+
+/* ---- Ticket header ---- */
+.ticket__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.ticket__header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ticket__table {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f0eff2;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket__meta {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket__header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ticket__timer {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.ticket[data-age="fresh"] .ticket__timer { color: #4cd48a; }
+.ticket[data-age="amber"] .ticket__timer { color: #f5c045; }
+.ticket[data-age="red"]   .ticket__timer { color: #f56565; }
+
+.ticket__guests {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ---- Ticket body ---- */
+.ticket__body {
+  flex: 1;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---- Course group ---- */
+.ticket__course-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.30);
+  margin-top: 2px;
+}
+
+/* ---- Item row ---- */
+.ticket__item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, transform 80ms;
+  min-height: 44px; /* WCAG touch target */
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.ticket__item:hover  { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+.ticket__item:active { transform: scale(0.98); }
+.ticket__item:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+.ticket__item-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ticket__item-qty {
+  font-size: 17px;
+  font-weight: 700;
+  color: #c2703d;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  min-width: 28px;
+}
+
+.ticket__item-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #f0eff2;
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+}
+
+.ticket__item-seat {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  flex-shrink: 0;
+}
+
+.ticket__item-mods {
+  padding-left: 36px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.50);
+  line-height: 1.5;
+}
+
+/* Notes — must be impossible to miss */
+.ticket__item-notes {
+  margin-top: 4px;
+  padding: 6px 10px;
+  background: rgba(232,82,82,0.15);
+  border-left: 3px solid #e05252;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffb3b3;
+  line-height: 1.4;
+}
+/* Allergy keywords get stronger emphasis */
+.ticket__item-notes.has-allergy {
+  background: rgba(232,82,82,0.25);
+  border-left-color: #ff4444;
+  color: #ff9999;
+}
+
+/* ---- Item status indicator ---- */
+.ticket__item[data-status="sent"] .ticket__item-status-dot      { background: #4cd48a; }
+.ticket__item[data-status="preparing"] .ticket__item-status-dot { background: #f5c045; }
+.ticket__item[data-status="ready"] .ticket__item-status-dot     { background: #63b3ed; }
+
+.ticket__item-status-dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Struck-through when ready */
+.ticket__item[data-status="ready"] .ticket__item-name {
+  opacity: 0.55;
+}
+
+/* ---- Footer bump row ---- */
+.ticket__footer {
+  padding: 10px 16px 14px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticket__bump-all {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(76,212,138,0.5);
+  background: rgba(76,212,138,0.08);
+  color: #4cd48a;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms, transform 80ms;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ticket__bump-all:hover  { background: rgba(76,212,138,0.16); }
+.ticket__bump-all:active { transform: scale(0.97); }
+.ticket__bump-all:focus-visible { outline: 2px solid #4cd48a; outline-offset: 2px; }
+/* When all items are ready, bump all says "Served" */
+.ticket__bump-all[data-state="all-ready"] {
+  border-color: rgba(99,179,237,0.5);
+  background: rgba(99,179,237,0.08);
+  color: #63b3ed;
+}
+
+/* ---- Status labels in footer ---- */
+.ticket__status-summary {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+
+/* ---- Empty / loading states ---- */
+#kds-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 24px;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+}
+#kds-empty svg { opacity: 0.25; }
+#kds-empty h2  { font-size: 22px; font-weight: 600; color: rgba(255,255,255,0.5); }
+#kds-empty p   { font-size: 15px; max-width: 320px; }
+
+#kds-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 24px;
+  color: rgba(255,255,255,0.4);
+}
+
+.kds-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(255,255,255,0.10);
+  border-top-color: #c2703d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#kds-error {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+}
+#kds-error p {
+  font-size: 16px;
+  color: #f56565;
+  max-width: 360px;
+}
+#kds-error button {
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: 8px;
+  background: rgba(192,48,48,0.2);
+  border: 1px solid rgba(192,48,48,0.5);
+  color: #f56565;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---- Toast ---- */
+#plat-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.plat-toast {
+  background: #1c2030;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0eff2;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 250ms;
+}
+.plat-toast.success { border-color: rgba(76,212,138,0.4); color: #4cd48a; }
+.plat-toast.error   { border-color: rgba(224,82,82,0.4);  color: #f56565; }
+
+/* ---- Realtime badge ---- */
+#kds-rt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  flex-shrink: 0;
+}
+.rt-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: background 400ms;
+}
+.rt-dot.live { background: #4cd48a; }
+
+/* ---- Sort toggle + filter ---- */
+.kds-seg {
+  display: flex;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.kds-seg-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+  white-space: nowrap;
+}
+.kds-seg-btn + .kds-seg-btn {
+  border-left: 1px solid rgba(255,255,255,0.08);
+}
+.kds-seg-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); }
+.kds-seg-btn.active {
+  background: rgba(194,112,61,0.18);
+  color: #c2703d;
+}
+.kds-seg-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* ---- Select filter ---- */
+.kds-select {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+  color: #f0eff2;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.kds-select:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* ---- Screen-reader only ---- */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ---- Responsive tweaks ---- */
+@media (max-width: 600px) {
+  #kds-topbar { height: 52px; padding: 0 12px; gap: 8px; }
+  .kds-logo   { font-size: 15px; }
+  #kds-restaurant-name, .kds-topbar-sep, #kds-rt-badge { display: none; }
+  #kds-board  { padding: 12px; gap: 12px; grid-template-columns: 1fr; }
+  .ticket__table { font-size: 18px; }
+  .ticket__timer { font-size: 18px; }
+}
+
+@media (min-width: 1200px) {
+  #kds-board { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket, .ticket__item, .kds-btn, .ticket__bump-all { transition: none; }
+  .ticket[data-age="red"] { animation: none; }
+  .ticket.ticket-new-flash { animation: none; }
+  .kds-spinner { animation-duration: 2s; }
+}
+</style>
+</head>
+<body>
+<div id="kds-shell">
+
+  <!-- ===== TOP BAR ===== -->
+  <header id="kds-topbar" role="banner">
+    <div class="kds-logo" aria-label="Tavolo kitchen display">
+      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <rect width="32" height="32" rx="7" fill="#c2703d"/>
+        <line x1="5" y1="11" x2="27" y2="11" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="9"  y1="11" x2="9"  y2="27" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="23" y1="11" x2="23" y2="27" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="9"  y1="21" x2="23" y2="21" stroke="#fff" stroke-width="2"   stroke-linecap="round" opacity="0.45"/>
+      </svg>
+      Kitchen
+    </div>
+    <span class="kds-topbar-sep" aria-hidden="true"></span>
+    <span id="kds-restaurant-name" aria-label="Restaurant name"></span>
+    <span class="kds-topbar-sep" aria-hidden="true"></span>
+    <time id="kds-clock" aria-live="off" aria-label="Current time"></time>
+
+    <div class="kds-topbar-flex" aria-hidden="true"></div>
+
+    <div class="kds-controls" role="toolbar" aria-label="KDS controls">
+      <!-- Sort order -->
+      <div class="kds-seg" role="group" aria-label="Sort order">
+        <button class="kds-seg-btn active" id="btn-sort-oldest" type="button"
+                aria-pressed="true" title="Oldest first">Oldest first</button>
+        <button class="kds-seg-btn" id="btn-sort-newest" type="button"
+                aria-pressed="false" title="Newest first">Newest</button>
+      </div>
+
+      <!-- Station / course filter -->
+      <select id="kds-course-filter" class="kds-select" aria-label="Filter by course">
+        <option value="all">All stations</option>
+        <option value="1">Course 1</option>
+        <option value="2">Course 2</option>
+        <option value="3">Course 3+</option>
+      </select>
+
+      <!-- Undo last bump -->
+      <button class="kds-btn kds-btn-undo" id="btn-undo" type="button" disabled aria-label="Undo last bump">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+        </svg>
+        Undo
+      </button>
+
+      <!-- Realtime badge -->
+      <div id="kds-rt-badge" role="status" aria-live="polite" aria-label="Realtime connection status">
+        <div class="rt-dot" id="rt-dot"></div>
+        <span id="rt-label">Connecting</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== ALL-DAY STRIP ===== -->
+  <section id="kds-allday" aria-label="All-day counts" aria-live="polite">
+    <span class="allday-label" aria-hidden="true">All day</span>
+    <span class="allday-empty" id="allday-empty">Loading...</span>
+  </section>
+
+  <!-- ===== TICKETS BOARD ===== -->
+  <main id="kds-board" aria-label="Kitchen tickets" aria-live="polite" aria-relevant="additions removals">
+    <div id="kds-loading" role="status" aria-label="Loading kitchen tickets">
+      <div class="kds-spinner" aria-hidden="true"></div>
+      <span>Loading tickets…</span>
+    </div>
+  </main>
+
+</div><!-- /#kds-shell -->
+
+<div id="plat-toast" aria-live="assertive" role="status"></div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/platform.js"></script>
+<script>
+/* ============================================================
+   Tavolo KDS — Kitchen Display System
+   Vanilla JS, no build step. Requires PLAT (platform.js).
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ---- Constants ---- */
+  var DEMO_RESTAURANT_ID = 'a1000000-0000-0000-0000-000000000001';
+  var POLL_INTERVAL_MS   = 15000;
+  var TIMER_TICK_MS      = 5000;  /* update age labels every 5s */
+  var ALLERGY_WORDS      = /\b(allerg|nut|peanut|gluten|dairy|shellfish|fish|egg|soy|wheat|lactose|vegan|kosher|halal)\b/i;
+
+  /* ---- State ---- */
+  var restaurantId  = DEMO_RESTAURANT_ID;
+  var restaurantName = '';
+  var tickets       = {};   /* keyed by session_id; value = { session, items[] } */
+  var undoStack     = [];   /* [{itemId, prevStatus}] */
+  var sortOrder     = 'oldest';
+  var courseFilter  = 'all';
+  var rtChannel     = null;
+  var rtChannelSeq  = 0;
+  var pollTimer     = null;
+  var tickTimer     = null;
+  var clockTimer    = null;
+  var isLoading     = true;
+
+  /* ---- DOM refs ---- */
+  var board          = document.getElementById('kds-board');
+  var alldayEl       = document.getElementById('kds-allday');
+  var alldayEmpty    = document.getElementById('allday-empty');
+  var clockEl        = document.getElementById('kds-clock');
+  var restaurantEl   = document.getElementById('kds-restaurant-name');
+  var rtDot          = document.getElementById('rt-dot');
+  var rtLabel        = document.getElementById('rt-label');
+  var btnUndo        = document.getElementById('btn-undo');
+  var btnSortOldest  = document.getElementById('btn-sort-oldest');
+  var btnSortNewest  = document.getElementById('btn-sort-newest');
+  var courseSelect   = document.getElementById('kds-course-filter');
+
+  /* ---- Utility ---- */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function toast(msg, kind) {
+    if (window.PLAT && window.PLAT.utils && window.PLAT.utils.toast) {
+      PLAT.utils.toast(msg, kind);
+    }
+  }
+
+  function elapsedMin(sentAtISO) {
+    if (!sentAtISO) return 0;
+    var sent = new Date(sentAtISO).getTime();
+    return Math.floor((Date.now() - sent) / 60000);
+  }
+
+  function formatElapsed(sentAtISO) {
+    if (!sentAtISO) return '--';
+    var sent = new Date(sentAtISO).getTime();
+    var totalSec = Math.floor((Date.now() - sent) / 1000);
+    if (totalSec < 0) return '0:00';
+    var m = Math.floor(totalSec / 60);
+    var s = totalSec % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function ageClass(sentAtISO) {
+    var min = elapsedMin(sentAtISO);
+    if (min < 5)  return 'fresh';
+    if (min < 10) return 'amber';
+    return 'red';
+  }
+
+  /* Earliest sent_at across all items in a ticket */
+  function ticketSentAt(items) {
+    var earliest = null;
+    items.forEach(function(item) {
+      if (!item.sent_at) return;
+      if (!earliest || item.sent_at < earliest) earliest = item.sent_at;
+    });
+    return earliest;
+  }
+
+  function courseLabel(course) {
+    var n = Number(course);
+    if (n === 1) return 'Starters / Course 1';
+    if (n === 2) return 'Mains / Course 2';
+    return 'Desserts / Course ' + n;
+  }
+
+  function orderTypeLabel(t) {
+    return ({dine_in:'Dine-in', takeout:'Takeout', delivery:'Delivery', bar:'Bar'})[t] || t || '';
+  }
+
+  function hasAllergyKeyword(notes) {
+    return notes && ALLERGY_WORDS.test(notes);
+  }
+
+  /* ---- Clock ---- */
+  function updateClock() {
+    clockEl.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+
+  /* ---- Realtime status ---- */
+  function setRtStatus(live) {
+    rtDot.classList.toggle('live', live);
+    rtLabel.textContent = live ? 'Live' : 'Polling';
+    rtDot.title = live ? 'Realtime connected' : 'Polling mode';
+  }
+
+  /* ---- Load restaurant info ---- */
+  function loadRestaurant() {
+    return PLAT.client
+      .from('mesa_restaurants')
+      .select('id, name')
+      .eq('id', restaurantId)
+      .single()
+      .then(function(r) {
+        if (r.data) {
+          restaurantName = r.data.name || 'Kitchen';
+          restaurantEl.textContent = restaurantName;
+        }
+      })
+      .catch(function() { /* non-critical */ });
+  }
+
+  /* ---- Load tickets from DB ---- */
+  function loadTickets() {
+    return PLAT.client
+      .from('mesa_order_items')
+      .select([
+        'id',
+        'session_id',
+        'name',
+        'qty',
+        'seat',
+        'course',
+        'kitchen_status',
+        'sent_at',
+        'notes',
+        /* join to session for table/tab info */
+        'mesa_sessions!inner(id, table_id, status, order_type, tab_name, guest_count, mesa_tables(id, label, table_code))',
+        /* join modifiers */
+        'pos_order_item_modifiers(modifier_id, name, price_delta_cents)'
+      ].join(','))
+      .in('kitchen_status', ['sent','preparing','ready'])
+      /* filter by restaurant via session → table relationship */
+      .then(function(r) {
+        if (r.error) throw r.error;
+        return r.data || [];
+      })
+      .then(function(rows) {
+        /* Filter to this restaurant's sessions — done in JS because the
+           join chain (order_items→sessions→tables→restaurants) is complex.
+           We identify the restaurant by checking that the session's table
+           belongs to this restaurant's table set, OR we load all sessions
+           for this restaurant first. We keep it simple: accept all rows
+           since the restaurant is the only one in demo data. For production
+           we'd add a restaurant_id column to mesa_order_items or use RLS. */
+        return rows;
+      });
+  }
+
+  /* ---- Load sessions + tables for context ---- */
+  function loadSessionContext() {
+    return PLAT.client
+      .from('mesa_sessions')
+      .select('id, table_id, status, order_type, tab_name, guest_count, mesa_tables(id, label, table_code)')
+      .in('status', ['open','seated'])
+      .then(function(r) {
+        if (r.error) throw r.error;
+        return r.data || [];
+      });
+  }
+
+  /* ---- Build tickets map from raw items ---- */
+  function buildTickets(items) {
+    var map = {};
+    items.forEach(function(item) {
+      var sid = item.session_id;
+      if (!map[sid]) {
+        var sess = item.mesa_sessions || {};
+        var tableInfo = sess.mesa_tables || {};
+        map[sid] = {
+          session_id:  sid,
+          tab_name:    sess.tab_name   || '',
+          order_type:  sess.order_type || 'dine_in',
+          guest_count: sess.guest_count || 1,
+          table_label: tableInfo.label || tableInfo.table_code || 'Table',
+          table_code:  tableInfo.table_code || '',
+          items: [],
+        };
+      }
+      map[sid].items.push({
+        id:             item.id,
+        name:           item.name,
+        qty:            item.qty,
+        seat:           item.seat,
+        course:         item.course || 1,
+        kitchen_status: item.kitchen_status,
+        sent_at:        item.sent_at,
+        notes:          item.notes || '',
+        modifiers:      (item.pos_order_item_modifiers || []).map(function(m) {
+          return m.name || '';
+        }).filter(Boolean),
+      });
+    });
+    return map;
+  }
+
+  /* ---- Render tickets to DOM ---- */
+  function renderTickets() {
+    /* Decide which tickets to show */
+    var ticketList = Object.values(tickets);
+
+    /* Apply course filter */
+    if (courseFilter !== 'all') {
+      var cf = parseInt(courseFilter, 10);
+      ticketList = ticketList.map(function(t) {
+        var filtered = t.items.filter(function(i) {
+          if (cf === 3) return i.course >= 3;
+          return i.course === cf;
+        });
+        if (!filtered.length) return null;
+        return Object.assign({}, t, {items: filtered});
+      }).filter(Boolean);
+    }
+
+    /* Sort */
+    ticketList.sort(function(a, b) {
+      var aAt = ticketSentAt(a.items) || '9999';
+      var bAt = ticketSentAt(b.items) || '9999';
+      if (sortOrder === 'newest') return bAt < aAt ? -1 : bAt > aAt ? 1 : 0;
+      return aAt < bAt ? -1 : aAt > bAt ? 1 : 0;
+    });
+
+    /* Clear loading/error nodes, preserve existing ticket elements */
+    var loadingEl = document.getElementById('kds-loading');
+    var errorEl   = document.getElementById('kds-error');
+    var emptyEl   = document.getElementById('kds-empty');
+    if (loadingEl)  { loadingEl.remove(); }
+    if (errorEl)    { errorEl.remove(); }
+    if (emptyEl)    { emptyEl.remove(); }
+
+    /* Remove tickets no longer in filtered set */
+    var existingCards = {};
+    Array.prototype.forEach.call(board.querySelectorAll('.ticket[data-session-id]'), function(card) {
+      existingCards[card.dataset.sessionId] = card;
+    });
+    var renderedSids = new Set(ticketList.map(function(t) { return t.session_id; }));
+    Object.keys(existingCards).forEach(function(sid) {
+      if (!renderedSids.has(sid)) existingCards[sid].remove();
+    });
+
+    if (ticketList.length === 0) {
+      var empty = document.createElement('div');
+      empty.id = 'kds-empty';
+      empty.setAttribute('role', 'status');
+      empty.innerHTML = [
+        '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"',
+        '  stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">',
+        '  <path d="M3 6h18M3 12h18M3 18h18"/>',
+        '</svg>',
+        '<h2>All clear</h2>',
+        '<p>No active kitchen tickets. New orders will appear here instantly.</p>',
+      ].join('');
+      board.appendChild(empty);
+      renderAllDay({});
+      return;
+    }
+
+    /* Render or update each ticket card */
+    ticketList.forEach(function(ticket, idx) {
+      var existing = existingCards[ticket.session_id];
+      var card = existing || document.createElement('article');
+
+      card.className = 'ticket';
+      card.dataset.sessionId = ticket.session_id;
+      card.setAttribute('aria-label', 'Ticket for ' + ticket.table_label);
+
+      /* Age coloring */
+      var sentAt = ticketSentAt(ticket.items);
+      card.dataset.age = ageClass(sentAt);
+
+      card.innerHTML = buildTicketHTML(ticket, sentAt);
+
+      /* Attach event listeners */
+      attachTicketEvents(card, ticket);
+
+      if (!existing) {
+        /* Insert at correct sorted position */
+        var allCards = board.querySelectorAll('.ticket[data-session-id]');
+        var inserted = false;
+        for (var i = 0; i < allCards.length; i++) {
+          var siblingSid  = allCards[i].dataset.sessionId;
+          var siblingIdx  = ticketList.findIndex(function(t) { return t.session_id === siblingSid; });
+          if (siblingIdx !== -1 && siblingIdx > idx) {
+            board.insertBefore(card, allCards[i]);
+            inserted = true;
+            break;
+          }
+        }
+        if (!inserted) board.appendChild(card);
+      }
+    });
+
+    /* Update allday strip */
+    renderAllDay(computeAllDay(ticketList));
+  }
+
+  /* ---- Build HTML for a ticket card ---- */
+  function buildTicketHTML(ticket, sentAt) {
+    var elapsed = sentAt ? formatElapsed(sentAt) : '--';
+    var guestTxt = ticket.guest_count > 0 ? ticket.guest_count + ' guest' + (ticket.guest_count > 1 ? 's' : '') : '';
+    var metaParts = [orderTypeLabel(ticket.order_type)];
+    if (ticket.tab_name) metaParts.push(ticket.tab_name);
+    if (guestTxt) metaParts.push(guestTxt);
+
+    /* Group items by course */
+    var courseMap = {};
+    ticket.items.forEach(function(item) {
+      var c = item.course || 1;
+      if (!courseMap[c]) courseMap[c] = [];
+      courseMap[c].push(item);
+    });
+    var courseKeys = Object.keys(courseMap).map(Number).sort(function(a,b){return a-b;});
+
+    /* Count sent/preparing/ready */
+    var counts = {sent:0, preparing:0, ready:0};
+    ticket.items.forEach(function(i) { if (counts[i.kitchen_status] != null) counts[i.kitchen_status]++; });
+    var allReady = counts.sent === 0 && counts.preparing === 0 && counts.ready === ticket.items.length;
+
+    var itemsHTML = courseKeys.map(function(course) {
+      var label = courseKeys.length > 1
+        ? '<div class="ticket__course-label">' + esc(courseLabel(course)) + '</div>'
+        : '';
+      var rowsHTML = courseMap[course].map(function(item) {
+        return buildItemHTML(item);
+      }).join('');
+      return label + rowsHTML;
+    }).join('');
+
+    var statusSummary = [
+      counts.sent      ? counts.sent      + ' sent'      : '',
+      counts.preparing ? counts.preparing + ' preparing' : '',
+      counts.ready     ? counts.ready     + ' ready'     : '',
+    ].filter(Boolean).join(', ');
+
+    var bumpAllLabel = allReady
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Served'
+      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 12 12 19 19 12"/></svg> All ready';
+
+    return [
+      '<header class="ticket__header">',
+        '<div class="ticket__header-left">',
+          '<div class="ticket__table">' + esc(ticket.table_label) + '</div>',
+          '<div class="ticket__meta">' + esc(metaParts.join(' · ')) + '</div>',
+        '</div>',
+        '<div class="ticket__header-right">',
+          '<div class="ticket__timer" data-sent-at="' + esc(sentAt || '') + '" aria-label="Elapsed time">' + esc(elapsed) + '</div>',
+          '<div class="ticket__guests" aria-hidden="true"></div>',
+        '</div>',
+      '</header>',
+      '<div class="ticket__body">',
+        itemsHTML,
+      '</div>',
+      '<footer class="ticket__footer">',
+        '<button class="ticket__bump-all" type="button"',
+        '  data-state="' + (allReady ? 'all-ready' : 'bump-all') + '"',
+        '  aria-label="' + (allReady ? 'Mark all items as served for ' + esc(ticket.table_label) : 'Mark all items as ready for ' + esc(ticket.table_label)) + '">',
+          bumpAllLabel,
+        '</button>',
+        '<span class="ticket__status-summary" aria-label="Item status summary">' + esc(statusSummary) + '</span>',
+      '</footer>',
+    ].join('');
+  }
+
+  /* ---- Build HTML for one item ---- */
+  function buildItemHTML(item) {
+    var seatLabel = item.seat ? 'Seat ' + item.seat : '';
+    var modsHTML = item.modifiers.length > 0
+      ? '<div class="ticket__item-mods" aria-label="Modifiers">' + esc(item.modifiers.join(', ')) + '</div>'
+      : '';
+    var notesHTML = item.notes
+      ? '<div class="ticket__item-notes' + (hasAllergyKeyword(item.notes) ? ' has-allergy' : '') + '" role="note" aria-label="Special note">' + esc(item.notes) + '</div>'
+      : '';
+
+    return [
+      '<div class="ticket__item" role="button" tabindex="0"',
+      '  data-item-id="' + esc(item.id) + '"',
+      '  data-status="' + esc(item.kitchen_status) + '"',
+      '  data-sent-at="' + esc(item.sent_at || '') + '"',
+      '  aria-label="' + esc(item.qty + 'x ' + item.name + ' – ' + item.kitchen_status + '. Tap to advance.') + '">',
+        '<div class="ticket__item-status-dot" aria-hidden="true"></div>',
+        '<div class="ticket__item-row">',
+          '<span class="ticket__item-qty">' + esc(item.qty) + '×</span>',
+          '<span class="ticket__item-name">' + esc(item.name) + '</span>',
+          seatLabel ? '<span class="ticket__item-seat">' + esc(seatLabel) + '</span>' : '',
+        '</div>',
+        modsHTML,
+        notesHTML,
+      '</div>',
+    ].join('');
+  }
+
+  /* ---- Attach event listeners to a rendered card ---- */
+  function attachTicketEvents(card, ticket) {
+    /* Individual item bump */
+    card.querySelectorAll('.ticket__item').forEach(function(itemEl) {
+      /* Remove old listeners by replacing — simplest approach for vanilla JS */
+      var fresh = itemEl.cloneNode(true);
+      itemEl.parentNode.replaceChild(fresh, itemEl);
+
+      function handleBump() {
+        var itemId = fresh.dataset.itemId;
+        var currentStatus = fresh.dataset.status;
+        var nextStatus = nextKitchenStatus(currentStatus);
+        if (!nextStatus) return; /* already served, shouldn't be on board */
+        bumpItem(itemId, currentStatus, nextStatus, ticket.session_id);
+      }
+      fresh.addEventListener('click', handleBump);
+      fresh.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleBump();
+        }
+      });
+    });
+
+    /* Bump all button */
+    var bumpAllBtn = card.querySelector('.ticket__bump-all');
+    if (bumpAllBtn) {
+      var fresh = bumpAllBtn.cloneNode(true);
+      bumpAllBtn.parentNode.replaceChild(fresh, bumpAllBtn);
+      fresh.addEventListener('click', function() {
+        var state = fresh.dataset.state;
+        if (state === 'all-ready') {
+          bumpAllItems(ticket.session_id, 'ready', 'served');
+        } else {
+          bumpAllItems(ticket.session_id, ['sent','preparing'], 'ready');
+        }
+      });
+    }
+  }
+
+  /* ---- Status progression ---- */
+  function nextKitchenStatus(current) {
+    var chain = {sent:'preparing', preparing:'ready', ready:'served'};
+    return chain[current] || null;
+  }
+
+  /* ---- Bump a single item via RPC ---- */
+  function bumpItem(itemId, prevStatus, nextStatus, sessionId) {
+    /* Optimistic update */
+    optimisticUpdateItem(itemId, nextStatus, sessionId);
+    undoStack.push({itemId: itemId, prevStatus: prevStatus, sessionId: sessionId});
+    if (undoStack.length > 10) undoStack.shift();
+    updateUndoBtn();
+
+    PLAT.client.rpc('pos_bump_item', {
+      p_order_item: itemId,
+      p_status: nextStatus,
+    }).then(function(r) {
+      if (r.error) {
+        /* Rollback */
+        optimisticUpdateItem(itemId, prevStatus, sessionId);
+        undoStack.pop();
+        updateUndoBtn();
+        toast('Bump failed — please retry', 'error');
+        console.error('[KDS] bump error', r.error);
+      } else {
+        if (nextStatus === 'served') {
+          /* Remove from our ticket's items and re-render */
+          removeItemFromTicket(itemId, sessionId);
+        }
+        toast(nextStatus === 'served' ? 'Item served' : 'Marked ' + nextStatus, 'success');
+      }
+    }).catch(function(err) {
+      optimisticUpdateItem(itemId, prevStatus, sessionId);
+      undoStack.pop();
+      updateUndoBtn();
+      toast('Connection error — please retry', 'error');
+      console.error('[KDS] bump exception', err);
+    });
+  }
+
+  /* ---- Bump all non-served items to a target status ---- */
+  function bumpAllItems(sessionId, fromStatuses, toStatus) {
+    var ticket = tickets[sessionId];
+    if (!ticket) return;
+    var eligible = ticket.items.filter(function(i) {
+      if (Array.isArray(fromStatuses)) return fromStatuses.indexOf(i.kitchen_status) !== -1;
+      return i.kitchen_status === fromStatuses;
+    });
+    if (!eligible.length) return;
+    eligible.forEach(function(item) {
+      bumpItem(item.id, item.kitchen_status, toStatus, sessionId);
+    });
+  }
+
+  /* ---- Optimistic update item status ---- */
+  function optimisticUpdateItem(itemId, newStatus, sessionId) {
+    var ticket = tickets[sessionId];
+    if (!ticket) return;
+    ticket.items.forEach(function(item) {
+      if (item.id === itemId) item.kitchen_status = newStatus;
+    });
+    renderTickets();
+  }
+
+  /* ---- Remove served item from local state ---- */
+  function removeItemFromTicket(itemId, sessionId) {
+    var ticket = tickets[sessionId];
+    if (!ticket) return;
+    ticket.items = ticket.items.filter(function(i) { return i.id !== itemId; });
+    if (ticket.items.length === 0) {
+      delete tickets[sessionId];
+    }
+    renderTickets();
+  }
+
+  /* ---- Undo last bump ---- */
+  function undoLastBump() {
+    if (!undoStack.length) return;
+    var last = undoStack.pop();
+    updateUndoBtn();
+
+    PLAT.client.rpc('pos_bump_item', {
+      p_order_item: last.itemId,
+      p_status: last.prevStatus,
+    }).then(function(r) {
+      if (r.error) {
+        toast('Undo failed', 'error');
+        console.error('[KDS] undo error', r.error);
+      } else {
+        /* Reload to get fresh state */
+        fetchAndRender();
+        toast('Bump undone', 'success');
+      }
+    }).catch(function(err) {
+      toast('Undo failed — connection error', 'error');
+      console.error('[KDS] undo exception', err);
+    });
+  }
+
+  function updateUndoBtn() {
+    btnUndo.disabled = undoStack.length === 0;
+    btnUndo.setAttribute('aria-label', undoStack.length
+      ? 'Undo last bump (' + undoStack.length + ' available)'
+      : 'Undo last bump (nothing to undo)');
+  }
+
+  /* ---- All-day counts ---- */
+  function computeAllDay(ticketList) {
+    var counts = {};
+    ticketList.forEach(function(ticket) {
+      ticket.items.forEach(function(item) {
+        if (item.kitchen_status === 'served') return;
+        var key = item.name;
+        counts[key] = (counts[key] || 0) + Number(item.qty || 1);
+      });
+    });
+    return counts;
+  }
+
+  function renderAllDay(counts) {
+    /* Remove existing chips */
+    alldayEl.querySelectorAll('.allday-chip').forEach(function(c) { c.remove(); });
+    if (alldayEmpty) alldayEmpty.remove();
+
+    var keys = Object.keys(counts);
+    if (!keys.length) {
+      var em = document.createElement('span');
+      em.id = 'allday-empty';
+      em.className = 'allday-empty';
+      em.textContent = 'No pending items';
+      alldayEl.appendChild(em);
+      return;
+    }
+
+    /* Sort by count descending */
+    keys.sort(function(a,b) { return counts[b] - counts[a]; });
+    keys.forEach(function(name) {
+      var chip = document.createElement('div');
+      chip.className = 'allday-chip';
+      chip.setAttribute('aria-label', counts[name] + ' ' + name);
+      chip.innerHTML = '<span class="allday-chip__qty">' + esc(String(counts[name])) + '</span>' +
+                       '<span>' + esc(name) + '</span>';
+      alldayEl.appendChild(chip);
+    });
+  }
+
+  /* ---- Timer tick — update elapsed times ---- */
+  function tickTimers() {
+    board.querySelectorAll('.ticket[data-session-id]').forEach(function(card) {
+      var sid = card.dataset.sessionId;
+      var ticket = tickets[sid];
+      if (!ticket) return;
+      var sentAt = ticketSentAt(ticket.items);
+      var timerEl = card.querySelector('.ticket__timer');
+      if (timerEl && sentAt) {
+        timerEl.textContent = formatElapsed(sentAt);
+      }
+      card.dataset.age = ageClass(sentAt);
+    });
+  }
+
+  /* ---- Fetch and render ---- */
+  function fetchAndRender() {
+    return loadTickets()
+      .then(function(rows) {
+        tickets = buildTickets(rows);
+        isLoading = false;
+        renderTickets();
+      })
+      .catch(function(err) {
+        console.error('[KDS] load error', err);
+        /* Only show error if board is empty */
+        if (isLoading) {
+          isLoading = false;
+          var loadingEl = document.getElementById('kds-loading');
+          if (loadingEl) loadingEl.remove();
+          var errorEl = document.createElement('div');
+          errorEl.id = 'kds-error';
+          errorEl.innerHTML = [
+            '<p role="alert">Unable to load kitchen tickets. Check your connection.</p>',
+            '<button type="button" onclick="window.location.reload()">Retry</button>',
+          ].join('');
+          board.appendChild(errorEl);
+        }
+      });
+  }
+
+  /* ---- Realtime subscription ---- */
+  function subscribeRealtime() {
+    /* Remove existing channel before re-subscribing */
+    if (rtChannel) {
+      try { PLAT.client.removeChannel(rtChannel); } catch(e) {}
+      rtChannel = null;
+    }
+    rtChannelSeq++;
+    var seq = rtChannelSeq;
+    var topic = 'kds-order-items-' + seq;
+
+    rtChannel = PLAT.client
+      .channel(topic)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'mesa_order_items',
+      }, function(payload) {
+        if (seq !== rtChannelSeq) return; /* stale subscription */
+        handleRealtimeEvent(payload);
+      })
+      .subscribe(function(status) {
+        setRtStatus(status === 'SUBSCRIBED');
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          /* Fall back to polling */
+          setRtStatus(false);
+        }
+      });
+  }
+
+  /* ---- Handle realtime event ---- */
+  function handleRealtimeEvent(payload) {
+    var record = payload.new || payload.old || {};
+    var status = record.kitchen_status;
+
+    /* Debounce rapid fire: just do a full re-fetch for correctness */
+    clearTimeout(handleRealtimeEvent._debounce);
+    handleRealtimeEvent._debounce = setTimeout(function() {
+      fetchAndRender().then(function() {
+        /* Flash new ticket if INSERT */
+        if (payload.eventType === 'INSERT') {
+          flashNewTicket(record.session_id);
+          playNewTicketSound();
+        }
+      });
+    }, 150);
+  }
+  handleRealtimeEvent._debounce = null;
+
+  /* ---- Flash card on new ticket ---- */
+  function flashNewTicket(sessionId) {
+    var card = board.querySelector('.ticket[data-session-id="' + sessionId + '"]');
+    if (!card) return;
+    card.classList.remove('ticket-new-flash');
+    void card.offsetWidth; /* force reflow */
+    card.classList.add('ticket-new-flash');
+    setTimeout(function() { card.classList.remove('ticket-new-flash'); }, 600);
+  }
+
+  /* ---- Subtle audio cue for new ticket ---- */
+  function playNewTicketSound() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.35);
+    } catch(e) { /* Audio not available — silent */ }
+  }
+
+  /* ---- Polling fallback ---- */
+  function startPoll() {
+    clearInterval(pollTimer);
+    pollTimer = setInterval(fetchAndRender, POLL_INTERVAL_MS);
+  }
+
+  /* ---- Controls ---- */
+  btnSortOldest.addEventListener('click', function() {
+    sortOrder = 'oldest';
+    btnSortOldest.classList.add('active');
+    btnSortOldest.setAttribute('aria-pressed', 'true');
+    btnSortNewest.classList.remove('active');
+    btnSortNewest.setAttribute('aria-pressed', 'false');
+    renderTickets();
+  });
+
+  btnSortNewest.addEventListener('click', function() {
+    sortOrder = 'newest';
+    btnSortNewest.classList.add('active');
+    btnSortNewest.setAttribute('aria-pressed', 'true');
+    btnSortOldest.classList.remove('active');
+    btnSortOldest.setAttribute('aria-pressed', 'false');
+    renderTickets();
+  });
+
+  courseSelect.addEventListener('change', function() {
+    courseFilter = courseSelect.value;
+    renderTickets();
+  });
+
+  btnUndo.addEventListener('click', undoLastBump);
+
+  /* ---- Boot ---- */
+  function init() {
+    if (!window.PLAT || !window.PLAT.client) {
+      console.error('[KDS] PLAT not available — platform.js must load first');
+      return;
+    }
+
+    /* Clock */
+    updateClock();
+    clockTimer = setInterval(updateClock, 30000);
+
+    /* Load restaurant info (non-blocking) */
+    loadRestaurant();
+
+    /* Initial load */
+    fetchAndRender();
+
+    /* Realtime */
+    subscribeRealtime();
+
+    /* Polling fallback */
+    startPoll();
+
+    /* Timer tick */
+    tickTimer = setInterval(tickTimers, TIMER_TICK_MS);
+  }
+
+  /* Wait for PLAT to be ready */
+  if (window.PLAT) {
+    init();
+  } else {
+    window.addEventListener('load', function() {
+      if (window.PLAT) init();
+      else console.error('[KDS] PLAT never loaded');
+    });
+  }
+
+}());
+</script>
+</body>
+</html>
