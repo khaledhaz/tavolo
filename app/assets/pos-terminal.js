@@ -565,8 +565,10 @@
       .then(function(r) {
         var groupIds = (r.data || []).map(function(row) { return row.group_id; });
         if (!groupIds.length) {
-          /* No modifiers — prompt for special instructions then add */
-          openItemNoteModal(item, [], state.currentSeat);
+          /* No modifiers — add IMMEDIATELY (fast path, 1 tap). The server adds a
+             special instruction via the pencil on the ticket line if needed —
+             never block the add or risk dropping the item behind a modal. */
+          addItemToTicket(item, [], state.currentSeat, null);
           return;
         }
         /* Fetch groups + modifiers */

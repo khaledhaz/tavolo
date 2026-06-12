@@ -685,7 +685,7 @@
 
     if (!sessionId) {
       var sIns = await sb.from('mesa_sessions')
-        .insert({ restaurant_id: restaurantId, table_id: tableId, status: 'seated' })
+        .insert({ restaurant_id: restaurantId, table_id: tableId, status: 'seated', source: 'qr' })
         .select('id').single();
       if (sIns.error) {
         var re = await sb.from('mesa_sessions').select('id').eq('table_id', tableId)

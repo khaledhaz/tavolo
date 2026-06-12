@@ -933,7 +933,7 @@ body {
         'sent_at',
         'notes',
         /* join to session for table/tab info */
-        'mesa_sessions!inner(id, table_id, status, order_type, tab_name, guest_count, server_staff_id, mesa_tables(id, label, table_code))',
+        'mesa_sessions!inner(id, table_id, status, order_type, tab_name, guest_count, server_staff_id, source, mesa_tables(id, label, table_code))',
         /* join modifiers */
         'pos_order_item_modifiers(modifier_id, name, price_delta_cents)'
       ].join(','))
@@ -982,7 +982,8 @@ body {
           guest_count: sess.guest_count || 1,
           table_label: tableInfo.label || tableInfo.table_code || 'Table',
           table_code:  tableInfo.table_code || '',
-          /* server_staff_id null → likely QR / self-service order */
+          /* explicit order source — reliable QR vs POS distinction */
+          is_qr:       (sess.source === 'qr'),
           has_server:  !!(sess.server_staff_id),
           items: [],
         };
@@ -1130,7 +1131,7 @@ body {
 
     /* QR / self-service badge: shown when no server is attached to the session */
     var qrHTML = '';
-    if (!ticket.has_server) {
+    if (ticket.is_qr) {
       qrHTML = '<span class="ticket__qr-chip" aria-label="Self-service QR order">QR</span>';
     }
 
