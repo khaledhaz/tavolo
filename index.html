@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0d0f14">
-<meta name="description" content="Tavolo — the complete restaurant operating system. Reservations, QR Pay-at-Table, and POS in one platform. Built for modern hospitality.">
-<title>Tavolo — One Platform. Every Seat, Every Order, Every Payment.</title>
+<meta name="description" content="Tavolo is the restaurant operating system: reservations, POS, kitchen display and QR pay-at-table in one platform. Watch it run live on this page.">
+<title>Tavolo — Run your whole floor from one screen.</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2703d'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23fff'%3ET%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   TAVOLO LANDING v2 — Midnight & Copper — Three Modules
+   TAVOLO LANDING v3 — Midnight & Copper — The app, in motion
    ============================================================ */
 
 /* ---- Reset ---- */
@@ -49,6 +49,7 @@ ul,ol{list-style:none}
   --text-2:#E8E3DC;
   --muted:#9A9A9A;
   --faint:#555;
+  --green:#3aa870;
   --shadow-card:0 0 0 1px rgba(255,255,255,0.05),0 8px 32px rgba(0,0,0,0.6);
   --radius-sm:6px;
   --radius-md:10px;
@@ -198,7 +199,6 @@ ul,ol{list-style:none}
 .btn-nav-cta:hover{background:var(--copper-hover)}
 .btn-nav-cta:active{transform:scale(0.97)}
 
-/* Mobile hamburger */
 .nav-toggle{
   display:none;
   flex-direction:column;gap:5px;
@@ -215,8 +215,7 @@ ul,ol{list-style:none}
   border-radius:2px;
   transition:transform 0.2s,opacity 0.2s;
 }
-
-@media(max-width:767px){
+@media(max-width:860px){
   .site-nav,.nav-open-app{display:none}
   .nav-toggle{display:flex}
 }
@@ -224,35 +223,62 @@ ul,ol{list-style:none}
   .btn-nav-cta{display:none}
 }
 
+/* Mobile menu drawer */
+.mobile-menu{
+  display:none;position:fixed;top:68px;left:0;right:0;
+  background:rgba(13,15,20,0.97);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border-mid);
+  flex-direction:column;gap:0;
+  padding:12px 0 20px;
+  z-index:199;
+  overflow-x:hidden;
+}
+.mobile-menu.open{display:flex}
+.mobile-menu a{
+  display:flex;align-items:center;
+  padding:14px 24px;
+  font-size:16px;font-weight:500;color:var(--muted);
+  text-decoration:none;min-height:52px;
+  border-bottom:1px solid var(--border);
+  transition:color 0.15s,background 0.15s;
+}
+.mobile-menu a:last-child{border-bottom:0}
+.mobile-menu a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.mobile-menu .mm-cta{
+  margin:12px 24px 0;
+  background:var(--copper);color:#fff;
+  justify-content:center;border-radius:var(--radius-full);
+  min-height:52px;font-weight:600;border-bottom:0;
+}
+.mobile-menu .mm-cta:hover{background:var(--copper-hover)}
+
 /* ============================================================
-   HERO
+   HERO — text + live cycling product stage
    ============================================================ */
 .hero{
-  padding:clamp(120px,14vw,160px) 0 clamp(72px,8vw,104px);
+  padding:clamp(110px,13vw,150px) 0 clamp(64px,7vw,96px);
   position:relative;overflow:hidden;
   background:var(--bg-deep);
 }
-/* Warm radial glow behind headline */
 .hero::before{
   content:'';position:absolute;
   top:-10%;left:50%;transform:translateX(-50%);
-  width:min(900px,130vw);height:600px;
-  background:radial-gradient(ellipse 900px 600px at 50% 0%,rgba(194,112,61,0.08),transparent 70%);
+  width:min(1000px,140vw);height:640px;
+  background:radial-gradient(ellipse 1000px 640px at 50% 0%,rgba(194,112,61,0.09),transparent 70%);
   pointer-events:none;z-index:0;
 }
 .hero-content{
   position:relative;z-index:1;
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:clamp(40px,6vw,80px);
+  grid-template-columns:1fr 1.05fr;
+  gap:clamp(36px,5vw,64px);
   align-items:center;
 }
-@media(max-width:900px){
+@media(max-width:960px){
   .hero-content{grid-template-columns:1fr}
 }
-
-/* Text side */
-.hero-text{max-width:560px}
+.hero-text{max-width:560px;min-width:0}
 .hero-eyebrow{
   display:inline-flex;align-items:center;gap:10px;
   font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
@@ -273,7 +299,7 @@ ul,ol{list-style:none}
 }
 .hero-headline{
   font-family:var(--serif);
-  font-size:clamp(44px,6vw,64px);
+  font-size:clamp(42px,5.6vw,62px);
   font-weight:700;line-height:1.05;
   letter-spacing:-0.03em;
   color:var(--text);
@@ -283,7 +309,7 @@ ul,ol{list-style:none}
 .hero-subline{
   font-size:clamp(15px,2vw,18px);
   color:var(--muted);line-height:1.65;
-  margin-bottom:40px;
+  margin-bottom:36px;
 }
 .hero-subline strong{color:var(--text-2);font-weight:500}
 .hero-actions{
@@ -291,163 +317,512 @@ ul,ol{list-style:none}
   align-items:center;
 }
 
-/* ---- Layered composite visual ---- */
+/* ---- Live product stage ---- */
 .hero-visual{
+  position:relative;min-width:0;
   display:flex;justify-content:center;align-items:center;
-  min-height:360px;
 }
-.hero-composite{
+.hero-stage-wrap{
+  position:relative;width:100%;max-width:540px;
+  perspective:1100px;
+}
+.hero-stage-glow{
+  position:absolute;inset:-30px -40px;
+  background:radial-gradient(ellipse at 55% 35%,rgba(194,112,61,0.16),transparent 65%);
+  pointer-events:none;z-index:0;
+}
+.hero-stage{
+  position:relative;z-index:1;
+  background:rgba(15,18,25,0.92);
+  border:1px solid var(--border-mid);
+  border-radius:var(--radius-xl);
+  box-shadow:0 24px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(194,112,61,0.08),0 0 90px rgba(194,112,61,0.07);
+  overflow:hidden;
+  transform:rotateX(var(--tx,0deg)) rotateY(var(--ty,0deg));
+  transition:transform 0.25s ease-out;
+  will-change:transform;
+}
+.stage-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;
+  border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+.stage-brand{
+  font-family:var(--serif);font-weight:700;font-size:17px;
+  color:var(--text);line-height:1;flex-shrink:0;
+}
+.stage-brand b{color:var(--copper);font-weight:700}
+.stage-tabs{
+  display:flex;gap:2px;flex:1;min-width:0;
+  justify-content:center;flex-wrap:nowrap;
+}
+.stage-tab{
   position:relative;
-  width:340px;height:340px;
+  font-size:11px;font-weight:600;color:var(--muted);
+  padding:8px 10px;min-height:36px;
+  border-radius:var(--radius-sm);
+  letter-spacing:0.03em;white-space:nowrap;
+  transition:color 0.15s;
+}
+.stage-tab:hover{color:var(--text)}
+.stage-tab.active{color:var(--copper)}
+.stage-tab::after{
+  content:'';position:absolute;left:8px;right:8px;bottom:3px;height:2px;
+  border-radius:2px;background:var(--copper);
+  transform:scaleX(0);transform-origin:left;
+}
+.stage-tab.active::after{animation:tabfill 4.2s linear forwards}
+@keyframes tabfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.stage-live{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--green);background:rgba(58,168,112,0.1);
+  padding:4px 9px;border-radius:var(--radius-full);
   flex-shrink:0;
 }
-@media(max-width:479px){
-  .hero-composite{width:290px;height:290px}
+.stage-live i{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 6px rgba(58,168,112,0.6);
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+.stage-view{position:relative;height:400px;overflow:hidden}
+.stage-panel{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:18px;
+  opacity:0;transform:translateY(10px) scale(0.985);
+  transition:opacity 0.45s ease,transform 0.45s ease;
+  pointer-events:none;
+}
+.stage-panel.on{opacity:1;transform:none}
+
+/* Floating toasts over the stage */
+.hero-toast{
+  position:absolute;top:12px;right:12px;z-index:5;
+  display:flex;align-items:center;gap:8px;
+  max-width:calc(100% - 24px);
+  background:rgba(19,22,28,0.96);
+  border:1px solid rgba(194,112,61,0.35);
+  border-radius:10px;padding:8px 12px;
+  font-size:11px;font-weight:600;color:var(--text-2);
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+  opacity:0;transform:translateY(-8px);
+  pointer-events:none;
+}
+.hero-toast svg{flex-shrink:0}
+.hero-toast b{color:var(--copper);font-weight:700}
+.hero-toast .tg{color:var(--green);font-weight:700}
+.hero-toast-1{animation:toast 16s ease-in-out infinite}
+.hero-toast-2{animation:toast 16s ease-in-out infinite;animation-delay:8s}
+@keyframes toast{
+  0%{opacity:0;transform:translateY(-8px)}
+  3%,22%{opacity:1;transform:none}
+  27%,100%{opacity:0;transform:translateY(-8px)}
 }
 
-/* Shared card base */
-.hc-card{
-  position:absolute;
-  background:var(--surface);
+@media(max-width:479px){
+  .stage-brand{display:none}
+  .stage-tab{padding:8px 7px;font-size:10px}
+  .stage-view{height:368px}
+}
+
+/* ============================================================
+   LIVE PREVIEWS — shared card chrome
+   All loops are transform/opacity only. Base (non-animated)
+   styles double as the prefers-reduced-motion static state.
+   ============================================================ */
+.pv{
+  background:#10131a;
   border:1px solid var(--border-mid);
   border-radius:var(--radius-lg);
-  padding:14px;
+  padding:16px;
   box-shadow:var(--shadow-card);
-  font-size:11px;
+  width:100%;max-width:420px;min-width:0;
+  font-size:12px;
 }
-.hc-card-header{
-  display:flex;align-items:center;gap:7px;
+.pv-head{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:12px;padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+.pv-title{
+  font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.05em;
+  flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pv-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+  background:var(--green);box-shadow:0 0 6px rgba(58,168,112,0.5);
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+.pv-live{
+  font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  padding:2px 8px;border-radius:var(--radius-full);
+  background:rgba(58,168,112,0.12);color:var(--green);flex-shrink:0;
+}
+.pv-caption{
+  font-size:12px;color:var(--muted);text-align:center;
+  margin-top:14px;letter-spacing:0.02em;
+}
+.pv-caption b{color:var(--copper);font-weight:600}
+
+/* ============================================================
+   PREVIEW 1 — RESERVATIONS floor filling up (12s loop)
+   Animated tiles crossfade stacked state layers:
+   open → reserved → seated. A booking chip slides in.
+   ============================================================ */
+.pvr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.pvr-tbl{
+  position:relative;aspect-ratio:1.18;border-radius:7px;
+  font-size:10px;font-weight:700;letter-spacing:0.03em;
+  min-width:0;
+}
+.pvr-st{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  border-radius:7px;border:1px solid;
+}
+.pvr-st small{font-size:7px;font-weight:500;opacity:0.75;text-transform:uppercase;letter-spacing:0.06em}
+.pvr-open{background:#0a2018;border-color:#1e6b40;color:#4cd48a}
+.pvr-rsv{background:#221a06;border-color:#c28a1a;color:#f5c045}
+.pvr-seat{background:#2a0d0d;border-color:#c03030;color:#f56565}
+.pvr-dirty{background:#18181e;border-color:#3a3b48;color:#777}
+/* animated tiles: all layers hidden except the chosen reduced-motion keeper */
+.pvr-anim .pvr-st{opacity:0}
+.pvr-anim .pvr-keep{opacity:1}
+.pvr-anim .pvr-st{
+  animation-duration:12s;animation-iteration-count:infinite;animation-timing-function:ease-in-out;
+}
+.pvr-anim .pvr-open{animation-name:pvrOpen}
+.pvr-anim .pvr-rsv{animation-name:pvrRsv}
+.pvr-anim .pvr-seat{animation-name:pvrSeat}
+@keyframes pvrOpen{0%,28%{opacity:1}34%,94%{opacity:0}100%{opacity:1}}
+@keyframes pvrRsv{0%,28%{opacity:0}34%,58%{opacity:1}64%,100%{opacity:0}}
+@keyframes pvrSeat{0%,58%{opacity:0}64%,94%{opacity:1}100%{opacity:0}}
+.pvr-d1 .pvr-st{animation-delay:-4s}
+.pvr-d2 .pvr-st{animation-delay:-8s}
+.pvr-d3 .pvr-st{animation-delay:-6s}
+/* new-booking chip — height reserved so the loop never shifts layout */
+.pvr-chipwrap{position:relative;height:36px;margin-top:10px}
+.pvr-chip{
+  position:absolute;inset:0;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(194,112,61,0.1);
+  border:1px solid rgba(194,112,61,0.32);
+  border-radius:8px;padding:0 10px;
+  font-size:10px;font-weight:600;color:var(--text-2);
+  white-space:nowrap;overflow:hidden;
+  animation:pvrChip 12s ease-in-out infinite;
+}
+.pvr-chip svg{flex-shrink:0}
+.pvr-chip b{color:var(--copper);font-weight:700}
+@keyframes pvrChip{
+  0%,6%{opacity:0;transform:translateY(8px)}
+  12%,46%{opacity:1;transform:none}
+  54%,100%{opacity:0;transform:translateY(-6px)}
+}
+
+/* ============================================================
+   PREVIEW 2 — POS ticket being rung & fired (10s loop)
+   Items land one by one, total ticks up, fire pulse.
+   ============================================================ */
+.pvp-rows{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.pvp-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 8px;border-radius:6px;
+  background:rgba(255,255,255,0.03);
+  animation-duration:10s;animation-timing-function:ease-out;animation-iteration-count:infinite;
+}
+.pvp-q{font-weight:700;color:var(--copper);flex-shrink:0;font-size:11px;width:20px}
+.pvp-n{color:var(--text-2);flex:1;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pvp-p{font-weight:700;color:var(--text);flex-shrink:0;font-variant-numeric:tabular-nums;font-size:12px}
+.pvp-mod{background:transparent;padding:0 8px 0 28px;color:var(--gold);font-size:11px;font-weight:500}
+.pvp-note{
+  background:rgba(240,181,29,0.07);
+  border:1px dashed rgba(240,181,29,0.3);
+  color:#e8c87a;font-size:11px;font-style:italic;
+}
+.pvp-r1{animation-name:pvpR1}
+.pvp-r2{animation-name:pvpR2}
+.pvp-r3{animation-name:pvpR3}
+.pvp-r4{animation-name:pvpR4}
+@keyframes pvpR1{0%,6%{opacity:0;transform:translateY(6px)}11%,88%{opacity:1;transform:none}94%,100%{opacity:0;transform:translateY(6px)}}
+@keyframes pvpR2{0%,18%{opacity:0;transform:translateY(6px)}23%,88%{opacity:1;transform:none}94%,100%{opacity:0;transform:translateY(6px)}}
+@keyframes pvpR3{0%,28%{opacity:0;transform:translateY(6px)}33%,88%{opacity:1;transform:none}94%,100%{opacity:0;transform:translateY(6px)}}
+@keyframes pvpR4{0%,40%{opacity:0;transform:translateY(6px)}45%,88%{opacity:1;transform:none}94%,100%{opacity:0;transform:translateY(6px)}}
+/* running total — stacked amounts crossfade ($0.00 → $48.00 → $62.00) */
+.pvp-total{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 8px;border-top:1px solid var(--border);
+  font-size:13px;font-weight:700;color:var(--text);
+  margin-bottom:12px;
+}
+.pvp-amts{position:relative;color:var(--gold);font-variant-numeric:tabular-nums;text-align:right}
+.pvp-amts b{font-weight:700;animation-duration:10s;animation-timing-function:ease;animation-iteration-count:infinite}
+.pvp-a1,.pvp-a2{position:absolute;right:0;top:0;opacity:0}
+.pvp-a3{position:static;opacity:1}
+.pvp-a1{animation-name:pvpA1}
+.pvp-a2{animation-name:pvpA2}
+.pvp-a3{animation-name:pvpA3}
+@keyframes pvpA1{0%,9%{opacity:1}13%,93%{opacity:0}97%,100%{opacity:1}}
+@keyframes pvpA2{0%,12%{opacity:0}14%,43%{opacity:1}46%,100%{opacity:0}}
+@keyframes pvpA3{0%,45%{opacity:0}47%,92%{opacity:1}96%,100%{opacity:0}}
+/* fire to kitchen — copper pulse + label swap */
+.pvp-fire{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--copper);color:#fff;
+  border-radius:8px;padding:11px;
+  font-size:12px;font-weight:700;letter-spacing:0.02em;
+  box-shadow:0 2px 14px rgba(194,112,61,0.35);
+  overflow:hidden;
+  animation:pvpFirePop 10s ease infinite;
+}
+@keyframes pvpFirePop{0%,56%{transform:none}59%{transform:scale(1.035)}63%,100%{transform:none}}
+.pvp-fire::after{
+  content:'';position:absolute;inset:0;border-radius:8px;
+  background:rgba(255,255,255,0.28);
+  opacity:0;animation:pvpFlash 10s ease infinite;
+}
+@keyframes pvpFlash{0%,56%{opacity:0}59%{opacity:1}65%,100%{opacity:0}}
+.pvp-f1{position:static;opacity:1;animation:pvpF1 10s ease infinite}
+.pvp-f2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;animation:pvpF2 10s ease infinite}
+@keyframes pvpF1{0%,57%{opacity:1}61%,94%{opacity:0}98%,100%{opacity:1}}
+@keyframes pvpF2{0%,59%{opacity:0}63%,91%{opacity:1}95%,100%{opacity:0}}
+
+/* ============================================================
+   PREVIEW 3 — KITCHEN (KDS) ticket advancing (10s loop)
+   New → Preparing → Ready, edge color shifts, then a bump.
+   Every animated child carries .pvk-a so the deep-dive pair
+   can phase-shift the whole component for POS sync.
+   ============================================================ */
+.pvk-card{
+  position:relative;
+  background:rgba(255,255,255,0.02);
+  border:1.5px solid var(--border-mid);
+  border-radius:12px;padding:12px;
+  animation:pvkCard 10s ease infinite;
+}
+@keyframes pvkCard{
+  0%{opacity:0;transform:translateY(8px)}
+  4%,88%{opacity:1;transform:none}
+  93%{opacity:0;transform:translateY(-14px)}
+  94%,100%{opacity:0;transform:translateY(8px)}
+}
+.pvk-edge{
+  position:absolute;inset:-1.5px;border-radius:12px;
+  border:1.5px solid;pointer-events:none;opacity:0;
+  animation-duration:10s;animation-timing-function:ease;animation-iteration-count:infinite;
+}
+.pvk-e1{border-color:rgba(58,168,112,0.8);box-shadow:0 0 14px rgba(58,168,112,0.18);animation-name:pvkE1}
+.pvk-e2{border-color:rgba(240,181,29,0.75);box-shadow:0 0 14px rgba(240,181,29,0.15);animation-name:pvkE2;opacity:1}
+.pvk-e3{border-color:rgba(194,112,61,0.9);box-shadow:0 0 16px rgba(194,112,61,0.25);animation-name:pvkE3}
+@keyframes pvkE1{0%,4%{opacity:0}6%,30%{opacity:1}34%,100%{opacity:0}}
+@keyframes pvkE2{0%,31%{opacity:0}35%,66%{opacity:1}70%,100%{opacity:0}}
+@keyframes pvkE3{0%,67%{opacity:0}71%,90%{opacity:1}93%,100%{opacity:0}}
+.pvk-top{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
   margin-bottom:10px;
 }
-.hc-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:0.05em;flex:1;min-width:0}
-
-/* Floor card — back */
-.hc-floor{
-  width:220px;top:0;left:0;
-  background:#0f1218;
-  border-color:rgba(255,255,255,0.09);
-  transform:rotate(-3deg) translateY(10px);
-  opacity:0;
-  animation:card-in 0.5s ease-out 0.2s forwards;
+.pvk-top b{font-size:12px;font-weight:700;color:var(--text);letter-spacing:0.02em}
+.pvk-pillbox{position:relative;display:inline-flex;flex-shrink:0}
+.pvk-pill{
+  font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
+  padding:3px 9px;border-radius:var(--radius-full);
+  white-space:nowrap;
+  animation-duration:10s;animation-timing-function:ease;animation-iteration-count:infinite;
 }
-.hc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.hc-dot-green{background:#3aa870;box-shadow:0 0 6px rgba(58,168,112,0.5)}
-.hc-badge-live{
-  font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
-  padding:2px 7px;border-radius:var(--radius-full);
-  background:rgba(58,168,112,0.12);color:#3aa870;
+.pvk-p-new{position:absolute;right:0;top:0;opacity:0;background:rgba(58,168,112,0.14);color:#4cd48a;animation-name:pvkE1}
+.pvk-p-prep{position:static;opacity:1;background:rgba(240,181,29,0.12);color:var(--gold);animation-name:pvkE2}
+.pvk-p-ready{position:absolute;right:0;top:0;opacity:0;background:rgba(194,112,61,0.16);color:#e08040;animation-name:pvkE3}
+.pvk-items{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.pvk-items li{
+  font-size:11px;color:var(--text-2);
+  padding:5px 7px;border-radius:5px;
+  background:rgba(255,255,255,0.025);
+  display:flex;gap:7px;align-items:center;
 }
-.hc-floor-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
+.pvk-items li b{color:var(--copper);font-weight:700;flex-shrink:0}
+.pvk-warn{
+  background:rgba(240,181,29,0.07) !important;
+  border:1px dashed rgba(240,181,29,0.3);
+  color:#e8c87a !important;font-style:italic;
 }
-.hc-tbl{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;padding:6px 4px;border-radius:5px;
-  font-size:9px;font-weight:700;letter-spacing:0.04em;
+.pvk-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding-top:8px;border-top:1px solid var(--border);
 }
-.hc-tbl span{font-size:7px;font-weight:500;opacity:0.7;letter-spacing:0.05em}
-.hc-open{background:#0a2018;border:1px solid #1e6b40;color:#4cd48a}
-.hc-seated{background:#2a0d0d;border:1px solid #c03030;color:#f56565}
-.hc-rsv{background:#221a06;border:1px solid #c28a1a;color:#f5c045}
-
-/* QR Pay card — mid */
-.hc-pay{
-  width:190px;bottom:20px;left:60px;
-  background:#111520;
-  border-color:rgba(194,112,61,0.25);
-  box-shadow:var(--shadow-card),0 0 24px rgba(194,112,61,0.1);
-  opacity:0;
-  animation:card-in 0.5s ease-out 0.45s forwards;
+.pvk-timer{position:relative;font-size:10px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.pvk-timer i{font-style:normal;animation-duration:10s;animation-timing-function:ease;animation-iteration-count:infinite}
+.pvk-t1,.pvk-t3{position:absolute;left:0;top:0;opacity:0}
+.pvk-t2{position:static;opacity:1}
+.pvk-t1{animation-name:pvkE1}
+.pvk-t2{animation-name:pvkE2}
+.pvk-t3{animation-name:pvkE3}
+.pvk-bump{
+  font-size:10px;font-weight:700;
+  padding:4px 11px;border-radius:var(--radius-full);
+  background:rgba(58,168,112,0.15);color:#4cd48a;
+  border:1px solid rgba(58,168,112,0.35);
+  opacity:0;transform:scale(0.9);
+  animation:pvkBump 10s ease infinite;
 }
-.hc-qr-icon{
-  display:flex;align-items:center;justify-content:center;
-  width:22px;height:22px;border-radius:4px;
-  background:rgba(194,112,61,0.1);border:1px solid rgba(194,112,61,0.2);
-  flex-shrink:0;
+@keyframes pvkBump{
+  0%,73%{opacity:0;transform:scale(0.9)}
+  77%,88%{opacity:1;transform:scale(1)}
+  92%,100%{opacity:0;transform:scale(0.9)}
 }
-.hc-bill-rows{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
-.hc-bill-row{
+/* dim queue ghost behind the live ticket */
+.pvk-ghost{
+  margin-top:8px;border-radius:10px;
+  border:1px solid var(--border);
+  padding:8px 12px;
   display:flex;justify-content:space-between;align-items:center;
-  padding:4px 5px;border-radius:4px;
-  font-size:10px;color:var(--muted);
-}
-.hc-bill-row span:last-child{color:var(--text-2);font-weight:600;font-size:10px}
-.hc-mine{background:rgba(194,112,61,0.07)}
-.hc-mine span:first-child{color:var(--copper)}
-.hc-mine span:first-child em{
-  font-style:normal;font-size:8px;font-weight:700;
-  background:rgba(194,112,61,0.15);color:var(--copper);
-  padding:1px 5px;border-radius:3px;margin-left:4px;
-}
-.hc-bill-total{
-  display:flex;justify-content:space-between;
-  padding:6px 5px 8px;border-top:1px solid var(--border);
-  font-size:10px;font-weight:600;color:var(--text-2);
-}
-.hc-gold{color:var(--gold)}
-.hc-pay-btn{
-  background:var(--copper);color:#fff;text-align:center;
-  border-radius:var(--radius-full);padding:6px;
-  font-size:10px;font-weight:700;letter-spacing:0.04em;
-  box-shadow:0 2px 10px rgba(194,112,61,0.4);
+  font-size:10px;color:var(--faint);
 }
 
-/* POS ticket card — front */
-.hc-pos{
-  width:180px;top:30px;right:0;
-  background:#0e1118;
-  border-color:rgba(240,181,29,0.2);
-  box-shadow:var(--shadow-card),0 0 20px rgba(240,181,29,0.08);
-  opacity:0;
-  animation:card-in 0.5s ease-out 0.7s forwards;
+/* ============================================================
+   PREVIEW 4 — QR PAY phone: bill → split & tip → paid (12s loop)
+   ============================================================ */
+.pvq{display:flex;flex-direction:column;align-items:center}
+.pvq-phone{
+  background:#0a0c10;
+  border:1.5px solid var(--border-mid);
+  border-radius:26px;padding:10px;
+  width:208px;max-width:100%;
+  box-shadow:var(--shadow-card),0 0 0 4px rgba(255,255,255,0.02);
 }
-.hc-pos-badge{
-  font-size:8px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
-  background:rgba(240,181,29,0.12);color:var(--gold);
-  padding:2px 7px;border-radius:var(--radius-full);
-  border:1px solid rgba(240,181,29,0.25);
+.pvq-notch{width:56px;height:13px;background:#13161c;border-radius:var(--radius-full);margin:0 auto 8px}
+.pvq-screen{
+  position:relative;
+  background:var(--bg-deep);
+  border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  height:264px;
 }
-.hc-pos-items{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
-.hc-pos-row{
-  display:flex;justify-content:space-between;
-  font-size:10px;color:var(--muted);padding:2px 0;
+.pvq-shead{
+  text-align:center;padding:9px 8px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,rgba(194,112,61,0.12),transparent);
 }
-.hc-pos-row span:last-child{color:var(--text-2);font-weight:600}
-.hc-pos-divider{height:1px;background:var(--border);margin:6px 0}
-.hc-pos-total{
+.pvq-shead b{display:block;font-size:11px;font-weight:700;color:var(--text)}
+.pvq-shead span{font-size:9px;color:var(--muted)}
+.pvq-stage{
+  position:absolute;top:50px;left:0;right:0;bottom:0;
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:6px;
+  animation-duration:12s;animation-timing-function:ease-in-out;animation-iteration-count:infinite;
+}
+.pvq-s1,.pvq-s3{opacity:0}
+.pvq-s2{opacity:1}
+.pvq-s1{animation-name:pvqS1}
+.pvq-s2{animation-name:pvqS2}
+.pvq-s3{animation-name:pvqS3;align-items:center;justify-content:center;gap:8px}
+@keyframes pvqS1{0%{opacity:0}3%,26%{opacity:1}30%,100%{opacity:0}}
+@keyframes pvqS2{0%,30%{opacity:0}34%,62%{opacity:1}66%,100%{opacity:0}}
+@keyframes pvqS3{0%,66%{opacity:0}70%,92%{opacity:1}96%,100%{opacity:0}}
+.pvq-row{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+  font-size:10px;color:var(--muted);
+  padding:4px 6px;border-radius:4px;background:rgba(255,255,255,0.025);
+}
+.pvq-row b{font-weight:700;color:var(--text-2);font-variant-numeric:tabular-nums}
+.pvq-tot{
   display:flex;justify-content:space-between;
   font-size:11px;font-weight:700;color:var(--text);
-  margin-bottom:10px;
+  padding:5px 6px 0;border-top:1px solid var(--border);margin-top:2px;
 }
-.hc-pos-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.hc-pos-btn-cash,.hc-pos-btn-card{
-  text-align:center;padding:5px;border-radius:5px;
-  font-size:10px;font-weight:700;letter-spacing:0.04em;
+.pvq-tot b{color:var(--gold)}
+.pvq-btn{
+  margin-top:auto;
+  background:var(--copper);color:#fff;text-align:center;
+  border-radius:var(--radius-full);padding:7px;
+  font-size:10px;font-weight:700;
+  box-shadow:0 2px 10px rgba(194,112,61,0.4);
 }
-.hc-pos-btn-cash{background:var(--surface-raised);color:var(--muted);border:1px solid var(--border)}
-.hc-pos-btn-card{background:var(--copper);color:#fff;box-shadow:0 1px 8px rgba(194,112,61,0.35)}
+.pvq-cap{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.pvq-share{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:10px;color:var(--muted);
+  padding:5px 7px;border-radius:5px;
+  background:rgba(255,255,255,0.025);
+  border:1px solid transparent;
+  animation-duration:12s;animation-timing-function:ease;animation-iteration-count:infinite;
+}
+.pvq-share b{font-weight:700;color:var(--text-2);font-variant-numeric:tabular-nums}
+.pvq-me{background:rgba(194,112,61,0.09);border-color:rgba(194,112,61,0.3)}
+.pvq-me span{color:var(--copper);font-weight:700}
+.pvq-sh1{animation-name:pvqSh1}
+.pvq-sh2{animation-name:pvqSh2}
+.pvq-sh3{animation-name:pvqSh3}
+@keyframes pvqSh1{0%,34%{opacity:0;transform:translateX(-8px)}38%,100%{opacity:1;transform:none}}
+@keyframes pvqSh2{0%,36%{opacity:0;transform:translateX(-8px)}40%,100%{opacity:1;transform:none}}
+@keyframes pvqSh3{0%,38%{opacity:0;transform:translateX(-8px)}42%,100%{opacity:1;transform:none}}
+.pvq-tips{display:flex;gap:5px;margin-top:2px}
+.pvq-tip{
+  position:relative;flex:1;text-align:center;
+  font-size:9px;font-weight:700;color:var(--muted);
+  padding:5px 0;border-radius:5px;
+  border:1px solid var(--border-mid);
+}
+.pvq-tipsel{
+  position:absolute;inset:-1px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--copper);color:#fff;
+  border-radius:5px;font-style:normal;
+  animation:pvqTip 12s ease infinite;
+}
+@keyframes pvqTip{
+  0%,46%{opacity:0;transform:scale(0.85)}
+  50%,100%{opacity:1;transform:none}
+}
+.pvq-check{
+  width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(58,168,112,0.12);
+  border:1.5px solid rgba(58,168,112,0.45);
+  animation:pvqCheck 12s ease infinite;
+}
+@keyframes pvqCheck{
+  0%,68%{opacity:0;transform:scale(0.4)}
+  72%{opacity:1;transform:scale(1.1)}
+  75%,100%{opacity:1;transform:scale(1)}
+}
+.pvq-paid{font-size:13px;font-weight:700;color:var(--text)}
+.pvq-rcpt{font-size:9px;color:var(--muted)}
 
-@keyframes card-in{
-  from{opacity:0;transform:translateY(12px) rotate(var(--card-rot,0deg))}
-  to{opacity:1;transform:translateY(0) rotate(var(--card-rot,0deg))}
+/* ============================================================
+   POS → KITCHEN synced pair (deep-dive 2)
+   KDS phase-shifted so "New" lands right after the POS fires.
+   ============================================================ */
+.dd-pair{
+  display:flex;flex-direction:column;align-items:center;
+  gap:0;width:100%;
 }
-.hc-floor{--card-rot:-3deg}
-.hc-pay{--card-rot:2deg}
-.hc-pos{--card-rot:1.5deg}
-
-@media(prefers-reduced-motion:reduce){
-  .hc-card{animation:none;opacity:1}
-  .eyebrow-dot{animation:none}
+.dd-pair .pv{max-width:340px}
+.kds-sync .pvk-card,
+.kds-sync .pvk-edge,
+.kds-sync .pvk-pill,
+.kds-sync .pvk-timer i,
+.kds-sync .pvk-bump{animation-delay:-3.4s}
+.pair-link{
+  position:relative;width:2px;height:40px;flex-shrink:0;
+  background:var(--border-mid);border-radius:2px;
+  margin:6px 0;
 }
-
-/* Mobile: composite stacks below text */
-@media(max-width:900px){
-  .hero-visual{min-height:320px}
-  .hero-composite{width:320px;height:320px}
+.pair-link::after{
+  content:'';position:absolute;top:2px;left:50%;
+  width:8px;height:8px;margin-left:-4px;border-radius:50%;
+  background:var(--gold);
+  box-shadow:0 0 10px rgba(240,181,29,0.8);
+  opacity:0;
+  animation:pairdot 10s linear infinite;
 }
-@media(max-width:479px){
-  .hero-visual{min-height:300px}
-  .hero-composite{width:290px;height:290px}
+@keyframes pairdot{
+  0%,57%{opacity:0;transform:translateY(0)}
+  60%{opacity:1;transform:translateY(5px)}
+  66%{opacity:1;transform:translateY(28px)}
+  68%,100%{opacity:0;transform:translateY(28px)}
 }
 
 /* ============================================================
@@ -459,10 +834,7 @@ ul,ol{list-style:none}
   border-bottom:1px solid rgba(194,112,61,0.12);
   padding:clamp(28px,4vw,40px) 0;
 }
-.proof-inner{
-  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
-  gap:0;
-}
+.proof-inner{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0}
 .proof-stat{
   display:flex;flex-direction:column;align-items:center;gap:4px;
   padding:12px clamp(20px,4vw,48px);
@@ -475,200 +847,107 @@ ul,ol{list-style:none}
   font-weight:700;color:var(--text);
   letter-spacing:-0.02em;line-height:1;
 }
-.proof-lbl{
-  font-size:12px;font-weight:500;color:var(--muted);
-  text-align:center;letter-spacing:0.02em;
-}
-.proof-sep{
-  width:1px;height:40px;
-  background:var(--border-mid);
-  flex-shrink:0;align-self:center;
-}
+.proof-lbl{font-size:12px;font-weight:500;color:var(--muted);text-align:center;letter-spacing:0.02em}
+.proof-sep{width:1px;height:40px;background:var(--border-mid);flex-shrink:0;align-self:center}
 @media(max-width:600px){
   .proof-sep{display:none}
   .proof-stat{min-width:calc(50% - 24px)}
 }
 
 /* ============================================================
-   BENTO GRID
+   HOW A SHIFT FLOWS — one connected animated story
+   JS cycles .active across the four steps; the rail fills.
    ============================================================ */
-.bento-intro{
-  max-width:540px;margin-bottom:clamp(40px,5vw,64px);
+.flow-section{background:var(--surface)}
+.flow-intro{max-width:520px;margin-bottom:clamp(36px,5vw,56px)}
+.flow-track{
+  position:relative;height:2px;border-radius:2px;
+  background:var(--border-mid);
+  margin-bottom:26px;
 }
-.bento-grid{
-  display:grid;
-  grid-template-columns:2fr 1fr;
-  grid-template-rows:auto auto;
-  gap:20px;
+.flow-fill{
+  position:absolute;inset:0;border-radius:2px;
+  background:linear-gradient(90deg,var(--copper),var(--gold));
+  transform:scaleX(var(--p,0));transform-origin:left;
+  transition:transform 0.7s cubic-bezier(0.6,0,0.3,1);
 }
-/* Reservations: top-left 1×1 (spans 1 col) */
-.bento-res{grid-column:1;grid-row:1}
-/* QR Pay: top-right spanning 2 rows */
-.bento-pay{grid-column:2;grid-row:1/3}
-/* POS: bottom-left full width of col 1 */
-.bento-pos{grid-column:1;grid-row:2}
-
-@media(max-width:900px){
-  .bento-grid{grid-template-columns:1fr;grid-template-rows:auto}
-  .bento-res,.bento-pay,.bento-pos{grid-column:1;grid-row:auto}
+.flow-steps{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:16px;
 }
-
-.bento-card{
-  background:var(--surface);
+@media(max-width:860px){
+  .flow-track{display:none}
+  .flow-steps{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .flow-steps{grid-template-columns:1fr}
+}
+.flow-step{
+  background:var(--bg-deep);
   border:1px solid var(--border);
-  border-radius:var(--radius-2xl);
-  overflow:hidden;
-  transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s;
-  position:relative;
+  border-radius:var(--radius-xl);
+  padding:20px;min-width:0;
+  transition:border-color 0.4s,transform 0.4s,box-shadow 0.4s;
 }
-.bento-card:hover{
-  transform:translateY(-5px);
-  border-color:rgba(194,112,61,0.35);
-  box-shadow:0 8px 40px rgba(194,112,61,0.12),var(--shadow-card);
+.flow-step.active{
+  border-color:rgba(194,112,61,0.45);
+  transform:translateY(-4px);
+  box-shadow:0 10px 30px rgba(0,0,0,0.35),0 0 0 1px rgba(194,112,61,0.12);
 }
-/* Copper top accent line */
-.bento-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:var(--divider);
-}
-.bento-res::before{background:linear-gradient(90deg,transparent,var(--copper),transparent)}
-.bento-pay::before{background:linear-gradient(90deg,transparent,rgba(194,112,61,0.5),transparent)}
-.bento-pos::before{background:linear-gradient(90deg,var(--copper),var(--gold),transparent)}
-
-.bento-card-inner{
-  display:flex;align-items:stretch;
-  gap:28px;padding:32px;min-height:260px;
-}
-.bento-card-inner-col{
-  flex-direction:column;min-height:400px;
-}
-@media(max-width:900px){
-  .bento-card-inner-col{min-height:auto}
-}
-.bento-card-text{
-  flex:1;min-width:0;display:flex;flex-direction:column;
-}
-.bento-module-label{
-  font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
-  color:var(--copper);margin-bottom:8px;
-}
-.bento-card-title{
+.flow-time{
   font-family:var(--serif);
-  font-size:clamp(22px,3vw,32px);
-  font-weight:700;line-height:1.1;
-  color:var(--text);margin-bottom:10px;
+  font-size:24px;font-weight:700;line-height:1;
+  color:rgba(194,112,61,0.45);letter-spacing:-0.02em;
+  margin-bottom:10px;
+  transition:color 0.4s;
 }
-.bento-card-desc{
-  font-size:14px;color:var(--muted);line-height:1.65;
-  flex:1;margin-bottom:20px;
+.flow-step.active .flow-time{color:var(--copper)}
+.flow-title{
+  font-size:15px;font-weight:600;color:var(--text);
+  margin-bottom:6px;line-height:1.3;
 }
-.bento-cta{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:13px;font-weight:600;color:var(--copper);
-  text-decoration:none;min-height:44px;
-  transition:gap 0.15s,color 0.15s;
-  align-self:flex-start;
+.flow-desc{font-size:13px;color:var(--muted);line-height:1.6}
+.flow-vg{margin-top:14px;min-height:42px;display:flex;align-items:center}
+.vg-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  max-width:100%;min-width:0;
+  background:rgba(194,112,61,0.08);
+  border:1px solid rgba(194,112,61,0.3);
+  padding:7px 11px;border-radius:9px;
+  font-size:11px;font-weight:600;color:var(--text-2);
+  white-space:nowrap;
 }
-.bento-cta:hover{gap:10px;color:#e08040}
-
-.bento-pos-header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.bento-pos-header .bento-module-label{margin-bottom:0}
-.bento-new-badge{
-  font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;
-  background:rgba(240,181,29,0.12);color:var(--gold);
-  padding:3px 9px;border-radius:var(--radius-full);
-  border:1px solid rgba(240,181,29,0.3);
+.vg-chip>span{overflow:hidden;text-overflow:ellipsis}
+.vg-ok{color:#4cd48a;font-weight:700;flex-shrink:0}
+.flow-step.active .vg-chip{animation:vgIn 2.6s ease both}
+@keyframes vgIn{0%{opacity:0;transform:translateY(8px)}25%,100%{opacity:1;transform:none}}
+.vg-rows{display:flex;flex-direction:column;gap:4px;width:100%}
+.vg-row{
+  display:flex;justify-content:space-between;gap:8px;
+  font-size:11px;color:var(--text-2);
+  padding:5px 8px;border-radius:5px;
+  background:rgba(255,255,255,0.03);
 }
-
-/* ---- Mini floor mock inside bento-res ---- */
-.bento-mock{flex-shrink:0;display:flex;flex-direction:column;justify-content:center}
-.bento-mock-floor{gap:6px;min-width:160px}
-.bm-floor-row{display:flex;gap:6px}
-.bm-tbl{
-  flex:1;padding:8px 4px;border-radius:6px;
-  text-align:center;font-size:10px;font-weight:700;
-  letter-spacing:0.04em;
+.vg-row b{color:var(--copper);font-weight:700;flex-shrink:0}
+.flow-step.active .vg-row1{animation:vgIn 2.4s ease both}
+.flow-step.active .vg-row2{animation:vgIn 2.4s ease 0.35s both}
+.vg-pills{position:relative;display:inline-flex}
+.vg-pill{
+  font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
+  padding:5px 12px;border-radius:var(--radius-full);white-space:nowrap;
 }
-.bm-open{background:#0a2018;border:1px solid #1e6b40;color:#4cd48a}
-.bm-seated{background:#2a0d0d;border:1px solid #c03030;color:#f56565}
-.bm-rsv{background:#221a06;border:1px solid #c28a1a;color:#f5c045}
-.bm-dirty{background:#18181e;border:1px solid #3a3b48;color:#666}
-.bm-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.bm-leg{
-  font-size:9px;font-weight:500;color:var(--muted);
-  display:flex;align-items:center;gap:4px;
-}
-.bm-leg::before{content:'';display:block;width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.bm-leg-open::before{background:#0a2018;border:1px solid #1e6b40}
-.bm-leg-seated::before{background:#2a0d0d;border:1px solid #c03030}
-.bm-leg-rsv::before{background:#221a06;border:1px solid #c28a1a}
-
-/* ---- Mini phone mock inside bento-pay ---- */
-.bento-mock-qr{align-items:center;flex:1;padding:8px 0}
-.bmq-phone{
-  background:#0a0c10;border:1.5px solid var(--border-mid);
-  border-radius:20px;padding:10px;width:100%;max-width:160px;
-  box-shadow:var(--shadow-card);
-}
-.bmq-notch{width:50px;height:14px;background:var(--bg);border-radius:var(--radius-full);margin:0 auto 10px}
-.bmq-header{text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.bmq-rest{font-size:10px;font-weight:700;color:var(--text)}
-.bmq-table{font-size:9px;color:var(--muted)}
-.bmq-rows{display:flex;flex-direction:column;gap:3px;margin-bottom:6px}
-.bmq-row{
-  display:flex;justify-content:space-between;
-  font-size:9px;color:var(--muted);padding:3px 4px;border-radius:3px;
-}
-.bmq-row span:last-child{font-weight:600;color:var(--text-2)}
-.bmq-mine{background:rgba(194,112,61,0.07)}
-.bmq-mine span:first-child{color:var(--copper);font-weight:600}
-.bmq-total{
-  display:flex;justify-content:space-between;
-  font-size:10px;font-weight:700;color:var(--text);
-  padding:6px 4px 8px;border-top:1px solid var(--border);
-}
-.bmq-gold{color:var(--gold)}
-.bmq-btn{
-  background:var(--copper);color:#fff;text-align:center;
-  border-radius:var(--radius-full);padding:6px 8px;
-  font-size:10px;font-weight:700;
-  box-shadow:0 2px 8px rgba(194,112,61,0.4);
-}
-
-/* ---- Mini POS ticket inside bento-pos ---- */
-.bento-mock-pos{flex-shrink:0;min-width:180px}
-.bmp-ticket{
-  background:#0a0c10;border:1px solid var(--border-mid);
-  border-radius:var(--radius-lg);padding:16px;
-  box-shadow:var(--shadow-card);
-}
-.bmp-row{
-  display:flex;justify-content:space-between;
-  font-size:11px;color:var(--muted);padding:4px 0;
-}
-.bmp-row span:last-child{font-weight:600;color:var(--text-2)}
-.bmp-divider{height:1px;background:var(--border);margin:8px 0}
-.bmp-total{
-  display:flex;justify-content:space-between;
-  font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;
-}
-.bmp-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.bmp-cash,.bmp-card{
-  text-align:center;padding:7px;border-radius:6px;
-  font-size:11px;font-weight:700;letter-spacing:0.04em;
-}
-.bmp-cash{background:var(--surface-raised);color:var(--muted);border:1px solid var(--border)}
-.bmp-card{background:var(--copper);color:#fff;box-shadow:0 1px 8px rgba(194,112,61,0.35)}
-
-/* stack bento card inner on narrow widths */
-@media(max-width:639px){
-  .bento-card-inner{flex-direction:column;padding:24px 20px;min-height:auto}
-  .bento-mock-floor,.bento-mock-pos{min-width:0;width:100%}
-  .bm-floor-row{justify-content:stretch}
-}
+.vg-pill-new{position:absolute;left:0;top:0;opacity:0;background:rgba(58,168,112,0.14);color:#4cd48a}
+.vg-pill-ready{position:static;background:rgba(194,112,61,0.16);color:#e08040}
+.flow-step.active .vg-pill-new{animation:vgNew 2.6s ease both}
+.flow-step.active .vg-pill-ready{animation:vgReady 2.6s ease both}
+@keyframes vgNew{0%,10%{opacity:1}45%,100%{opacity:0}}
+@keyframes vgReady{0%,45%{opacity:0;transform:scale(0.9)}62%,100%{opacity:1;transform:none}}
+.vg-id{font-size:10px;font-weight:600;color:var(--muted);margin-left:10px}
+.flow-step.active .vg-pop{animation:vgPop 2.6s ease both}
+@keyframes vgPop{0%,15%{opacity:0;transform:scale(0.85)}38%{opacity:1;transform:scale(1.05)}52%,100%{opacity:1;transform:scale(1)}}
 
 /* ============================================================
-   MODULE DEEP-DIVES — shared
+   MODULE DEEP-DIVES — copy + live preview pairs
    ============================================================ */
 .deepdive-a{background:var(--bg-deep)}
 .deepdive-b{background:var(--surface)}
@@ -688,6 +967,9 @@ ul,ol{list-style:none}
   .dd-grid-reverse .dd-text,.dd-grid-reverse .dd-visual{order:unset}
   .dd-grid-reverse .dd-visual{order:-1}
 }
+.dd-visual{display:flex;flex-direction:column;align-items:center;min-width:0}
+.dd-visual > .pv{max-width:440px}
+.pv-lg{max-width:460px}
 
 .dd-list{
   display:flex;flex-direction:column;gap:14px;
@@ -718,251 +1000,19 @@ ul,ol{list-style:none}
   font-size:16px;color:var(--text-2);line-height:1.55;margin-bottom:6px;
 }
 .dd-quote-attr{font-size:12px;color:var(--muted);font-weight:500}
-
 .dd-cta{align-self:flex-start}
 .dd-pos-eyebrow{display:flex;align-items:center;margin-bottom:8px}
-
-/* ---- Floor card deep-dive visual ---- */
-.dd-floor-card{
-  background:var(--surface);
-  border:1px solid var(--border-mid);
-  border-radius:var(--radius-xl);
-  padding:20px;
-  box-shadow:var(--shadow-card);
-}
-.ddf-bar{
-  display:flex;align-items:center;gap:8px;
-  margin-bottom:14px;
-}
-.ddf-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.ddf-green{background:#3aa870;box-shadow:0 0 6px rgba(58,168,112,0.5)}
-.ddf-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.05em;flex:1}
-.ddf-live{
-  font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
-  padding:2px 8px;border-radius:var(--radius-full);
-  background:rgba(58,168,112,0.12);color:#3aa870;
-}
-.ddf-canvas{
-  position:relative;width:100%;height:200px;
-  background:rgba(255,255,255,0.02);
-  border-radius:var(--radius-md);
-  border:1px solid var(--border);
-  overflow:hidden;margin-bottom:14px;
-}
-.ddf-tbl{
-  position:absolute;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;border-radius:5px;
-  font-size:9px;font-weight:700;letter-spacing:0.04em;
-}
-.ddf-tbl span{line-height:1}
-.ddf-tbl small{font-size:7px;font-weight:500;opacity:0.7;letter-spacing:0.05em}
-.ddf-open{background:#0a2018;border:1px solid #1e6b40;color:#4cd48a}
-.ddf-seated{background:#2a0d0d;border:1px solid #c03030;color:#f56565}
-.ddf-rsv{background:#221a06;border:1px solid #c28a1a;color:#f5c045}
-.ddf-dirty{background:#18181e;border:1px solid #3a3b48;color:#666}
-.ddf-legend{display:flex;flex-wrap:wrap;gap:10px}
-.ddf-leg{
-  font-size:9px;font-weight:500;color:var(--muted);
-  display:flex;align-items:center;gap:4px;
-}
-.ddf-leg::before{content:'';display:block;width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.ddf-leg-open::before{background:#0a2018;border:1px solid #1e6b40}
-.ddf-leg-seated::before{background:#2a0d0d;border:1px solid #c03030}
-.ddf-leg-rsv::before{background:#221a06;border:1px solid #c28a1a}
-.ddf-leg-dirty::before{background:#18181e;border:1px solid #3a3b48}
-
-/* ---- Phone visual deep-dive ---- */
-.dd-phone-wrap{display:flex;justify-content:center}
-.dd-phone{
-  background:var(--surface-raised);
-  border:2px solid var(--border-mid);
-  border-radius:32px;padding:16px;
-  max-width:260px;width:100%;
-  box-shadow:var(--shadow-card),0 0 0 4px rgba(255,255,255,0.02);
-}
-.dd-phone-notch{
-  width:70px;height:18px;
-  background:var(--bg-deep);
-  border-radius:var(--radius-full);
-  margin:0 auto 14px;
-}
-.dd-phone-inner{
-  background:var(--bg-deep);
-  border-radius:20px;overflow:hidden;
-  border:1px solid var(--border);
-}
-.ddp-header{
-  background:linear-gradient(135deg,rgba(194,112,61,0.12),rgba(240,181,29,0.04));
-  padding:14px;border-bottom:1px solid var(--border);text-align:center;
-}
-.ddp-name{font-size:13px;font-weight:700;color:var(--text);letter-spacing:0.02em}
-.ddp-table{font-size:11px;color:var(--muted);margin-top:2px}
-.ddp-qr-icon{
-  width:32px;height:32px;margin:8px auto 0;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(194,112,61,0.1);border:1px solid rgba(194,112,61,0.2);
-  border-radius:6px;
-}
-.ddp-rows{padding:10px}
-.ddp-row{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:5px 6px;border-radius:4px;margin-bottom:3px;
-  font-size:11px;color:var(--muted);
-}
-.ddp-row span:last-child{font-weight:700;color:var(--text-2);font-size:11px;flex-shrink:0;margin-left:8px}
-.ddp-mine{background:rgba(194,112,61,0.07)}
-.ddp-mine span:first-child{color:var(--copper)}
-.ddp-mine em{
-  font-style:normal;font-size:8px;font-weight:700;
-  background:rgba(194,112,61,0.15);color:var(--copper);
-  padding:1px 5px;border-radius:3px;margin-left:5px;
-}
-.ddp-footer{padding:10px 12px 14px;border-top:1px solid var(--border)}
-.ddp-total{
-  display:flex;justify-content:space-between;
-  font-size:12px;font-weight:700;color:var(--text);
-  margin-bottom:10px;
-}
-.ddp-gold{color:var(--gold)}
-.ddp-pay-btn{
-  display:flex;align-items:center;justify-content:center;
-  width:100%;height:36px;border-radius:var(--radius-full);
-  background:var(--copper);color:#fff;
-  font-size:12px;font-weight:700;
-  box-shadow:0 2px 12px rgba(194,112,61,0.4);
-  cursor:default;
-}
-
-/* ---- POS terminal card ---- */
-.dd-pos-card{
-  background:var(--surface);
-  border:1px solid rgba(240,181,29,0.15);
-  border-radius:var(--radius-xl);
-  padding:24px;
-  box-shadow:var(--shadow-card),0 0 24px rgba(240,181,29,0.06);
-}
-.ddpos-header{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:16px;padding-bottom:14px;
-  border-bottom:1px solid var(--border);
-}
-.ddpos-title{font-size:12px;font-weight:700;color:var(--text);letter-spacing:0.04em}
-.ddpos-status{
-  font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+.new-badge{
+  font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;
+  background:rgba(240,181,29,0.12);color:var(--gold);
   padding:3px 9px;border-radius:var(--radius-full);
-  background:rgba(194,112,61,0.1);color:var(--copper);
-  border:1px solid rgba(194,112,61,0.2);
-}
-.ddpos-items{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
-.ddpos-item{
-  display:flex;align-items:center;gap:8px;
-  padding:7px 8px;border-radius:6px;
-  background:rgba(255,255,255,0.02);
-}
-.ddpos-new{background:rgba(194,112,61,0.06);border:1px solid rgba(194,112,61,0.15)}
-.ddpos-qty{font-size:11px;font-weight:700;color:var(--copper);width:20px;flex-shrink:0}
-.ddpos-name{font-size:12px;color:var(--text-2);flex:1;min-width:0}
-.ddpos-price{font-size:12px;font-weight:700;color:var(--text);flex-shrink:0}
-.ddpos-subtotals{
-  background:rgba(255,255,255,0.02);
-  border-radius:var(--radius-md);
-  padding:12px;margin-bottom:16px;
-  border:1px solid var(--border);
-}
-.ddpos-sub-row{
-  display:flex;justify-content:space-between;
-  font-size:12px;color:var(--muted);padding:3px 0;
-}
-.ddpos-sub-row span:last-child{font-weight:600;color:var(--text-2)}
-.ddpos-total-row{
-  border-top:1px solid var(--border);margin-top:6px;padding-top:8px;
-}
-.ddpos-total-row span{font-size:14px;font-weight:700;color:var(--text) !important}
-.ddpos-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ddpos-btn-split{
-  background:var(--surface-raised);color:var(--muted);
-  text-align:center;padding:9px;border-radius:8px;
-  font-size:12px;font-weight:600;border:1px solid var(--border);
-}
-.ddpos-btn-kitchen{
-  background:rgba(240,181,29,0.1);color:var(--gold);
-  text-align:center;padding:9px;border-radius:8px;
-  font-size:12px;font-weight:600;border:1px solid rgba(240,181,29,0.2);
-}
-.ddpos-btn-pay{
-  grid-column:1/-1;
-  background:var(--copper);color:#fff;
-  text-align:center;padding:12px;border-radius:8px;
-  font-size:14px;font-weight:700;
-  box-shadow:0 2px 16px rgba(194,112,61,0.4);
+  border:1px solid rgba(240,181,29,0.3);
 }
 
 /* ============================================================
-   HOW A SHIFT FLOWS
+   INTERACTIVE FLOOR DEMO — proof by touch
    ============================================================ */
-.how-section{background:var(--surface)}
-.how-intro{max-width:440px;margin-bottom:clamp(40px,5vw,64px)}
-.how-steps{
-  display:flex;align-items:flex-start;
-  gap:0;
-}
-@media(max-width:767px){
-  .how-steps{flex-direction:column;gap:0}
-}
-.how-step{
-  flex:1;min-width:0;
-  display:flex;flex-direction:column;
-  align-items:flex-start;
-  padding:0 clamp(16px,3vw,32px);
-  transition-delay:calc(var(--delay,0)*100ms);
-}
-.how-step:first-child{padding-left:0}
-.how-step:last-child{padding-right:0}
-@media(max-width:767px){
-  .how-step{padding:0 0 0 48px;margin-bottom:32px;position:relative}
-  .how-step:last-child{margin-bottom:0}
-}
-.how-step-num{
-  font-family:var(--serif);
-  font-size:40px;font-weight:700;line-height:1;
-  color:rgba(194,112,61,0.15);letter-spacing:-0.04em;
-  margin-bottom:2px;
-}
-.how-step-icon{
-  width:48px;height:48px;border-radius:var(--radius-md);
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(194,112,61,0.08);
-  border:1px solid rgba(194,112,61,0.2);
-  margin-bottom:16px;flex-shrink:0;
-}
-@media(max-width:767px){
-  .how-step-num{position:absolute;left:0;top:0;font-size:36px}
-  .how-step-icon{margin-bottom:12px}
-}
-.how-step-title{
-  font-family:var(--serif);
-  font-size:clamp(18px,2.5vw,22px);
-  font-weight:700;color:var(--text);
-  margin-bottom:8px;line-height:1.2;
-}
-.how-step-desc{font-size:14px;color:var(--muted);line-height:1.65}
-
-.how-connector{
-  flex-shrink:0;width:clamp(20px,4vw,48px);
-  height:2px;background:var(--divider);
-  align-self:center;margin-top:-24px;
-}
-@media(max-width:767px){
-  .how-connector{
-    display:none;
-  }
-}
-
-/* ============================================================
-   INTERACTIVE FLOOR DEMO
-   ============================================================ */
-.demo-section{background:var(--bg-deep)}
+.demo-section{background:var(--surface)}
 .demo-intro{max-width:520px;margin-bottom:clamp(40px,5vw,56px)}
 .demo-wrap{
   display:grid;
@@ -973,7 +1023,7 @@ ul,ol{list-style:none}
   .demo-wrap{grid-template-columns:1fr}
 }
 .demo-floor-wrap{
-  background:var(--surface);
+  background:var(--bg-deep);
   border:1px solid var(--border-mid);
   border-radius:var(--radius-2xl);
   overflow:hidden;
@@ -988,7 +1038,7 @@ ul,ol{list-style:none}
 .demo-floor-header-left{display:flex;align-items:center;gap:10px}
 .demo-live-dot{
   width:8px;height:8px;border-radius:50%;
-  background:#3aa870;flex-shrink:0;
+  background:var(--green);flex-shrink:0;
   box-shadow:0 0 6px rgba(58,168,112,0.5);
   animation:pulse-dot 2s ease-in-out infinite;
 }
@@ -998,9 +1048,7 @@ ul,ol{list-style:none}
   font-size:10px;font-weight:500;color:var(--muted);
   display:flex;align-items:center;gap:5px;
 }
-.demo-leg::before{
-  content:'';display:block;width:10px;height:10px;border-radius:3px;flex-shrink:0;
-}
+.demo-leg::before{content:'';display:block;width:10px;height:10px;border-radius:3px;flex-shrink:0}
 .demo-leg[data-state="empty"]::before{background:#1a1e27;border:1px solid #3a3b48}
 .demo-leg[data-state="occupied"]::before{background:#2a0d0d;border:1px solid #c03030}
 .demo-leg[data-state="paying"]::before{background:#221a06;border:1px solid #c28a1a}
@@ -1018,8 +1066,6 @@ ul,ol{list-style:none}
   padding:10px 20px 14px;letter-spacing:0.02em;
   min-height:34px;
 }
-
-/* Table cells — injected by JS, styled here */
 .dt{
   aspect-ratio:1;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -1056,10 +1102,8 @@ ul,ol{list-style:none}
   0%,100%{box-shadow:0 0 6px rgba(194,138,26,0.3)}
   50%{box-shadow:0 0 16px rgba(194,138,26,0.6)}
 }
-
-/* POS panel */
 .demo-panel{
-  background:var(--surface);
+  background:var(--bg-deep);
   border:1px solid var(--border-mid);
   border-radius:var(--radius-2xl);
   overflow:hidden;
@@ -1084,7 +1128,6 @@ ul,ol{list-style:none}
 }
 .demo-panel-guests{font-size:12px;color:var(--muted);margin-top:3px}
 .demo-panel-close{
-  width:32px;height:32px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   background:var(--surface-raised);color:var(--muted);
   border:1px solid var(--border);flex-shrink:0;
@@ -1092,10 +1135,7 @@ ul,ol{list-style:none}
   min-width:44px;min-height:44px;border-radius:var(--radius-full);
 }
 .demo-panel-close:hover{background:rgba(255,255,255,0.1);color:var(--text)}
-.demo-panel-items{
-  display:flex;flex-direction:column;gap:6px;
-  margin-bottom:16px;
-}
+.demo-panel-items{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
 .dpi{
   display:flex;justify-content:space-between;align-items:center;
   padding:8px 10px;border-radius:var(--radius-sm);
@@ -1128,7 +1168,7 @@ ul,ol{list-style:none}
 .demo-pay-anim{
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
-  background:var(--surface);
+  background:var(--bg-deep);
   font-size:14px;font-weight:600;color:var(--muted);
   border-radius:var(--radius-2xl);
   opacity:0;pointer-events:none;
@@ -1136,11 +1176,32 @@ ul,ol{list-style:none}
   padding:24px;text-align:center;
 }
 .demo-pay-anim.active{opacity:1;pointer-events:auto}
+.pay-step{display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px}
+.pay-step-icon{
+  display:flex;align-items:center;justify-content:center;
+  width:56px;height:56px;border-radius:50%;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border-mid);
+}
+.pay-step-label{font-size:14px;font-weight:600;color:var(--text-2);text-align:center;line-height:1.5}
+.pay-spinner{
+  width:28px;height:28px;border-radius:50%;
+  border:2.5px solid rgba(194,112,61,0.2);
+  border-top-color:var(--copper);
+  animation:spin 0.7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pay-check-icon{animation:check-in 0.4s ease-out forwards}
+@keyframes check-in{from{opacity:0;transform:scale(0.6)}to{opacity:1;transform:scale(1)}}
+.pay-step-check .pay-step-icon{
+  background:rgba(58,168,112,0.1);
+  border-color:rgba(58,168,112,0.3);
+}
 
 /* ============================================================
    FEATURE GRID
    ============================================================ */
-.feat-section{background:var(--surface)}
+.feat-section{background:var(--bg-deep)}
 .feat-intro{max-width:440px;margin-bottom:clamp(40px,5vw,56px)}
 .feat-grid{
   display:grid;
@@ -1150,13 +1211,17 @@ ul,ol{list-style:none}
 @media(max-width:900px){.feat-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:500px){.feat-grid{grid-template-columns:1fr}}
 .feat-card{
-  background:var(--bg-deep);
+  background:var(--surface);
   border:1px solid var(--border);
   border-radius:var(--radius-xl);
   padding:28px 24px;
-  transition:border-color 0.2s,transform 0.15s;
+  transition:border-color 0.2s,transform 0.15s,box-shadow 0.2s;
 }
-.feat-card:hover{border-color:rgba(194,112,61,0.3);transform:translateY(-3px)}
+.feat-card:hover{
+  border-color:rgba(194,112,61,0.3);
+  transform:translateY(-3px);
+  box-shadow:0 8px 30px rgba(194,112,61,0.08);
+}
 .feat-icon{
   width:44px;height:44px;border-radius:var(--radius-md);
   display:flex;align-items:center;justify-content:center;
@@ -1164,20 +1229,17 @@ ul,ol{list-style:none}
   border:1px solid rgba(194,112,61,0.18);
   margin-bottom:16px;
 }
-.feat-title{
-  font-size:15px;font-weight:600;color:var(--text);
-  margin-bottom:8px;line-height:1.3;
-}
+.feat-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;line-height:1.3}
 .feat-desc{font-size:13px;color:var(--muted);line-height:1.65}
 
 /* ============================================================
    PRICING
    ============================================================ */
-.pricing-section{background:var(--bg-deep)}
+.pricing-section{background:var(--surface)}
 .pricing-intro{max-width:480px;margin-bottom:clamp(32px,4vw,48px)}
 .pricing-toggle-wrap{
   display:flex;gap:4px;
-  background:var(--surface);
+  background:var(--bg-deep);
   border:1px solid var(--border-mid);
   border-radius:var(--radius-full);
   padding:4px;
@@ -1203,7 +1265,7 @@ ul,ol{list-style:none}
 }
 @media(max-width:900px){.pricing-cards{grid-template-columns:1fr}}
 .price-card{
-  background:var(--surface);
+  background:var(--bg-deep);
   border:1px solid var(--border);
   border-radius:var(--radius-2xl);
   padding:32px 28px;
@@ -1233,10 +1295,7 @@ ul,ol{list-style:none}
   margin-bottom:12px;letter-spacing:-0.02em;
 }
 .price-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
-.price-features{
-  display:flex;flex-direction:column;gap:9px;
-  margin-bottom:28px;flex:1;
-}
+.price-features{display:flex;flex-direction:column;gap:9px;margin-bottom:28px;flex:1}
 .price-features li{
   font-size:13px;color:var(--muted);
   padding-left:18px;position:relative;line-height:1.5;
@@ -1253,10 +1312,7 @@ ul,ol{list-style:none}
 }
 .price-cta-primary{background:var(--copper);color:#fff;box-shadow:0 4px 16px rgba(194,112,61,0.3)}
 .price-cta-primary:hover{background:var(--copper-hover)}
-.price-cta-ghost{
-  background:transparent;color:var(--muted);
-  border:1px solid var(--border-mid);
-}
+.price-cta-ghost{background:transparent;color:var(--muted);border:1px solid var(--border-mid)}
 .price-cta-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.22);background:rgba(255,255,255,0.04)}
 .pricing-note{font-size:13px;color:var(--muted);text-align:center;line-height:1.6}
 .pricing-note-link{color:var(--copper);font-weight:500}
@@ -1265,7 +1321,7 @@ ul,ol{list-style:none}
 /* ============================================================
    FAQ
    ============================================================ */
-.faq-section{background:var(--surface)}
+.faq-section{background:var(--bg-deep)}
 .faq-header{max-width:440px;margin-bottom:clamp(36px,5vw,56px)}
 .faq-list{
   max-width:720px;
@@ -1273,7 +1329,7 @@ ul,ol{list-style:none}
   border-radius:var(--radius-2xl);
   overflow:hidden;
 }
-.faq-item{border-bottom:1px solid var(--border);background:var(--bg-deep)}
+.faq-item{border-bottom:1px solid var(--border);background:var(--surface)}
 .faq-item:last-child{border-bottom:0}
 .faq-q{
   display:flex;align-items:center;justify-content:space-between;
@@ -1382,77 +1438,31 @@ ul,ol{list-style:none}
 }
 .js-ready .reveal{opacity:0;transform:translateY(20px)}
 .js-ready .reveal.visible{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){
-  .reveal,.js-ready .reveal{
-    opacity:1 !important;transform:none !important;
-    transition:none !important;
-  }
-}
 
 /* ============================================================
-   PAYMENT ANIMATION STEPS (injected by landing.js)
+   REDUCED MOTION — freeze every loop to its tasteful base state
+   (base styles above are authored as the static keeper frames)
    ============================================================ */
-.pay-step{
-  display:flex;flex-direction:column;align-items:center;gap:14px;
-  padding:16px;
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal,.js-ready .reveal{opacity:1 !important;transform:none !important;transition:none !important}
+  .eyebrow-dot,.pv-dot,.demo-live-dot,.stage-live i,
+  .pvr-anim .pvr-st,.pvr-chip,
+  .pvp-row,.pvp-amts b,.pvp-fire,.pvp-fire::after,.pvp-f1,.pvp-f2,
+  .pvk-card,.pvk-edge,.pvk-pill,.pvk-timer i,.pvk-bump,
+  .pvq-stage,.pvq-share,.pvq-tipsel,.pvq-check,
+  .pair-link::after,.hero-toast,
+  .stage-tab.active::after,
+  .dt.dt-paying,
+  .flow-step .vg-chip,.flow-step .vg-row,.flow-step .vg-pill-new,
+  .flow-step .vg-pill-ready,.flow-step .vg-pop{
+    animation:none !important;
+  }
+  .pvr-chip{opacity:1;transform:none}
+  .hero-toast{opacity:0}
+  .stage-panel,.flow-step,.flow-fill,.hero-stage{transition:none}
+  .flow-step.active{transform:none}
 }
-.pay-step-icon{
-  display:flex;align-items:center;justify-content:center;
-  width:56px;height:56px;border-radius:50%;
-  background:rgba(255,255,255,0.04);
-  border:1px solid var(--border-mid);
-}
-.pay-step-label{
-  font-size:14px;font-weight:600;color:var(--text-2);
-  text-align:center;line-height:1.5;
-}
-.pay-spinner{
-  width:28px;height:28px;border-radius:50%;
-  border:2.5px solid rgba(194,112,61,0.2);
-  border-top-color:var(--copper);
-  animation:spin 0.7s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.pay-check-icon{
-  animation:check-in 0.4s ease-out forwards;
-}
-@keyframes check-in{
-  from{opacity:0;transform:scale(0.6)}
-  to{opacity:1;transform:scale(1)}
-}
-.pay-step-check .pay-step-icon{
-  background:rgba(58,168,112,0.1);
-  border-color:rgba(58,168,112,0.3);
-}
-
-/* Mobile menu drawer */
-.mobile-menu{
-  display:none;position:fixed;top:68px;left:0;right:0;
-  background:rgba(13,15,20,0.97);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border-mid);
-  flex-direction:column;gap:0;
-  padding:12px 0 20px;
-  z-index:199;
-}
-.mobile-menu.open{display:flex}
-.mobile-menu a{
-  display:flex;align-items:center;
-  padding:14px 24px;
-  font-size:16px;font-weight:500;color:var(--muted);
-  text-decoration:none;min-height:52px;
-  border-bottom:1px solid var(--border);
-  transition:color 0.15s,background 0.15s;
-}
-.mobile-menu a:last-child{border-bottom:0}
-.mobile-menu a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
-.mobile-menu .mm-cta{
-  margin:12px 24px 0;
-  background:var(--copper);color:#fff;
-  justify-content:center;border-radius:var(--radius-full);
-  min-height:52px;font-weight:600;border-bottom:0;
-}
-.mobile-menu .mm-cta:hover{background:var(--copper-hover)}
 </style>
 </head>
 <body>
@@ -1467,6 +1477,7 @@ ul,ol{list-style:none}
     <a href="#" class="wordmark" aria-label="Tavolo — home">tav<span>o</span>lo</a>
 
     <nav class="site-nav" aria-label="Main navigation">
+      <a href="#flow">How it flows</a>
       <a href="#modules">Modules</a>
       <a href="#demo">Live demo</a>
       <a href="#pricing">Pricing</a>
@@ -1493,6 +1504,7 @@ ul,ol{list-style:none}
 
 <!-- Mobile menu -->
 <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation" aria-hidden="true">
+  <a href="#flow">How it flows</a>
   <a href="#modules">Modules</a>
   <a href="#demo">Live demo</a>
   <a href="#pricing">Pricing</a>
@@ -1504,7 +1516,7 @@ ul,ol{list-style:none}
 <main id="main-content">
 
 <!-- =====================================================
-     HERO
+     HERO — headline + live cycling product stage
      ===================================================== -->
 <section class="hero" aria-labelledby="hero-headline">
   <div class="container">
@@ -1515,76 +1527,183 @@ ul,ol{list-style:none}
           The complete restaurant operating system
         </div>
         <h1 class="hero-headline" id="hero-headline">
-          One platform.<br>Every seat,<br>every order,<br><em>every payment.</em>
+          Run your whole floor<br>from <em>one screen.</em>
         </h1>
         <p class="hero-subline">
-          <strong>Reservations · QR Pay-at-Table · POS</strong> — three modules that work beautifully together, or independently. Built for modern hospitality.
+          Bookings land on the floor map, orders fire to the kitchen, guests pay by QR —
+          <strong>one platform, in motion.</strong> The screen you're watching is the product, running live.
         </p>
         <div class="hero-actions">
           <a href="app/" class="btn-primary">
             Book a demo
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
-          <a href="#demo" class="btn-ghost">
-            See it live ↓
-          </a>
+          <a href="#demo" class="btn-ghost">Try it live ↓</a>
         </div>
       </div>
-      <div class="hero-visual" aria-hidden="true">
-        <!-- Layered 3-card composite -->
-        <div class="hero-composite">
-          <!-- Card 1: Floor plan (back) -->
-          <div class="hc-card hc-floor">
-            <div class="hc-card-header">
-              <span class="hc-dot hc-dot-green"></span>
-              <span class="hc-label">Floor · Friday 20:00</span>
-              <span class="hc-badge-live">Live</span>
+
+      <div class="hero-visual">
+        <div class="hero-stage-wrap">
+          <div class="hero-stage-glow" aria-hidden="true"></div>
+          <div class="hero-stage" id="hero-stage">
+            <div class="stage-bar">
+              <span class="stage-brand" aria-hidden="true">tav<b>o</b>lo</span>
+              <div class="stage-tabs" role="group" aria-label="Choose a product preview">
+                <button class="stage-tab active" type="button" aria-pressed="true" aria-label="Show the reservations floor preview">Floor</button>
+                <button class="stage-tab" type="button" aria-pressed="false" aria-label="Show the POS preview">POS</button>
+                <button class="stage-tab" type="button" aria-pressed="false" aria-label="Show the kitchen display preview">Kitchen</button>
+                <button class="stage-tab" type="button" aria-pressed="false" aria-label="Show the QR pay preview">QR Pay</button>
+              </div>
+              <span class="stage-live" aria-hidden="true"><i></i>Live</span>
             </div>
-            <div class="hc-floor-grid">
-              <div class="hc-tbl hc-open">T1<span>Open</span></div>
-              <div class="hc-tbl hc-seated">T2<span>Seated</span></div>
-              <div class="hc-tbl hc-rsv">T3<span>Rsvd</span></div>
-              <div class="hc-tbl hc-open">T4<span>Open</span></div>
-              <div class="hc-tbl hc-seated">T5<span>Seated</span></div>
-              <div class="hc-tbl hc-rsv">T6<span>Rsvd</span></div>
-            </div>
-          </div>
-          <!-- Card 2: QR Pay (mid) -->
-          <div class="hc-card hc-pay">
-            <div class="hc-card-header">
-              <span class="hc-qr-icon" aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17h3v3"/></svg>
-              </span>
-              <span class="hc-label">Table 9 · QR Pay</span>
-            </div>
-            <div class="hc-bill-rows">
-              <div class="hc-bill-row"><span>Burrata</span><span>$18</span></div>
-              <div class="hc-bill-row hc-mine"><span>Sea Bass <em>Mine</em></span><span>$34</span></div>
-              <div class="hc-bill-row"><span>Bottle Rosé</span><span>$58</span></div>
-            </div>
-            <div class="hc-bill-total">
-              <span>Your share</span><span class="hc-gold">$55.40</span>
-            </div>
-            <div class="hc-pay-btn">Pay $55.40</div>
-          </div>
-          <!-- Card 3: POS ticket (front) -->
-          <div class="hc-card hc-pos">
-            <div class="hc-card-header">
-              <span class="hc-pos-badge">NEW</span>
-              <span class="hc-label">POS · Table 7</span>
-            </div>
-            <div class="hc-pos-items">
-              <div class="hc-pos-row"><span>2× Ribeye</span><span>$96</span></div>
-              <div class="hc-pos-row"><span>1× Tiramisu</span><span>$14</span></div>
-              <div class="hc-pos-row"><span>Barolo 750ml</span><span>$85</span></div>
-            </div>
-            <div class="hc-pos-divider"></div>
-            <div class="hc-pos-total">
-              <span>Total</span><span>$195.00</span>
-            </div>
-            <div class="hc-pos-actions">
-              <div class="hc-pos-btn-cash">Cash</div>
-              <div class="hc-pos-btn-card">Card ✓</div>
+            <div class="stage-view" aria-hidden="true">
+
+              <!-- Panel 1 — Reservations floor -->
+              <div class="stage-panel on">
+                <div class="pv">
+                  <div class="pv-head">
+                    <span class="pv-dot"></span>
+                    <span class="pv-title">Floor · Friday 19:30</span>
+                    <span class="pv-live">Live</span>
+                  </div>
+                  <div class="pvr-grid">
+                    <div class="pvr-tbl"><span class="pvr-st pvr-seat" style="opacity:1">T1<small>Seated</small></span></div>
+                    <div class="pvr-tbl pvr-anim">
+                      <span class="pvr-st pvr-open">T2<small>Open</small></span>
+                      <span class="pvr-st pvr-rsv pvr-keep">T2<small>Reserved</small></span>
+                      <span class="pvr-st pvr-seat">T2<small>Seated</small></span>
+                    </div>
+                    <div class="pvr-tbl"><span class="pvr-st pvr-open" style="opacity:1">T3<small>Open</small></span></div>
+                    <div class="pvr-tbl"><span class="pvr-st pvr-rsv" style="opacity:1">T4<small>Reserved</small></span></div>
+                    <div class="pvr-tbl pvr-anim pvr-d1">
+                      <span class="pvr-st pvr-open">T5<small>Open</small></span>
+                      <span class="pvr-st pvr-rsv">T5<small>Reserved</small></span>
+                      <span class="pvr-st pvr-seat pvr-keep">T5<small>Seated</small></span>
+                    </div>
+                    <div class="pvr-tbl"><span class="pvr-st pvr-seat" style="opacity:1">T6<small>Seated</small></span></div>
+                    <div class="pvr-tbl pvr-anim pvr-d2">
+                      <span class="pvr-st pvr-open pvr-keep">T7<small>Open</small></span>
+                      <span class="pvr-st pvr-rsv">T7<small>Reserved</small></span>
+                      <span class="pvr-st pvr-seat">T7<small>Seated</small></span>
+                    </div>
+                    <div class="pvr-tbl"><span class="pvr-st pvr-dirty" style="opacity:1">T8<small>Clean</small></span></div>
+                  </div>
+                  <div class="pvr-chipwrap">
+                    <div class="pvr-chip">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      <span><b>New booking</b> — Sofia M. · 4 guests · 20:00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Panel 2 — POS ticket -->
+              <div class="stage-panel">
+                <div class="pv">
+                  <div class="pv-head">
+                    <span class="pv-dot"></span>
+                    <span class="pv-title">POS · Table 12 · Course 1</span>
+                    <span class="pv-live">Open</span>
+                  </div>
+                  <div class="pvp-rows">
+                    <div class="pvp-row pvp-r1"><span class="pvp-q">1×</span><span class="pvp-n">Ribeye, 300g</span><span class="pvp-p">$48.00</span></div>
+                    <div class="pvp-row pvp-mod pvp-r2">+ Medium rare</div>
+                    <div class="pvp-row pvp-note pvp-r3">"No onion — allergy"</div>
+                    <div class="pvp-row pvp-r4"><span class="pvp-q">2×</span><span class="pvp-n">Truffle fries</span><span class="pvp-p">$14.00</span></div>
+                  </div>
+                  <div class="pvp-total">
+                    <span>Total</span>
+                    <span class="pvp-amts"><b class="pvp-a1">$0.00</b><b class="pvp-a2">$48.00</b><b class="pvp-a3">$62.00</b></span>
+                  </div>
+                  <div class="pvp-fire">
+                    <span class="pvp-f1">Fire to kitchen</span>
+                    <span class="pvp-f2">Fired to kitchen ✓</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Panel 3 — Kitchen display -->
+              <div class="stage-panel">
+                <div class="pv">
+                  <div class="pv-head">
+                    <span class="pv-dot"></span>
+                    <span class="pv-title">Kitchen display · Grill</span>
+                    <span class="pv-live">2 open</span>
+                  </div>
+                  <div class="pvk-card">
+                    <span class="pvk-edge pvk-e1"></span>
+                    <span class="pvk-edge pvk-e2"></span>
+                    <span class="pvk-edge pvk-e3"></span>
+                    <div class="pvk-top">
+                      <b>#214 · Table 12</b>
+                      <span class="pvk-pillbox">
+                        <i class="pvk-pill pvk-p-new">New</i>
+                        <i class="pvk-pill pvk-p-prep">Preparing</i>
+                        <i class="pvk-pill pvk-p-ready">Ready</i>
+                      </span>
+                    </div>
+                    <ul class="pvk-items">
+                      <li><b>1×</b> Ribeye — medium rare</li>
+                      <li class="pvk-warn">No onion — allergy</li>
+                      <li><b>2×</b> Truffle fries</li>
+                    </ul>
+                    <div class="pvk-foot">
+                      <span class="pvk-timer"><i class="pvk-t1">0:08</i><i class="pvk-t2">3:42</i><i class="pvk-t3">7:15</i></span>
+                      <span class="pvk-bump">Bump ✓</span>
+                    </div>
+                  </div>
+                  <div class="pvk-ghost"><span>#215 · Table 4 — Sea Bass ×2</span><span>queued</span></div>
+                </div>
+              </div>
+
+              <!-- Panel 4 — QR Pay phone -->
+              <div class="stage-panel">
+                <div class="pvq">
+                  <div class="pvq-phone">
+                    <div class="pvq-notch"></div>
+                    <div class="pvq-screen">
+                      <div class="pvq-shead"><b>The Ember Room</b><span>Table 9 · 3 guests</span></div>
+                      <div class="pvq-stage pvq-s1">
+                        <div class="pvq-row"><span>Burrata</span><b>$18.00</b></div>
+                        <div class="pvq-row"><span>2× Sea Bass</span><b>$68.00</b></div>
+                        <div class="pvq-row"><span>Bottle Rosé</span><b>$38.00</b></div>
+                        <div class="pvq-tot"><span>Total</span><b>$124.00</b></div>
+                        <div class="pvq-btn">Split the bill</div>
+                      </div>
+                      <div class="pvq-stage pvq-s2">
+                        <p class="pvq-cap">Split 3 ways</p>
+                        <div class="pvq-share pvq-sh1 pvq-me"><span>You</span><b>$41.33</b></div>
+                        <div class="pvq-share pvq-sh2"><span>Aya</span><b>$41.33</b></div>
+                        <div class="pvq-share pvq-sh3"><span>Marco</span><b>$41.34</b></div>
+                        <div class="pvq-tips">
+                          <span class="pvq-tip">15%</span>
+                          <span class="pvq-tip">18%<i class="pvq-tipsel">18%</i></span>
+                          <span class="pvq-tip">20%</span>
+                        </div>
+                        <div class="pvq-btn">Pay $48.77</div>
+                      </div>
+                      <div class="pvq-stage pvq-s3">
+                        <span class="pvq-check">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </span>
+                        <b class="pvq-paid">Paid · $48.77</b>
+                        <span class="pvq-rcpt">Receipt sent to your phone</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Floating live toasts -->
+              <div class="hero-toast hero-toast-1">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span><b>New booking</b> — Sofia M. · 4 guests</span>
+              </div>
+              <div class="hero-toast hero-toast-2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <span><span class="tg">Paid</span> — Table 9 settled $124.00</span>
+              </div>
+
             </div>
           </div>
         </div>
@@ -1625,108 +1744,56 @@ ul,ol{list-style:none}
 <hr class="divider">
 
 <!-- =====================================================
-     BENTO GRID — THE PLATFORM
+     HOW A SHIFT FLOWS — one connected animated story
      ===================================================== -->
-<section class="section bento-section" id="modules" aria-labelledby="bento-heading">
+<section class="section flow-section" id="flow" aria-labelledby="flow-heading">
   <div class="container">
-    <div class="bento-intro reveal">
-      <p class="section-label">The platform</p>
-      <h2 class="section-headline" id="bento-heading">Three modules.<br><em>One seamless system.</em></h2>
-      <p class="section-sub">Enable the modules you need now. Add the rest when you're ready — no migration, no re-training.</p>
+    <div class="flow-intro reveal">
+      <p class="section-label">One shift, one flow</p>
+      <h2 class="section-headline" id="flow-heading">Watch a shift <em>flow.</em></h2>
+      <p class="section-sub">From the booking to the bumped ticket to the paid bill — every step hands off to the next, automatically.</p>
     </div>
-
-    <div class="bento-grid">
-      <!-- Reservations 2×2 -->
-      <article class="bento-card bento-res reveal" aria-labelledby="bento-res-title">
-        <div class="bento-card-inner">
-          <div class="bento-card-text">
-            <p class="bento-module-label">Module 01</p>
-            <h3 class="bento-card-title" id="bento-res-title">Reservations</h3>
-            <p class="bento-card-desc">Booking widget, live floor map, guest CRM, timeline view — everything to fill every seat.</p>
-            <a href="app/book.html?r=demo-restaurant" class="bento-cta">
-              Try booking demo
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-            </a>
-          </div>
-          <div class="bento-mock bento-mock-floor" aria-hidden="true">
-            <div class="bm-floor-row">
-              <div class="bm-tbl bm-open">T1</div>
-              <div class="bm-tbl bm-seated">T2</div>
-              <div class="bm-tbl bm-rsv">T3</div>
-            </div>
-            <div class="bm-floor-row">
-              <div class="bm-tbl bm-dirty">T4</div>
-              <div class="bm-tbl bm-open">T5</div>
-              <div class="bm-tbl bm-seated">T6</div>
-            </div>
-            <div class="bm-legend">
-              <span class="bm-leg bm-leg-open">Open</span>
-              <span class="bm-leg bm-leg-seated">Seated</span>
-              <span class="bm-leg bm-leg-rsv">Reserved</span>
-            </div>
+    <div class="flow-track reveal" aria-hidden="true"><span class="flow-fill" id="flow-fill"></span></div>
+    <div class="flow-steps" id="flow-steps">
+      <div class="flow-step reveal">
+        <p class="flow-time">19:30</p>
+        <h3 class="flow-title">Booking lands</h3>
+        <p class="flow-desc">Sofia books online. The floor map reserves T12 by itself — no phone call, no notebook.</p>
+        <div class="flow-vg" aria-hidden="true">
+          <span class="vg-chip"><span>Sofia M. · 4 guests · T12</span><span class="vg-ok">✓</span></span>
+        </div>
+      </div>
+      <div class="flow-step reveal" style="--delay:1">
+        <p class="flow-time">19:34</p>
+        <h3 class="flow-title">Seated &amp; ordering</h3>
+        <p class="flow-desc">The host seats the party against the booking; orders go in tableside on the POS.</p>
+        <div class="flow-vg" aria-hidden="true">
+          <div class="vg-rows">
+            <span class="vg-row vg-row1"><span>Ribeye — medium rare</span><b>1×</b></span>
+            <span class="vg-row vg-row2"><span>Truffle fries</span><b>2×</b></span>
           </div>
         </div>
-      </article>
-
-      <!-- QR Pay 1×2 tall -->
-      <article class="bento-card bento-pay reveal" aria-labelledby="bento-pay-title" style="--delay:1">
-        <div class="bento-card-inner bento-card-inner-col">
-          <p class="bento-module-label">Module 02</p>
-          <h3 class="bento-card-title" id="bento-pay-title">QR Pay-at-Table</h3>
-          <p class="bento-card-desc">Guests scan, split, tip and pay from their phone. No app. No waiting for the check.</p>
-          <div class="bento-mock bento-mock-qr" aria-hidden="true">
-            <div class="bmq-phone">
-              <div class="bmq-notch"></div>
-              <div class="bmq-header">
-                <div class="bmq-rest">Olive &amp; Ember</div>
-                <div class="bmq-table">Table 9</div>
-              </div>
-              <div class="bmq-rows">
-                <div class="bmq-row bmq-mine"><span>Sea Bass</span><span>$34</span></div>
-                <div class="bmq-row"><span>Lamb Ragu</span><span>$28</span></div>
-                <div class="bmq-row"><span>Rosé</span><span>$58</span></div>
-              </div>
-              <div class="bmq-total"><span>Your share</span><span class="bmq-gold">$37.40</span></div>
-              <div class="bmq-btn">Pay $37.40</div>
-            </div>
-          </div>
-          <a href="app/pay.html?code=OE-03" class="bento-cta">
-            Try pay demo
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
+      </div>
+      <div class="flow-step reveal" style="--delay:2">
+        <p class="flow-time">19:41</p>
+        <h3 class="flow-title">Kitchen fires</h3>
+        <p class="flow-desc">The ticket hits the grill screen the second it's sent — and gets bumped when it's plated.</p>
+        <div class="flow-vg" aria-hidden="true">
+          <span class="vg-pills">
+            <span class="vg-pill vg-pill-new">New</span>
+            <span class="vg-pill vg-pill-ready">Ready</span>
+          </span>
+          <span class="vg-id">#214</span>
         </div>
-      </article>
-
-      <!-- POS 3×1 wide — NEW badge -->
-      <article class="bento-card bento-pos reveal" aria-labelledby="bento-pos-title" style="--delay:2">
-        <div class="bento-card-inner">
-          <div class="bento-card-text">
-            <div class="bento-pos-header">
-              <p class="bento-module-label">Module 03</p>
-              <span class="bento-new-badge">NEW</span>
-            </div>
-            <h3 class="bento-card-title" id="bento-pos-title">Point of Sale</h3>
-            <p class="bento-card-desc">Full tableside ordering, kitchen tickets, split bills, cash &amp; card — a complete POS terminal right in the browser.</p>
-            <a href="app/" class="bento-cta">
-              Open POS demo
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-            </a>
-          </div>
-          <div class="bento-mock bento-mock-pos" aria-hidden="true">
-            <div class="bmp-ticket">
-              <div class="bmp-row"><span>2× Ribeye</span><span>$96</span></div>
-              <div class="bmp-row"><span>1× Tiramisu</span><span>$14</span></div>
-              <div class="bmp-row"><span>Barolo 750ml</span><span>$85</span></div>
-              <div class="bmp-divider"></div>
-              <div class="bmp-total"><span>Total</span><span>$195.00</span></div>
-              <div class="bmp-actions">
-                <div class="bmp-cash">Cash</div>
-                <div class="bmp-card">Card ✓</div>
-              </div>
-            </div>
-          </div>
+      </div>
+      <div class="flow-step reveal" style="--delay:3">
+        <p class="flow-time">20:52</p>
+        <h3 class="flow-title">Paid by QR, table turns</h3>
+        <p class="flow-desc">Guests scan, split three ways, tip, done. T12 flips back to open for the next party.</p>
+        <div class="flow-vg" aria-hidden="true">
+          <span class="vg-chip vg-pop"><span class="vg-ok">✓</span><span>Paid $124.00 · T12 → open</span></span>
         </div>
-      </article>
+      </div>
     </div>
   </div>
 </section>
@@ -1736,11 +1803,11 @@ ul,ol{list-style:none}
 <!-- =====================================================
      MODULE DEEP-DIVE 1 — RESERVATIONS
      ===================================================== -->
-<section class="section deepdive deepdive-a" aria-labelledby="dd-res-heading">
+<section class="section deepdive deepdive-a" id="modules" aria-labelledby="dd-res-heading">
   <div class="container">
     <div class="dd-grid">
       <div class="dd-text reveal">
-        <p class="section-label">Reservations</p>
+        <p class="section-label">Reservations · Module 01</p>
         <h2 class="section-headline" id="dd-res-heading">Fill every seat.<br><em>Effortlessly.</em></h2>
         <p class="section-sub">From the booking widget guests see to the live floor your team operates — one seamless reservation stack.</p>
         <ul class="dd-list">
@@ -1755,34 +1822,55 @@ ul,ol{list-style:none}
           <p class="dd-quote-attr">— Early access operator, 120-cover Italian restaurant</p>
         </div>
         <a href="app/book.html?r=demo-restaurant" class="btn-primary dd-cta">
-          Try reservation demo
+          Try the booking flow
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
       </div>
-      <div class="dd-visual reveal" aria-hidden="true" style="--delay:1">
-        <div class="dd-floor-card">
-          <div class="ddf-bar">
-            <span class="ddf-dot ddf-green"></span>
-            <span class="ddf-title">Floor · Friday 20:00</span>
-            <span class="ddf-live">Live</span>
+      <div class="dd-visual reveal" style="--delay:1">
+        <div class="pv pv-lg" aria-hidden="true">
+          <div class="pv-head">
+            <span class="pv-dot"></span>
+            <span class="pv-title">The Ember Room · Floor · Friday 19:30</span>
+            <span class="pv-live">Live</span>
           </div>
-          <div class="ddf-canvas">
-            <div class="ddf-tbl ddf-open"  style="top:8%;left:6%;width:22%;height:20%"><span>T1</span><small>Open</small></div>
-            <div class="ddf-tbl ddf-seated" style="top:8%;left:32%;width:22%;height:20%"><span>T2</span><small>Seated</small></div>
-            <div class="ddf-tbl ddf-rsv"   style="top:8%;left:58%;width:22%;height:20%"><span>T3</span><small>Rsvd</small></div>
-            <div class="ddf-tbl ddf-open"  style="top:38%;left:6%;width:22%;height:20%"><span>T4</span><small>Open</small></div>
-            <div class="ddf-tbl ddf-seated" style="top:38%;left:32%;width:22%;height:20%"><span>T5</span><small>Seated</small></div>
-            <div class="ddf-tbl ddf-dirty"  style="top:38%;left:58%;width:22%;height:20%"><span>T6</span><small>Clean</small></div>
-            <div class="ddf-tbl ddf-rsv"   style="top:68%;left:6%;width:36%;height:20%"><span>Patio Bar</span><small>Rsvd 20:30</small></div>
-            <div class="ddf-tbl ddf-open"  style="top:68%;left:50%;width:22%;height:20%"><span>T8</span><small>Open</small></div>
+          <div class="pvr-grid">
+            <div class="pvr-tbl"><span class="pvr-st pvr-seat" style="opacity:1">T1<small>Seated</small></span></div>
+            <div class="pvr-tbl pvr-anim">
+              <span class="pvr-st pvr-open">T2<small>Open</small></span>
+              <span class="pvr-st pvr-rsv pvr-keep">T2<small>Reserved</small></span>
+              <span class="pvr-st pvr-seat">T2<small>Seated</small></span>
+            </div>
+            <div class="pvr-tbl"><span class="pvr-st pvr-open" style="opacity:1">T3<small>Open</small></span></div>
+            <div class="pvr-tbl"><span class="pvr-st pvr-rsv" style="opacity:1">T4<small>Reserved</small></span></div>
+            <div class="pvr-tbl pvr-anim pvr-d1">
+              <span class="pvr-st pvr-open">T5<small>Open</small></span>
+              <span class="pvr-st pvr-rsv">T5<small>Reserved</small></span>
+              <span class="pvr-st pvr-seat pvr-keep">T5<small>Seated</small></span>
+            </div>
+            <div class="pvr-tbl"><span class="pvr-st pvr-seat" style="opacity:1">T6<small>Seated</small></span></div>
+            <div class="pvr-tbl pvr-anim pvr-d2">
+              <span class="pvr-st pvr-open pvr-keep">T7<small>Open</small></span>
+              <span class="pvr-st pvr-rsv">T7<small>Reserved</small></span>
+              <span class="pvr-st pvr-seat">T7<small>Seated</small></span>
+            </div>
+            <div class="pvr-tbl"><span class="pvr-st pvr-dirty" style="opacity:1">T8<small>Clean</small></span></div>
+            <div class="pvr-tbl"><span class="pvr-st pvr-open" style="opacity:1">T9<small>Open</small></span></div>
+            <div class="pvr-tbl pvr-anim pvr-d3">
+              <span class="pvr-st pvr-open">T10<small>Open</small></span>
+              <span class="pvr-st pvr-rsv pvr-keep">T10<small>Reserved</small></span>
+              <span class="pvr-st pvr-seat">T10<small>Seated</small></span>
+            </div>
+            <div class="pvr-tbl"><span class="pvr-st pvr-seat" style="opacity:1">T11<small>Seated</small></span></div>
+            <div class="pvr-tbl"><span class="pvr-st pvr-rsv" style="opacity:1">T12<small>Reserved</small></span></div>
           </div>
-          <div class="ddf-legend">
-            <span class="ddf-leg ddf-leg-open">Open</span>
-            <span class="ddf-leg ddf-leg-seated">Seated</span>
-            <span class="ddf-leg ddf-leg-rsv">Reserved</span>
-            <span class="ddf-leg ddf-leg-dirty">Needs clean</span>
+          <div class="pvr-chipwrap">
+            <div class="pvr-chip">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span><b>New booking</b> — Sofia M. · 4 guests · 20:00</span>
+            </div>
           </div>
         </div>
+        <p class="pv-caption"><b>Live preview</b> — the floor fills as bookings land.</p>
       </div>
     </div>
   </div>
@@ -1791,39 +1879,105 @@ ul,ol{list-style:none}
 <hr class="divider">
 
 <!-- =====================================================
-     MODULE DEEP-DIVE 2 — QR PAY
+     MODULE DEEP-DIVE 2 — POS + KITCHEN (synced pair)
      ===================================================== -->
-<section class="section deepdive deepdive-b" aria-labelledby="dd-pay-heading">
+<section class="section deepdive deepdive-b" aria-labelledby="dd-pos-heading">
   <div class="container">
     <div class="dd-grid dd-grid-reverse">
-      <div class="dd-visual reveal" aria-hidden="true">
-        <div class="dd-phone-wrap">
-          <div class="dd-phone">
-            <div class="dd-phone-notch"></div>
-            <div class="dd-phone-inner">
-              <div class="ddp-header">
-                <div class="ddp-name">Olive &amp; Ember</div>
-                <div class="ddp-table">Table 9 · 4 guests</div>
-                <div class="ddp-qr-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17h3v3"/></svg>
-                </div>
-              </div>
-              <div class="ddp-rows">
-                <div class="ddp-row ddp-mine"><span>Burrata &amp; Prosciutto <em>Mine</em></span><span>$18</span></div>
-                <div class="ddp-row ddp-mine"><span>Sea Bass <em>Mine</em></span><span>$34</span></div>
-                <div class="ddp-row"><span>Lamb Ragu</span><span>$28</span></div>
-                <div class="ddp-row"><span>Bottle Rosé</span><span>$58</span></div>
-              </div>
-              <div class="ddp-footer">
-                <div class="ddp-total"><span>Your share</span><span class="ddp-gold">$55.40</span></div>
-                <button class="ddp-pay-btn" type="button" tabindex="-1" aria-hidden="true">Pay $55.40</button>
-              </div>
+      <div class="dd-visual reveal">
+        <div class="dd-pair" aria-hidden="true">
+          <div class="pv">
+            <div class="pv-head">
+              <span class="pv-dot"></span>
+              <span class="pv-title">POS · Table 12</span>
+              <span class="pv-live">Open</span>
+            </div>
+            <div class="pvp-rows">
+              <div class="pvp-row pvp-r1"><span class="pvp-q">1×</span><span class="pvp-n">Ribeye, 300g</span><span class="pvp-p">$48.00</span></div>
+              <div class="pvp-row pvp-mod pvp-r2">+ Medium rare</div>
+              <div class="pvp-row pvp-note pvp-r3">"No onion — allergy"</div>
+              <div class="pvp-row pvp-r4"><span class="pvp-q">2×</span><span class="pvp-n">Truffle fries</span><span class="pvp-p">$14.00</span></div>
+            </div>
+            <div class="pvp-total">
+              <span>Total</span>
+              <span class="pvp-amts"><b class="pvp-a1">$0.00</b><b class="pvp-a2">$48.00</b><b class="pvp-a3">$62.00</b></span>
+            </div>
+            <div class="pvp-fire">
+              <span class="pvp-f1">Fire to kitchen</span>
+              <span class="pvp-f2">Fired to kitchen ✓</span>
             </div>
           </div>
+          <span class="pair-link"></span>
+          <div class="pv kds-sync">
+            <div class="pv-head">
+              <span class="pv-dot"></span>
+              <span class="pv-title">Kitchen · Grill</span>
+              <span class="pv-live">2 open</span>
+            </div>
+            <div class="pvk-card">
+              <span class="pvk-edge pvk-e1"></span>
+              <span class="pvk-edge pvk-e2"></span>
+              <span class="pvk-edge pvk-e3"></span>
+              <div class="pvk-top">
+                <b>#214 · T12</b>
+                <span class="pvk-pillbox">
+                  <i class="pvk-pill pvk-p-new">New</i>
+                  <i class="pvk-pill pvk-p-prep">Preparing</i>
+                  <i class="pvk-pill pvk-p-ready">Ready</i>
+                </span>
+              </div>
+              <ul class="pvk-items">
+                <li><b>1×</b> Ribeye — medium rare</li>
+                <li class="pvk-warn">No onion — allergy</li>
+                <li><b>2×</b> Truffle fries</li>
+              </ul>
+              <div class="pvk-foot">
+                <span class="pvk-timer"><i class="pvk-t1">0:08</i><i class="pvk-t2">3:42</i><i class="pvk-t3">7:15</i></span>
+                <span class="pvk-bump">Bump ✓</span>
+              </div>
+            </div>
+            <div class="pvk-ghost"><span>#215 · T4 — Sea Bass ×2</span><span>queued</span></div>
+          </div>
         </div>
+        <p class="pv-caption"><b>Live preview</b> — fire the ticket above, watch it land below.</p>
       </div>
       <div class="dd-text reveal" style="--delay:1">
-        <p class="section-label">QR Pay-at-Table</p>
+        <div class="dd-pos-eyebrow">
+          <p class="section-label" style="margin-bottom:0">Point of Sale · Module 02</p>
+          <span class="new-badge" style="margin-left:10px">NEW</span>
+        </div>
+        <h2 class="section-headline" id="dd-pos-heading">Ring it. Fire it.<br><em>Bump it.</em></h2>
+        <p class="section-sub">A full POS in the browser, wired straight to a kitchen display. The ticket you ring is the ticket the grill sees — the moment you fire it.</p>
+        <ul class="dd-list">
+          <li><span class="dd-li-title">Tableside ordering</span><span class="dd-li-desc">Modifiers, allergy notes and courses in one tap</span></li>
+          <li><span class="dd-li-title">Fire to kitchen</span><span class="dd-li-desc">Tickets hit the kitchen display instantly — no printers</span></li>
+          <li><span class="dd-li-title">Kitchen display</span><span class="dd-li-desc">New → Preparing → Ready with timers, then bump</span></li>
+          <li><span class="dd-li-title">Split &amp; merge bills</span><span class="dd-li-desc">Any combination — by seat, item, or equal split</span></li>
+          <li><span class="dd-li-title">Unified with Reservations</span><span class="dd-li-desc">Orders attach to reservation records automatically</span></li>
+        </ul>
+        <div class="dd-quote">
+          <p class="dd-quote-text">"Finally a POS that doesn't require a 3-day setup or a £400 terminal on every table."</p>
+          <p class="dd-quote-attr">— Early access operator, 200-cover gastropub</p>
+        </div>
+        <a href="app/" class="btn-primary dd-cta">
+          Open the POS demo
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- =====================================================
+     MODULE DEEP-DIVE 3 — QR PAY
+     ===================================================== -->
+<section class="section deepdive deepdive-c" aria-labelledby="dd-pay-heading">
+  <div class="container">
+    <div class="dd-grid">
+      <div class="dd-text reveal">
+        <p class="section-label">QR Pay-at-Table · Module 03</p>
         <h2 class="section-headline" id="dd-pay-heading">Close tables<br>in <em>seconds.</em></h2>
         <p class="section-sub">Guests scan, see their live bill, claim their items, tip, and pay — no app download, no waiting for the check.</p>
         <ul class="dd-list">
@@ -1838,68 +1992,46 @@ ul,ol{list-style:none}
           <p class="dd-quote-attr">— Early access operator, 80-cover bistro</p>
         </div>
         <a href="app/pay.html?code=OE-03" class="btn-primary dd-cta">
-          Try QR Pay demo
+          Try the QR Pay demo
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
       </div>
-    </div>
-  </div>
-</section>
-
-<hr class="divider">
-
-<!-- =====================================================
-     MODULE DEEP-DIVE 3 — POS
-     ===================================================== -->
-<section class="section deepdive deepdive-c" aria-labelledby="dd-pos-heading">
-  <div class="container">
-    <div class="dd-grid">
-      <div class="dd-text reveal">
-        <div class="dd-pos-eyebrow">
-          <p class="section-label" style="margin-bottom:0">POS</p>
-          <span class="bento-new-badge" style="margin-left:10px">NEW</span>
-        </div>
-        <h2 class="section-headline" id="dd-pos-heading">Run a flawless<br><em>shift.</em></h2>
-        <p class="section-sub">A full point-of-sale terminal in the browser. Order, modify, split and settle — without touching a legacy POS system.</p>
-        <ul class="dd-list">
-          <li><span class="dd-li-title">Tableside ordering</span><span class="dd-li-desc">Send tickets to the kitchen in one tap</span></li>
-          <li><span class="dd-li-title">Menu management</span><span class="dd-li-desc">Update items, prices, and modifiers live</span></li>
-          <li><span class="dd-li-title">Split &amp; merge bills</span><span class="dd-li-desc">Any combination — by seat, item, or equal split</span></li>
-          <li><span class="dd-li-title">Cash &amp; card</span><span class="dd-li-desc">Record any tender type; Stripe integration for card</span></li>
-          <li><span class="dd-li-title">Unified with Reservations</span><span class="dd-li-desc">Orders attach to reservation records automatically</span></li>
-        </ul>
-        <div class="dd-quote">
-          <p class="dd-quote-text">"Finally a POS that doesn't require a 3-day setup or a £400 terminal on every table."</p>
-          <p class="dd-quote-attr">— Early access operator, 200-cover gastropub</p>
-        </div>
-        <a href="app/" class="btn-primary dd-cta">
-          Open POS demo
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-        </a>
-      </div>
-      <div class="dd-visual reveal" aria-hidden="true" style="--delay:1">
-        <div class="dd-pos-card">
-          <div class="ddpos-header">
-            <span class="ddpos-title">POS Terminal · Table 7</span>
-            <span class="ddpos-status">Ordering</span>
-          </div>
-          <div class="ddpos-items">
-            <div class="ddpos-item"><span class="ddpos-qty">2×</span><span class="ddpos-name">Ribeye Steak</span><span class="ddpos-price">$96</span></div>
-            <div class="ddpos-item"><span class="ddpos-qty">1×</span><span class="ddpos-name">Tiramisu</span><span class="ddpos-price">$14</span></div>
-            <div class="ddpos-item"><span class="ddpos-qty">1×</span><span class="ddpos-name">Barolo 750ml</span><span class="ddpos-price">$85</span></div>
-            <div class="ddpos-item ddpos-new"><span class="ddpos-qty">1×</span><span class="ddpos-name">Espresso ×2</span><span class="ddpos-price">$10</span></div>
-          </div>
-          <div class="ddpos-subtotals">
-            <div class="ddpos-sub-row"><span>Subtotal</span><span>$205.00</span></div>
-            <div class="ddpos-sub-row"><span>Tax (10%)</span><span>$20.50</span></div>
-            <div class="ddpos-sub-row ddpos-total-row"><span>Total</span><span>$225.50</span></div>
-          </div>
-          <div class="ddpos-btns">
-            <div class="ddpos-btn-split">Split bill</div>
-            <div class="ddpos-btn-kitchen">Send to kitchen</div>
-            <div class="ddpos-btn-pay">Charge $225.50</div>
+      <div class="dd-visual reveal" style="--delay:1">
+        <div class="pvq" aria-hidden="true">
+          <div class="pvq-phone">
+            <div class="pvq-notch"></div>
+            <div class="pvq-screen">
+              <div class="pvq-shead"><b>The Ember Room</b><span>Table 9 · 3 guests</span></div>
+              <div class="pvq-stage pvq-s1">
+                <div class="pvq-row"><span>Burrata</span><b>$18.00</b></div>
+                <div class="pvq-row"><span>2× Sea Bass</span><b>$68.00</b></div>
+                <div class="pvq-row"><span>Bottle Rosé</span><b>$38.00</b></div>
+                <div class="pvq-tot"><span>Total</span><b>$124.00</b></div>
+                <div class="pvq-btn">Split the bill</div>
+              </div>
+              <div class="pvq-stage pvq-s2">
+                <p class="pvq-cap">Split 3 ways</p>
+                <div class="pvq-share pvq-sh1 pvq-me"><span>You</span><b>$41.33</b></div>
+                <div class="pvq-share pvq-sh2"><span>Aya</span><b>$41.33</b></div>
+                <div class="pvq-share pvq-sh3"><span>Marco</span><b>$41.34</b></div>
+                <div class="pvq-tips">
+                  <span class="pvq-tip">15%</span>
+                  <span class="pvq-tip">18%<i class="pvq-tipsel">18%</i></span>
+                  <span class="pvq-tip">20%</span>
+                </div>
+                <div class="pvq-btn">Pay $48.77</div>
+              </div>
+              <div class="pvq-stage pvq-s3">
+                <span class="pvq-check">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+                <b class="pvq-paid">Paid · $48.77</b>
+                <span class="pvq-rcpt">Receipt sent to your phone</span>
+              </div>
+            </div>
           </div>
         </div>
+        <p class="pv-caption"><b>Live preview</b> — scan, split, tip, paid.</p>
       </div>
     </div>
   </div>
@@ -1908,56 +2040,14 @@ ul,ol{list-style:none}
 <hr class="divider">
 
 <!-- =====================================================
-     HOW A SHIFT FLOWS
-     ===================================================== -->
-<section class="section how-section" aria-labelledby="how-heading">
-  <div class="container">
-    <div class="how-intro reveal">
-      <p class="section-label">How it works</p>
-      <h2 class="section-headline" id="how-heading">A shift, <em>simplified.</em></h2>
-    </div>
-    <div class="how-steps">
-      <div class="how-step reveal">
-        <div class="how-step-num" aria-hidden="true">01</div>
-        <div class="how-step-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        </div>
-        <h3 class="how-step-title">Staff logs in</h3>
-        <p class="how-step-desc">Open any browser. See today's reservations, the live floor map, and the POS — no install, no training day.</p>
-      </div>
-      <div class="how-connector" aria-hidden="true"></div>
-      <div class="how-step reveal" style="--delay:1">
-        <div class="how-step-num" aria-hidden="true">02</div>
-        <div class="how-step-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </div>
-        <h3 class="how-step-title">Table opens, orders flow</h3>
-        <p class="how-step-desc">Guest is seated against the reservation. Staff takes orders on POS; tickets hit the kitchen instantly.</p>
-      </div>
-      <div class="how-connector" aria-hidden="true"></div>
-      <div class="how-step reveal" style="--delay:2">
-        <div class="how-step-num" aria-hidden="true">03</div>
-        <div class="how-step-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        </div>
-        <h3 class="how-step-title">Guest pays, table turns</h3>
-        <p class="how-step-desc">Guests scan the QR, claim items, tip, and pay in under 2 minutes. Staff mark the table ready — shift closed.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<hr class="divider">
-
-<!-- =====================================================
-     INTERACTIVE FLOOR DEMO
+     INTERACTIVE FLOOR DEMO — proof by touch
      ===================================================== -->
 <section class="section demo-section" id="demo" aria-labelledby="demo-heading">
   <div class="container">
     <div class="demo-intro reveal">
-      <p class="section-label">Interactive demo</p>
-      <h2 class="section-headline" id="demo-heading">Try the floor.<br><em>Right here.</em></h2>
-      <p class="section-sub">Click any occupied table to open a POS order panel. Hit Pay to watch the full payment flow.</p>
+      <p class="section-label">Proof by touch</p>
+      <h2 class="section-headline" id="demo-heading">Don't just watch.<br><em>Drive it.</em></h2>
+      <p class="section-sub">This is the real floor interface. Click an occupied table to open its order, then hit Pay and run the full payment flow yourself.</p>
     </div>
     <div class="demo-wrap">
       <div class="demo-floor-wrap reveal" style="--delay:1">
@@ -2008,7 +2098,7 @@ ul,ol{list-style:none}
 <hr class="divider">
 
 <!-- =====================================================
-     FEATURE BENTO — 6 cross-module features
+     FEATURE GRID — 6 cross-module features
      ===================================================== -->
 <section class="section feat-section" aria-labelledby="feat-heading">
   <div class="container">
@@ -2083,7 +2173,6 @@ ul,ol{list-style:none}
       </button>
     </div>
     <div class="pricing-cards reveal" style="--delay:2">
-      <!-- Starter -->
       <article class="price-card" aria-labelledby="pc-starter">
         <p class="price-tier-label">Starter</p>
         <h3 class="price-amount" id="pc-starter" data-monthly="Talk to us" data-annual="Talk to us">Talk to us</h3>
@@ -2096,7 +2185,6 @@ ul,ol{list-style:none}
         </ul>
         <a href="app/" class="price-cta price-cta-ghost">Get early access</a>
       </article>
-      <!-- Growth — featured -->
       <article class="price-card price-card-featured" aria-labelledby="pc-growth">
         <div class="price-featured-badge">Most popular</div>
         <p class="price-tier-label">Growth</p>
@@ -2110,7 +2198,6 @@ ul,ol{list-style:none}
         </ul>
         <a href="app/" class="price-cta price-cta-primary">Get early access</a>
       </article>
-      <!-- Scale -->
       <article class="price-card" aria-labelledby="pc-scale">
         <p class="price-tier-label">Scale</p>
         <h3 class="price-amount" id="pc-scale" data-monthly="Talk to us" data-annual="Talk to us">Talk to us</h3>
@@ -2231,7 +2318,7 @@ ul,ol{list-style:none}
           Book a demo
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
-        <a href="#demo" class="btn-ghost">Watch it live ↓</a>
+        <a href="#demo" class="btn-ghost">Try the live demo ↑</a>
       </div>
     </div>
   </div>
@@ -2268,105 +2355,9 @@ ul,ol{list-style:none}
     </div>
   </div>
 </footer>
+
 </main>
 
 <script src="assets/landing.js" defer></script>
-<script>
-(function(){
-'use strict';
-
-/* ---- Nav: transparent → solid on scroll ---- */
-var hdr = document.getElementById('site-header');
-var scrolled = false;
-function onScroll(){
-  var s = window.scrollY > 80;
-  if(s !== scrolled){ scrolled = s; hdr.classList.toggle('scrolled', s); }
-}
-window.addEventListener('scroll', onScroll, {passive:true});
-onScroll();
-
-/* ---- Mobile menu toggle ---- */
-var toggle = document.getElementById('nav-toggle');
-var menu   = document.getElementById('mobile-menu');
-if(toggle && menu){
-  toggle.addEventListener('click', function(){
-    var open = menu.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', String(open));
-    menu.setAttribute('aria-hidden', String(!open));
-  });
-  /* Close on any link click */
-  menu.querySelectorAll('a').forEach(function(a){
-    a.addEventListener('click', function(){
-      menu.classList.remove('open');
-      toggle.setAttribute('aria-expanded','false');
-      menu.setAttribute('aria-hidden','true');
-    });
-  });
-}
-
-/* ---- FAQ accordion ---- */
-document.querySelectorAll('.faq-q').forEach(function(btn){
-  btn.addEventListener('click', function(){ toggle_faq(btn); });
-  btn.addEventListener('keydown', function(e){
-    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle_faq(btn); }
-  });
-});
-function toggle_faq(btn){
-  var expanded = btn.getAttribute('aria-expanded') === 'true';
-  document.querySelectorAll('.faq-q').forEach(function(b){
-    b.setAttribute('aria-expanded','false');
-    var ans = document.getElementById(b.getAttribute('aria-controls'));
-    if(ans) ans.classList.remove('open');
-  });
-  if(!expanded){
-    btn.setAttribute('aria-expanded','true');
-    var ans = document.getElementById(btn.getAttribute('aria-controls'));
-    if(ans) ans.classList.add('open');
-  }
-}
-
-/* ---- Pricing monthly/annual toggle ---- */
-var btnM = document.getElementById('ptog-monthly');
-var btnA = document.getElementById('ptog-annual');
-if(btnM && btnA){
-  [btnM, btnA].forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var isAnnual = btn === btnA;
-      btnM.classList.toggle('ptoggle-active', !isAnnual);
-      btnA.classList.toggle('ptoggle-active',  isAnnual);
-      btnM.setAttribute('aria-pressed', String(!isAnnual));
-      btnA.setAttribute('aria-pressed', String(isAnnual));
-      document.querySelectorAll('.price-amount').forEach(function(el){
-        el.textContent = isAnnual
-          ? (el.dataset.annual  || el.dataset.monthly)
-          : (el.dataset.monthly || el.textContent);
-      });
-    });
-    btn.addEventListener('keydown', function(e){
-      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); btn.click(); }
-    });
-  });
-}
-
-/* ---- Scroll reveal ---- */
-var reveals = document.querySelectorAll('.reveal');
-reveals.forEach(function(el){ el.classList.add('visible'); });
-if('IntersectionObserver' in window){
-  requestAnimationFrame(function(){
-    document.documentElement.classList.add('js-ready');
-    var obs = new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if(entry.isIntersecting){
-          entry.target.classList.add('visible');
-          obs.unobserve(entry.target);
-        }
-      });
-    },{threshold:0.15, rootMargin:'0px 0px -32px 0px'});
-    reveals.forEach(function(el){ obs.observe(el); });
-  });
-}
-
-})();
-</script>
 </body>
 </html>
