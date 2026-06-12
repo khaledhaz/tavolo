@@ -1456,6 +1456,8 @@ input  { font-family: inherit; }
       <div id="ticket-header">
         <span id="ticket-session-label">New order</span>
         <span id="ticket-guests-label"></span>
+        <button id="btn-close-order" type="button" aria-label="Close or cancel this order"
+          style="margin-left:auto;min-height:32px;padding:0 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);cursor:pointer;font-size:13px;">Close</button>
       </div>
 
       <div id="ticket-seat-bar" role="group" aria-label="Seat selection"></div>
@@ -1497,7 +1499,12 @@ input  { font-family: inherit; }
             <button class="split-btn active" data-split="whole" type="button">Whole check</button>
             <button class="split-btn" data-split="even" type="button">Split evenly</button>
             <button class="split-btn" data-split="seat" type="button">By seat</button>
+            <button class="split-btn" data-split="item" type="button">By item</button>
             <button class="split-btn" data-split="custom" type="button">Custom amount</button>
+          </div>
+          <div id="split-item-wrap" class="hidden" style="margin-top:10px;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;">Tap the items this guest is paying for:</div>
+            <div id="split-item-list" role="group" aria-label="Select items to pay for"></div>
           </div>
           <div id="split-custom-wrap" class="hidden" style="margin-top:10px;display:flex;align-items:center;gap:8px;">
             <label for="split-custom-input" style="font-size:13px;color:rgba(255,255,255,0.5);">$</label>

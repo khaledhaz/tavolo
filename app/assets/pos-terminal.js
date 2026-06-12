@@ -178,12 +178,17 @@
         p_pin: buf,
       }).then(function(r) {
         if (r.error || !r.data || r.data.ok === false) {
-          var msg = (r.data && r.data.error) ? r.data.error : 'Invalid PIN';
-          loginCard.querySelector('.login-display').classList.add('error');
-          errEl.textContent = msg;
+          var raw = (r.data && r.data.error) ? r.data.error : 'Invalid PIN';
+          var msg = (raw === 'not_found') ? 'Incorrect PIN — try again' : raw;
+          /* BUG 1 FIX: reset buf and dots WITHOUT calling updateDisplay() so error stays */
           buf = '';
           state.loginBuf = '';
-          updateDisplay();
+          var dots = '';
+          for (var i = 0; i < 4; i++) dots += '·';
+          display.textContent = dots;
+          submit.disabled = true; /* re-disable; re-enabled once 4 digits entered */
+          loginCard.querySelector('.login-display').classList.add('error');
+          errEl.textContent = msg;
           submit.disabled = false;
           submit.textContent = 'Sign In';
           return;
@@ -928,6 +933,29 @@
      ============================================================ */
 
   /* Fire course */
+  /* Close/cancel the current order. Empty (total 0) → pos_cancel_session frees the
+     table; with items → leave it open (resumable) and return home. (Fixes stuck-table bug.) */
+  el('btn-close-order').addEventListener('click', function() {
+    var bill = state.payBill || {};
+    var total = bill.total_cents != null ? bill.total_cents : null;
+    var refresh = sb.rpc('pos_session_bill', { p_session: state.sessionId });
+    refresh.then(function(r) {
+      var t = (r.data && r.data.total_cents != null) ? r.data.total_cents : (total || 0);
+      if (t <= 0) {
+        sb.rpc('pos_cancel_session', { p_session: state.sessionId }).then(function(cr) {
+          if (cr.error) { toast('Could not close order', 'error'); return; }
+          toast('Empty order closed', 'ok');
+          state.sessionId = null;
+          showScreen('screen-home'); loadHomeData();
+        });
+      } else {
+        if (window.confirm('Leave this order open? It will stay on the floor and you can resume it later.')) {
+          showScreen('screen-home'); loadHomeData();
+        }
+      }
+    });
+  });
+
   el('btn-fire').addEventListener('click', function() {
     if (!state.sessionId) return;
     sb.rpc('pos_fire_course', {
@@ -1118,10 +1146,11 @@
       p_pin: pin,
     }).then(function(r) {
       if (r.error || !r.data || r.data.ok === false || (r.data.role !== 'manager' && r.data.role !== 'owner')) {
+        /* BUG 2 FIX: removed setTimeout(updateMgrDisplay, 800) — error must persist
+           until the next digit press; updateMgrDisplay() is called on every keypress. */
         el('mgr-pin-display').classList.add('error');
         el('mgr-pin-error').textContent = 'Invalid manager PIN';
         state.mgrPinBuf = '';
-        setTimeout(function() { updateMgrDisplay(); }, 800);
         return;
       }
       closeMgrPinModal();
@@ -1151,8 +1180,10 @@
     state.paySplitMode     = 'whole';
     state.paySplitCustomCents = 0;
     state.paySplitEvenWays = 2;
+    state.paySplitItemIds  = {};
     state.payTipPct        = 18;
     state.payMethod        = 'cash';
+    el('split-item-wrap').classList.add('hidden');
 
     /* Mark split/tip UI */
     qsa('.split-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.split === 'whole'); });
@@ -1179,9 +1210,38 @@
       qsa('.split-btn').forEach(function(b) { b.classList.toggle('active', b === btn); });
       el('split-custom-wrap').classList.toggle('hidden', state.paySplitMode !== 'custom');
       el('split-even-wrap').classList.toggle('hidden', state.paySplitMode !== 'even');
+      el('split-item-wrap').classList.toggle('hidden', state.paySplitMode !== 'item');
+      if (state.paySplitMode === 'item') renderSplitItems();
       updatePaymentAmounts();
     });
   });
+
+  /* Split-by-item: render the bill's unpaid line items as toggleable rows */
+  function renderSplitItems() {
+    var bill = state.payBill;
+    var listEl = el('split-item-list');
+    if (!bill || !bill.items || !bill.items.length) { listEl.innerHTML = '<div style="font-size:13px;color:rgba(255,255,255,0.45);">No items to split.</div>'; return; }
+    state.paySplitItemIds = state.paySplitItemIds || {};
+    listEl.innerHTML = bill.items.filter(function(it){ return !it.voided; }).map(function(it) {
+      var on = !!state.paySplitItemIds[it.id];
+      return '<button type="button" class="split-item-row" data-item-id="' + esc(it.id) + '"'
+        + ' aria-pressed="' + on + '" style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:10px;'
+        + 'padding:10px 12px;margin-bottom:6px;border-radius:8px;min-height:44px;cursor:pointer;text-align:left;'
+        + 'border:1px solid ' + (on ? '#c2703d' : 'rgba(255,255,255,0.12)') + ';'
+        + 'background:' + (on ? 'rgba(194,112,61,0.18)' : 'rgba(255,255,255,0.04)') + ';color:#fff;">'
+        + '<span>' + (on ? '✓ ' : '') + esc(it.qty + '× ' + it.name) + '</span>'
+        + '<span style="font-variant-numeric:tabular-nums;">' + money(it.line_total_cents) + '</span>'
+        + '</button>';
+    }).join('');
+    qsa('#split-item-list .split-item-row').forEach(function(row) {
+      row.addEventListener('click', function() {
+        var id = row.dataset.itemId;
+        if (state.paySplitItemIds[id]) delete state.paySplitItemIds[id]; else state.paySplitItemIds[id] = true;
+        renderSplitItems();
+        updatePaymentAmounts();
+      });
+    });
+  }
 
   el('split-custom-input').addEventListener('input', function() {
     state.paySplitCustomCents = Math.round(parseFloat(this.value || '0') * 100);
@@ -1243,6 +1303,12 @@
           return bill.by_seat[state.currentSeat].subtotal_cents || 0;
         }
         return remaining;
+      case 'item':
+        /* sum the selected line items (capped at remaining) */
+        var sel = state.paySplitItemIds || {};
+        var sum = 0;
+        (bill.items || []).forEach(function(it) { if (sel[it.id] && !it.voided) sum += (it.line_total_cents || 0); });
+        return Math.min(sum, remaining);
       default: return remaining;
     }
   }
