@@ -37,6 +37,8 @@
     modGroups:    [],     /* groups for current item */
     modSelected:  {},     /* group_id → [modifier_ids] */
     voidItemId:   null,
+    itemNoteItem: null,  /* {item, modifierIds, seat} pending note prompt */
+    editNoteItemId: null, /* order item uuid being note-edited */
     mgrPinResolve:null,
     mgrPinReject: null,
     mgrPinBuf:    '',
@@ -563,8 +565,8 @@
       .then(function(r) {
         var groupIds = (r.data || []).map(function(row) { return row.group_id; });
         if (!groupIds.length) {
-          /* No modifiers — add directly */
-          addItemToTicket(item, [], state.currentSeat);
+          /* No modifiers — prompt for special instructions then add */
+          openItemNoteModal(item, [], state.currentSeat);
           return;
         }
         /* Fetch groups + modifiers */
@@ -605,6 +607,7 @@
     el('mod-title').textContent  = item.name;
     el('mod-price').textContent  = localMoney(item.price_cents);
     el('mod-validation').textContent = '';
+    el('mod-notes-input').value = '';
 
     /* Populate seat selector */
     var seatSel = el('modifier-seat-sel');
@@ -733,15 +736,16 @@
       modIds = modIds.concat(ids);
     });
 
-    var seat = parseInt(el('modifier-seat-sel').value, 10) || state.currentSeat;
+    var seat  = parseInt(el('modifier-seat-sel').value, 10) || state.currentSeat;
+    var notes = (el('mod-notes-input').value || '').trim() || null;
     closeModifierModal();
-    addItemToTicket(item, modIds, seat);
+    addItemToTicket(item, modIds, seat, notes);
   });
 
   /* ============================================================
      ADD ITEM TO TICKET (RPC)
      ============================================================ */
-  function addItemToTicket(item, modifierIds, seat) {
+  function addItemToTicket(item, modifierIds, seat, notes) {
     if (!state.sessionId) { toast('No active session', 'error'); return; }
 
     sb.rpc('pos_add_item', {
@@ -750,7 +754,7 @@
       p_qty:          1,
       p_seat:         seat || 1,
       p_course:       state.currentCourse,
-      p_notes:        null,
+      p_notes:        notes || null,
       p_modifier_ids: modifierIds || [],
     }).then(function(r) {
       if (r.error) { toast(r.error.message || 'Add item failed', 'error'); return; }
@@ -761,6 +765,96 @@
       toast('Connection error — item not added', 'error');
     });
   }
+
+  /* ============================================================
+     ITEM NOTE MODAL (no-modifier items — quick prompt before add)
+     ============================================================ */
+  function openItemNoteModal(item, modifierIds, seat) {
+    state.itemNoteItem = { item: item, modifierIds: modifierIds, seat: seat };
+    el('item-note-item-name').textContent = item.name;
+    el('item-note-input').value = '';
+    el('item-note-modal').classList.add('open');
+    el('item-note-input').focus();
+  }
+
+  function closeItemNoteModal() {
+    el('item-note-modal').classList.remove('open');
+    state.itemNoteItem = null;
+  }
+
+  el('btn-item-note-confirm').addEventListener('click', function() {
+    if (!state.itemNoteItem) return;
+    var notes = (el('item-note-input').value || '').trim() || null;
+    var p = state.itemNoteItem;
+    closeItemNoteModal();
+    addItemToTicket(p.item, p.modifierIds, p.seat, notes);
+  });
+
+  el('btn-item-note-skip').addEventListener('click', function() {
+    if (!state.itemNoteItem) return;
+    var p = state.itemNoteItem;
+    closeItemNoteModal();
+    addItemToTicket(p.item, p.modifierIds, p.seat, null);
+  });
+
+  el('item-note-modal').addEventListener('click', function(e) {
+    if (e.target === el('item-note-modal')) closeItemNoteModal();
+  });
+
+  el('item-note-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      el('btn-item-note-confirm').click();
+    }
+    if (e.key === 'Escape') closeItemNoteModal();
+  });
+
+  /* ============================================================
+     EDIT NOTE MODAL (pencil affordance on ticket lines)
+     ============================================================ */
+  function openEditNoteModal(itemId, itemName, currentNote) {
+    state.editNoteItemId = itemId;
+    el('edit-note-item-name').textContent = itemName;
+    el('edit-note-input').value = currentNote || '';
+    el('edit-note-modal').classList.add('open');
+    el('edit-note-input').focus();
+    /* select all existing text so it's easy to replace */
+    el('edit-note-input').select();
+  }
+
+  function closeEditNoteModal() {
+    el('edit-note-modal').classList.remove('open');
+    state.editNoteItemId = null;
+  }
+
+  el('btn-edit-note-confirm').addEventListener('click', function() {
+    var itemId = state.editNoteItemId;
+    if (!itemId) return;
+    var note = (el('edit-note-input').value || '').trim();
+    closeEditNoteModal();
+    sb.rpc('pos_update_item_note', { p_order_item: itemId, p_note: note || null })
+      .then(function(r) {
+        if (r.error) { toast(r.error.message || 'Note update failed', 'error'); return; }
+        refreshBill();
+      }).catch(function(err) {
+        console.error('[POS] update note error', err);
+        toast('Connection error — note not saved', 'error');
+      });
+  });
+
+  el('btn-edit-note-cancel').addEventListener('click', closeEditNoteModal);
+
+  el('edit-note-modal').addEventListener('click', function(e) {
+    if (e.target === el('edit-note-modal')) closeEditNoteModal();
+  });
+
+  el('edit-note-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      el('btn-edit-note-confirm').click();
+    }
+    if (e.key === 'Escape') closeEditNoteModal();
+  });
 
   /* ============================================================
      BILL / TICKET
@@ -862,13 +956,21 @@
         var modsStr = item.modifiers && item.modifiers.length
           ? item.modifiers.map(function(m){return m.name;}).join(', ')
           : '';
+        var noteStr   = item.notes || '';
+        var hasNote   = noteStr.length > 0;
         var canRemove = item.kitchen_status === 'new';
+        var noteBtnCls = 'ti-note-btn' + (hasNote ? ' has-note' : '');
+        var noteBtnLabel = hasNote ? 'Edit note' : 'Add note';
+        /* pencil svg */
+        var pencilSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
         html += [
           '<div class="ticket-item-row" data-item-id="' + localEsc(item.id) + '" role="listitem">',
             '<div style="flex:1;min-width:0;">',
               '<div class="ti-name">' + localEsc(item.qty + '× ' + item.name) + '</div>',
               modsStr ? '<div class="ti-mods">' + localEsc(modsStr) + '</div>' : '',
+              hasNote ? '<div class="ti-note">' + localEsc(noteStr) + '</div>' : '',
             '</div>',
+            '<button class="' + noteBtnCls + '" data-action="note" data-item-id="' + localEsc(item.id) + '" data-item-name="' + localEsc(item.name) + '" data-note="' + localEsc(noteStr) + '" type="button" aria-label="' + localEsc(noteBtnLabel + ' for ' + item.name) + '">' + pencilSvg + '</button>',
             '<div class="ti-qty-wrap">',
               canRemove ? '<button class="ti-qty-btn" data-action="dec" data-item-id="' + localEsc(item.id) + '" data-qty="' + item.qty + '" type="button" aria-label="Decrease qty">−</button>' : '',
               '<span class="ti-qty-num">' + localEsc(String(item.qty)) + '</span>',
@@ -881,6 +983,13 @@
     });
 
     list.innerHTML = html;
+
+    /* Attach note button listeners */
+    qsa('[data-action="note"]', list).forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        openEditNoteModal(btn.dataset.itemId, btn.dataset.itemName, btn.dataset.note || '');
+      });
+    });
 
     /* Attach qty event listeners */
     qsa('[data-action="dec"],[data-action="inc"]', list).forEach(function(btn) {
@@ -910,15 +1019,48 @@
     var bill = state.bill;
     if (!bill) {
       el('tot-subtotal').textContent = localMoney(0);
-      el('tot-charges').textContent  = localMoney(0);
+      el('tot-discounts-row').classList.add('hidden');
+      el('tot-tax-row').classList.add('hidden');
+      el('tot-service-row').classList.add('hidden');
       el('tot-total').textContent    = localMoney(0);
       el('tot-remaining-row').classList.add('hidden');
       return;
     }
-    var charges = (bill.service_charge_cents || 0) - (bill.discounts_cents || 0);
+
     el('tot-subtotal').textContent = localMoney(bill.subtotal_cents || 0);
-    el('tot-charges').textContent  = localMoney(charges);
-    el('tot-total').textContent    = localMoney(bill.total_cents || 0);
+
+    /* Discounts row — show only if there are discounts */
+    var discCents = bill.discounts_cents || 0;
+    if (discCents > 0) {
+      el('tot-discounts-row').classList.remove('hidden');
+      el('tot-discounts').textContent = '−' + localMoney(discCents);
+    } else {
+      el('tot-discounts-row').classList.add('hidden');
+    }
+
+    /* Tax row — show only if non-zero */
+    var taxCents = bill.tax_cents || 0;
+    var taxPct   = bill.tax_pct   != null ? bill.tax_pct : null;
+    if (taxCents > 0) {
+      el('tot-tax-row').classList.remove('hidden');
+      el('tot-tax-label').textContent = taxPct != null ? 'Tax (' + taxPct + '%)' : 'Tax';
+      el('tot-tax').textContent = localMoney(taxCents);
+    } else {
+      el('tot-tax-row').classList.add('hidden');
+    }
+
+    /* Service charge row — show only if non-zero */
+    var svcCents = bill.service_charge_cents || 0;
+    var svcPct   = bill.service_pct != null ? bill.service_pct : null;
+    if (svcCents > 0) {
+      el('tot-service-row').classList.remove('hidden');
+      el('tot-service-label').textContent = svcPct != null ? 'Service charge (' + svcPct + '%)' : 'Service charge';
+      el('tot-service').textContent = localMoney(svcCents);
+    } else {
+      el('tot-service-row').classList.add('hidden');
+    }
+
+    el('tot-total').textContent = localMoney(bill.total_cents || 0);
 
     if (bill.paid_cents > 0) {
       el('tot-remaining-row').classList.remove('hidden');
@@ -1333,10 +1475,41 @@
     var total      = chargeSub + tipCents;
     state.payTipCents = tipCents;
 
-    el('pay-sub').textContent      = localMoney(bill.subtotal_cents || 0);
-    el('pay-charges').textContent  = localMoney((bill.service_charge_cents || 0) - (bill.discounts_cents || 0));
-    el('pay-tip').textContent      = localMoney(tipCents);
-    el('pay-charge-row').textContent = localMoney(total);
+    el('pay-sub').textContent = localMoney(bill.subtotal_cents || 0);
+
+    /* Discounts */
+    var payDiscCents = bill.discounts_cents || 0;
+    if (payDiscCents > 0) {
+      el('pay-discounts-row').classList.remove('hidden');
+      el('pay-discounts').textContent = '−' + localMoney(payDiscCents);
+    } else {
+      el('pay-discounts-row').classList.add('hidden');
+    }
+
+    /* Tax */
+    var payTaxCents = bill.tax_cents || 0;
+    var payTaxPct   = bill.tax_pct   != null ? bill.tax_pct : null;
+    if (payTaxCents > 0) {
+      el('pay-tax-row').classList.remove('hidden');
+      el('pay-tax-label').textContent = payTaxPct != null ? 'Tax (' + payTaxPct + '%)' : 'Tax';
+      el('pay-tax').textContent = localMoney(payTaxCents);
+    } else {
+      el('pay-tax-row').classList.add('hidden');
+    }
+
+    /* Service charge */
+    var paySvcCents = bill.service_charge_cents || 0;
+    var paySvcPct   = bill.service_pct != null ? bill.service_pct : null;
+    if (paySvcCents > 0) {
+      el('pay-service-row').classList.remove('hidden');
+      el('pay-service-label').textContent = paySvcPct != null ? 'Service charge (' + paySvcPct + '%)' : 'Service charge';
+      el('pay-service').textContent = localMoney(paySvcCents);
+    } else {
+      el('pay-service-row').classList.add('hidden');
+    }
+
+    el('pay-tip').textContent          = localMoney(tipCents);
+    el('pay-charge-row').textContent   = localMoney(total);
     el('pay-charge-total').textContent = localMoney(total);
 
     el('pay-tip-row').style.display = tipCents > 0 ? '' : 'none';

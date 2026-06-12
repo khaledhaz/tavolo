@@ -728,6 +728,9 @@
     });
     if (!rows.length) return { error: null, count: 0 };
     var ins = await sb.from('mesa_order_items').insert(rows);
+    // QR/diner orders fire to the kitchen immediately so the line cooks see them
+    // (POS v2 unified kitchen — QR orders no longer get stuck at kitchen_status 'new').
+    if (!ins.error) { try { await sb.rpc('pos_fire_session', { p_session: sessionId }); } catch (e) {} }
     return { error: ins.error, count: rows.length };
   }
 

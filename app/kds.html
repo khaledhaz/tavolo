@@ -617,6 +617,78 @@ body {
   clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 
+/* ---- Channel / order-type chip ---- */
+.ticket__channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Dine-in — warm green */
+.ticket__channel[data-channel="dine_in"] {
+  color: #5ecb8a;
+  background: rgba(76,212,138,0.10);
+  border-color: rgba(76,212,138,0.30);
+}
+/* Takeout — amber */
+.ticket__channel[data-channel="takeout"] {
+  color: #f5c045;
+  background: rgba(245,192,69,0.10);
+  border-color: rgba(245,192,69,0.30);
+}
+/* Bar — blue-violet */
+.ticket__channel[data-channel="bar"] {
+  color: #93c5fd;
+  background: rgba(147,197,253,0.10);
+  border-color: rgba(147,197,253,0.30);
+}
+/* Delivery — orange */
+.ticket__channel[data-channel="delivery"] {
+  color: #fb923c;
+  background: rgba(251,146,60,0.10);
+  border-color: rgba(251,146,60,0.30);
+}
+
+/* QR / self-service badge — subtle, shown when no server */
+.ticket__qr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 20px;
+  color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Header left — allow chips to wrap on narrow cards */
+.ticket__header-left {
+  flex-wrap: wrap;
+}
+
+/* Channel row wraps chips */
+.ticket__channel-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
 /* ---- Responsive tweaks ---- */
 @media (max-width: 600px) {
   #kds-topbar { height: 52px; padding: 0 12px; gap: 8px; }
@@ -861,7 +933,7 @@ body {
         'sent_at',
         'notes',
         /* join to session for table/tab info */
-        'mesa_sessions!inner(id, table_id, status, order_type, tab_name, guest_count, mesa_tables(id, label, table_code))',
+        'mesa_sessions!inner(id, table_id, status, order_type, tab_name, guest_count, server_staff_id, mesa_tables(id, label, table_code))',
         /* join modifiers */
         'pos_order_item_modifiers(modifier_id, name, price_delta_cents)'
       ].join(','))
@@ -910,6 +982,8 @@ body {
           guest_count: sess.guest_count || 1,
           table_label: tableInfo.label || tableInfo.table_code || 'Table',
           table_code:  tableInfo.table_code || '',
+          /* server_staff_id null → likely QR / self-service order */
+          has_server:  !!(sess.server_staff_id),
           items: [],
         };
       }
@@ -998,7 +1072,9 @@ body {
 
       card.className = 'ticket';
       card.dataset.sessionId = ticket.session_id;
-      card.setAttribute('aria-label', 'Ticket for ' + ticket.table_label);
+      var channelLabels = { dine_in: 'Dine-in', takeout: 'Takeout', bar: 'Bar', delivery: 'Delivery' };
+      var channelDesc = (channelLabels[ticket.order_type] || ticket.order_type || 'Order') + ', ' + ticket.table_label;
+      card.setAttribute('aria-label', 'Ticket: ' + channelDesc);
 
       /* Age coloring */
       var sentAt = ticketSentAt(ticket.items);
@@ -1030,12 +1106,43 @@ body {
     renderAllDay(computeAllDay(ticketList));
   }
 
+  /* ---- Build channel chip HTML ---- */
+  function buildChannelChipHTML(ticket) {
+    var type  = ticket.order_type || 'dine_in';
+    var icons = { dine_in: '🍽', takeout: '🥡', bar: '🍸', delivery: '🛵' };
+    var labels = { dine_in: 'Dine-in', takeout: 'Takeout', bar: 'Bar', delivery: 'Delivery' };
+    var icon  = icons[type]  || '📋';
+    var label = labels[type] || esc(type);
+
+    /* Build the primary channel label: type + table/tab context */
+    var contextPart = '';
+    if (type === 'dine_in' && ticket.table_code) {
+      contextPart = ' · Table ' + esc(ticket.table_code);
+    } else if (type === 'bar' && ticket.tab_name) {
+      contextPart = ' · ' + esc(ticket.tab_name);
+    } else if (type === 'takeout' && ticket.tab_name) {
+      contextPart = ' · ' + esc(ticket.tab_name);
+    }
+
+    var chipHTML = '<span class="ticket__channel" data-channel="' + esc(type) + '" aria-label="Order type: ' + label + contextPart + '">'
+      + icon + ' ' + label + contextPart
+      + '</span>';
+
+    /* QR / self-service badge: shown when no server is attached to the session */
+    var qrHTML = '';
+    if (!ticket.has_server) {
+      qrHTML = '<span class="ticket__qr-chip" aria-label="Self-service QR order">QR</span>';
+    }
+
+    return '<div class="ticket__channel-row">' + chipHTML + qrHTML + '</div>';
+  }
+
   /* ---- Build HTML for a ticket card ---- */
   function buildTicketHTML(ticket, sentAt) {
     var elapsed = sentAt ? formatElapsed(sentAt) : '--';
     var guestTxt = ticket.guest_count > 0 ? ticket.guest_count + ' guest' + (ticket.guest_count > 1 ? 's' : '') : '';
-    var metaParts = [orderTypeLabel(ticket.order_type)];
-    if (ticket.tab_name) metaParts.push(ticket.tab_name);
+    /* meta line: guests only (channel info is now in the chip row) */
+    var metaParts = [];
     if (guestTxt) metaParts.push(guestTxt);
 
     /* Group items by course */
@@ -1075,8 +1182,9 @@ body {
     return [
       '<header class="ticket__header">',
         '<div class="ticket__header-left">',
+          buildChannelChipHTML(ticket),
           '<div class="ticket__table">' + esc(ticket.table_label) + '</div>',
-          '<div class="ticket__meta">' + esc(metaParts.join(' · ')) + '</div>',
+          metaParts.length ? '<div class="ticket__meta">' + esc(metaParts.join(' · ')) + '</div>' : '',
         '</div>',
         '<div class="ticket__header-right">',
           '<div class="ticket__timer" data-sent-at="' + esc(sentAt || '') + '" aria-label="Elapsed time">' + esc(elapsed) + '</div>',

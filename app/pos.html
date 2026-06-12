@@ -1284,6 +1284,95 @@ input  { font-family: inherit; }
 #btn-void-cancel:hover { background: rgba(255,255,255,0.09); }
 #btn-void-cancel:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
 
+/* Item-note and edit-note modals share void-card styles;
+   add specific positioning identical to #void-modal */
+#item-note-modal,
+#edit-note-modal {
+  position: fixed; inset: 0;
+  z-index: 550;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+#item-note-modal.open,
+#edit-note-modal.open { display: flex; }
+
+/* Style confirm/skip buttons inside note modals */
+#btn-item-note-confirm,
+#btn-edit-note-confirm {
+  flex: 1; min-height: 44px; border-radius: 10px;
+  background: rgba(194,112,61,0.18);
+  border: 1.5px solid rgba(194,112,61,0.45);
+  color: #e8905d; font-size: 14px; font-weight: 700;
+  transition: background 150ms;
+}
+#btn-item-note-confirm:hover,
+#btn-edit-note-confirm:hover { background: rgba(194,112,61,0.28); }
+#btn-item-note-confirm:focus-visible,
+#btn-edit-note-confirm:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+#btn-item-note-skip,
+#btn-edit-note-cancel {
+  min-height: 44px; padding: 0 20px; border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 14px; font-weight: 600;
+}
+#btn-item-note-skip:hover,
+#btn-edit-note-cancel:hover { background: rgba(255,255,255,0.09); }
+#btn-item-note-skip:focus-visible,
+#btn-edit-note-cancel:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
+/* Ticket item note line */
+.ti-note {
+  font-size: 11px;
+  color: #f0b51d;
+  font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding-left: 2px;
+  margin-top: 1px;
+}
+
+/* Note affordance button (pencil icon / add note) */
+.ti-note-btn {
+  flex-shrink: 0;
+  min-width: 28px; min-height: 28px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.4);
+  font-size: 13px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 100ms, color 100ms;
+  cursor: pointer;
+}
+.ti-note-btn:hover { background: rgba(240,181,29,0.14); color: #f0b51d; }
+.ti-note-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 1px; }
+.ti-note-btn.has-note { color: #f0b51d; border-color: rgba(240,181,29,0.3); }
+
+/* Modifier modal special-instructions area */
+.mod-notes-wrap {
+  padding: 12px 20px 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.mod-notes-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+#mod-notes-input {
+  width: 100%; min-height: 40px; padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0eff2; font-size: 13px;
+  outline: none; resize: none; font-family: inherit;
+}
+#mod-notes-input::placeholder { color: rgba(255,255,255,0.3); }
+#mod-notes-input:focus { border-color: rgba(240,181,29,0.4); }
+
 /* ============================================================
    GLOBAL UTILITIES
    ============================================================ */
@@ -1474,7 +1563,9 @@ input  { font-family: inherit; }
 
       <div id="ticket-totals" aria-live="polite">
         <div class="totals-row"><span>Subtotal</span><span id="tot-subtotal">$0.00</span></div>
-        <div class="totals-row"><span>Tax &amp; charges</span><span id="tot-charges">$0.00</span></div>
+        <div class="totals-row hidden" id="tot-discounts-row"><span id="tot-discounts-label">Discounts</span><span id="tot-discounts">$0.00</span></div>
+        <div class="totals-row hidden" id="tot-tax-row"><span id="tot-tax-label">Tax</span><span id="tot-tax">$0.00</span></div>
+        <div class="totals-row hidden" id="tot-service-row"><span id="tot-service-label">Service charge</span><span id="tot-service">$0.00</span></div>
         <div class="totals-row total"><span>Total</span><span id="tot-total">$0.00</span></div>
         <div class="totals-row remaining hidden" id="tot-remaining-row"><span>Remaining</span><span id="tot-remaining">$0.00</span></div>
       </div>
@@ -1546,7 +1637,9 @@ input  { font-family: inherit; }
           <div class="pay-amount-total" id="pay-charge-total">$0.00</div>
           <div class="pay-amount-rows">
             <div class="pay-amount-row"><span>Subtotal</span><span id="pay-sub">$0.00</span></div>
-            <div class="pay-amount-row"><span>Tax &amp; charges</span><span id="pay-charges">$0.00</span></div>
+            <div class="pay-amount-row hidden" id="pay-discounts-row"><span id="pay-discounts-label">Discounts</span><span id="pay-discounts">$0.00</span></div>
+            <div class="pay-amount-row hidden" id="pay-tax-row"><span id="pay-tax-label">Tax</span><span id="pay-tax">$0.00</span></div>
+            <div class="pay-amount-row hidden" id="pay-service-row"><span id="pay-service-label">Service charge</span><span id="pay-service">$0.00</span></div>
             <div class="pay-amount-row tip-row" id="pay-tip-row"><span>Tip</span><span id="pay-tip">$0.00</span></div>
             <div class="pay-amount-row charge-row"><span>Total to charge</span><span id="pay-charge-row">$0.00</span></div>
           </div>
@@ -1684,6 +1777,10 @@ input  { font-family: inherit; }
       <button class="modifier-close" id="btn-mod-close" type="button" aria-label="Close modifier picker">✕</button>
     </div>
     <div class="modifier-body" id="mod-groups-body"></div>
+    <div class="mod-notes-wrap">
+      <div class="mod-notes-label">Special instructions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(255,255,255,0.25);font-size:10px;">(optional)</span></div>
+      <textarea id="mod-notes-input" rows="2" placeholder="e.g. no onion, well done, allergy: nuts…" aria-label="Special instructions for this item"></textarea>
+    </div>
     <p class="mod-validation-msg" id="mod-validation" role="alert" aria-live="assertive"></p>
     <div class="modifier-footer">
       <div id="modifier-seat-wrap">
@@ -1729,6 +1826,34 @@ input  { font-family: inherit; }
     <h2 id="disc-title">Apply Discount</h2>
     <div id="discount-options-list" role="list" aria-label="Available discounts"></div>
     <button class="discount-cancel" id="btn-discount-cancel" type="button" aria-label="Cancel discount">Cancel</button>
+  </div>
+</div>
+
+<!-- Item note modal (quick-add note for items without modifiers) -->
+<div id="item-note-modal" role="dialog" aria-modal="true" aria-labelledby="item-note-title">
+  <div class="void-card">
+    <h2 id="item-note-title">Special Instructions</h2>
+    <p id="item-note-item-name" style="font-size:13px;color:rgba(255,255,255,0.5);"></p>
+    <label for="item-note-input" class="sr-only">Special instructions</label>
+    <textarea id="item-note-input" rows="2" placeholder="e.g. no onion, well done, allergy: nuts…" aria-label="Special instructions"></textarea>
+    <div class="void-actions">
+      <button id="btn-item-note-confirm" type="button" aria-label="Add item to ticket">Add to ticket</button>
+      <button id="btn-item-note-skip"    type="button" aria-label="Skip note and add to ticket">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit note modal (edit note on an existing ticket line) -->
+<div id="edit-note-modal" role="dialog" aria-modal="true" aria-labelledby="edit-note-title">
+  <div class="void-card">
+    <h2 id="edit-note-title">Edit Note</h2>
+    <p id="edit-note-item-name" style="font-size:13px;color:rgba(255,255,255,0.5);"></p>
+    <label for="edit-note-input" class="sr-only">Note</label>
+    <textarea id="edit-note-input" rows="2" placeholder="e.g. no onion, well done, allergy: nuts…" aria-label="Item note"></textarea>
+    <div class="void-actions">
+      <button id="btn-edit-note-confirm" type="button" aria-label="Save note">Save Note</button>
+      <button id="btn-edit-note-cancel"  type="button" aria-label="Cancel">Cancel</button>
+    </div>
   </div>
 </div>
 
