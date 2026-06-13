@@ -868,9 +868,10 @@
 
         var openSess = safeNum(x.open_sessions) != null ? String(Math.round(x.open_sessions)) : '0';
 
-        // sales_today — handle both object and flat number
+        // sales_today — NET of tips (tips are a liability, not revenue; they get
+        // their own tile). Falls back to total/flat for older RPC shapes.
         var salesObj  = x.sales_today || {};
-        var salesCents = safeNum(salesObj.total_cents != null ? salesObj.total_cents : salesObj.net_cents != null ? salesObj.net_cents : x.sales_today);
+        var salesCents = safeNum(salesObj.net_cents != null ? salesObj.net_cents : salesObj.total_cents != null ? salesObj.total_cents : x.sales_today);
         var salesAmt  = salesCents != null ? money(salesCents) : '$0.00';
 
         // tips — from sales_today.tips_cents or x.tips
@@ -889,7 +890,7 @@
 
         kpiEl.innerHTML = [
           posrKpi('Open Sessions', openSess, 'Active tables/tabs right now', ''),
-          posrKpi('Sales Today',   salesAmt, 'Gross paid-session revenue', 'copper'),
+          posrKpi('Sales Today',   salesAmt, 'Revenue, net of tips', 'copper'),
           posrKpi('Cash Tender',   cashAmt,  'Cash collected today', ''),
           posrKpi('Card Tender',   cardAmt,  'Card collected today', ''),
           posrKpi('Voids',         voids,    'Voided items today', ''),

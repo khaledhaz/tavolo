@@ -143,8 +143,9 @@
         var quotedWait = res._quoted_wait || 0;
         var addedAt = utils.formatDate(res.created_at, tz, { dateStyle: undefined, timeStyle: 'short' });
 
-        /* compute actual wait so far in minutes */
-        var waitedMin = Math.floor((Date.now() - new Date(res.created_at).getTime()) / 60000);
+        /* compute actual wait so far in minutes — clamp ≥0 (client/server
+           clock skew made fresh entries read "Waited: -1 min") */
+        var waitedMin = Math.max(0, Math.floor((Date.now() - new Date(res.created_at).getTime()) / 60000));
 
         return '<div class="wl-item" role="listitem" data-resid="' + esc(res.id) + '">' +
           '<div class="wl-item-top">' +
