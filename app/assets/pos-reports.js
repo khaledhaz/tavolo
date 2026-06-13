@@ -775,33 +775,48 @@
         var z = res.data;
         var lines = [];
 
-        // Sales
-        lines.push({ label: 'Gross Sales', val: money(z.sales || 0) });
-        lines.push({ label: 'Voids', val: money(z.voids || 0), sub: true });
+        /* RPC shape (verified live): sales:{net_cents,total_cents},
+           voids:{count,amount_cents}, tenders:{cash,card}, tips_cents,
+           declared_tips_cents, cash:{opening_cents,closing_cents,
+           expected_cents,over_short_cents}. Tolerate flat numbers too. */
+        var num = function (v) { var n = Number(v); return isFinite(n) ? n : 0; };
+        var salesTotal = z.sales && typeof z.sales === 'object' ? num(z.sales.total_cents) : num(z.sales);
+        var salesNet   = z.sales && typeof z.sales === 'object' ? num(z.sales.net_cents)   : salesTotal;
+        var voidsAmt   = z.voids && typeof z.voids === 'object' ? num(z.voids.amount_cents) : num(z.voids);
+        var voidsCnt   = z.voids && typeof z.voids === 'object' ? num(z.voids.count) : 0;
+        var tipsCents  = z.tips_cents != null ? num(z.tips_cents) : num(z.tips);
 
-        // Tenders
+        lines.push({ label: 'Gross Sales', val: money(salesTotal) });
+        lines.push({ label: 'Voids' + (voidsCnt ? ' (' + voidsCnt + ')' : ''), val: money(voidsAmt), sub: true });
+
         if (z.tenders) {
           lines.push({ sep: true });
-          lines.push({ label: 'Cash Collected', val: money(z.tenders.cash || 0) });
-          lines.push({ label: 'Card Collected', val: money(z.tenders.card || 0) });
+          lines.push({ label: 'Cash Collected', val: money(num(z.tenders.cash)) });
+          lines.push({ label: 'Card Collected', val: money(num(z.tenders.card)) });
         }
 
-        // Tips
         lines.push({ sep: true });
-        lines.push({ label: 'Tips', val: money(z.tips || 0) });
+        lines.push({ label: 'Tips', val: money(tipsCents) });
+        if (z.declared_tips_cents != null && num(z.declared_tips_cents) > 0) {
+          lines.push({ label: 'Declared cash tips', val: money(num(z.declared_tips_cents)), sub: true });
+        }
 
-        // Cash management
-        if (z.expected_cash != null) {
+        var cashObj = z.cash && typeof z.cash === 'object' ? z.cash : null;
+        var expected = cashObj ? cashObj.expected_cents : z.expected_cash;
+        if (expected != null) {
           lines.push({ sep: true });
-          lines.push({ label: 'Expected Cash', val: money(z.expected_cash) });
-          var os = z.over_short || 0;
-          lines.push({ label: 'Over / Short', val: (os >= 0 ? '+' : '') + money(os),
+          if (cashObj) {
+            lines.push({ label: 'Opening Float', val: money(num(cashObj.opening_cents)), sub: true });
+            lines.push({ label: 'Counted Close', val: money(num(cashObj.closing_cents)), sub: true });
+          }
+          lines.push({ label: 'Expected Cash', val: money(num(expected)) });
+          var os = num(cashObj ? cashObj.over_short_cents : z.over_short);
+          lines.push({ label: 'Over / Short', val: (os >= 0 ? '+' : '−') + money(Math.abs(os)),
             cls: os >= 0 ? 'pos' : 'neg' });
         }
 
-        // Net total
         lines.push({ sep: true });
-        lines.push({ label: 'Net Sales', val: money((z.sales || 0) - (z.voids || 0)), total: true });
+        lines.push({ label: 'Net Sales', val: money(salesNet), total: true });
 
         body.innerHTML = lines.map(function (l) {
           if (l.sep) return '<div class="posr-z-divider"></div>';
@@ -1390,31 +1405,63 @@
       });
   }
 
-  /* End-of-night from the back office: count the drawer, close the shift, get the Z. */
+  /* End-of-night from the back office: count the drawer, close the shift, get
+     the Z. In-page dialog — native prompt/alert block the JS thread and hang
+     the page under automation/kiosk shells (the M3 lesson). */
   function closeShiftFlow(shiftId, staffName, startedAt, sectionEl, rest) {
-    var cashStr = window.prompt('Close ' + (staffName || 'this') + " shift\n\nCounted cash in drawer ($):", '');
-    if (cashStr === null) return; // cancelled
-    var closingCash = Math.round(parseFloat(cashStr || '0') * 100);
-    if (!isFinite(closingCash) || closingCash < 0) { window.alert('Enter a valid cash amount.'); return; }
-    var tipsStr = window.prompt('Declared cash tips ($) — optional:', '0');
-    if (tipsStr === null) return;
-    var declaredTips = Math.round(parseFloat(tipsStr || '0') * 100);
-    if (!isFinite(declaredTips) || declaredTips < 0) declaredTips = 0;
-
-    window.PLAT.client.rpc('pos_close_shift', {
-      p_shift:         shiftId,
-      p_closing_cash:  closingCash,
-      p_declared_tips: declaredTips,
-    }).then(function (r) {
-      if (r.error) {
-        window.alert('Could not close the shift: ' + (r.error.message || 'unknown error'));
-        return;
-      }
-      loadShifts(sectionEl, rest);                       // row flips to Closed
-      openZModal(shiftId, staffName, startedAt);          // straight into the Z-report
-    }).catch(function (err) {
-      console.error('[pos-reports] close shift error', err);
-      window.alert('Connection error — the shift was not closed.');
+    var old = document.getElementById('posr-close-shift-overlay');
+    if (old) old.remove();
+    var overlay = document.createElement('div');
+    overlay.id = 'posr-close-shift-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);backdrop-filter:blur(3px);padding:16px;';
+    overlay.innerHTML =
+      '<div style="background:var(--color-surface,#fff);border:1px solid var(--color-border,rgba(0,0,0,0.1));border-radius:16px;width:100%;max-width:360px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 16px 50px rgba(0,0,0,0.35);">'
+      + '<h3 style="font-size:16px;font-weight:800;">Close ' + esc(staffName || 'this') + '’s shift</h3>'
+      + '<label style="font-size:12.5px;font-weight:600;">Counted cash in drawer ($)'
+      + '<input id="posr-cs-cash" type="number" min="0" step="0.01" style="width:100%;margin-top:6px;min-height:42px;padding:8px 12px;border-radius:9px;border:1px solid var(--color-border,rgba(0,0,0,0.15));font-size:14px;" /></label>'
+      + '<label style="font-size:12.5px;font-weight:600;">Declared cash tips ($) — optional'
+      + '<input id="posr-cs-tips" type="number" min="0" step="0.01" value="0" style="width:100%;margin-top:6px;min-height:42px;padding:8px 12px;border-radius:9px;border:1px solid var(--color-border,rgba(0,0,0,0.15));font-size:14px;" /></label>'
+      + '<p id="posr-cs-err" role="alert" style="font-size:12px;color:#e53e3e;min-height:14px;"></p>'
+      + '<div style="display:flex;gap:10px;">'
+      + '<button id="posr-cs-confirm" type="button" style="flex:1;min-height:42px;border-radius:9px;background:rgba(194,112,61,0.15);border:1.5px solid rgba(194,112,61,0.5);color:#c2703d;font-weight:700;cursor:pointer;">Close shift &amp; run Z</button>'
+      + '<button id="posr-cs-cancel" type="button" style="min-height:42px;padding:0 16px;border-radius:9px;background:transparent;border:1px solid var(--color-border,rgba(0,0,0,0.15));cursor:pointer;">Cancel</button>'
+      + '</div></div>';
+    document.body.appendChild(overlay);
+    var cashInp = overlay.querySelector('#posr-cs-cash');
+    setTimeout(function () { cashInp.focus(); }, 40);
+    function dismiss() { overlay.remove(); document.removeEventListener('keydown', onKey); }
+    function onKey(e) { if (e.key === 'Escape') dismiss(); }
+    document.addEventListener('keydown', onKey);
+    overlay.querySelector('#posr-cs-cancel').addEventListener('click', dismiss);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) dismiss(); });
+    overlay.querySelector('#posr-cs-confirm').addEventListener('click', function () {
+      var errEl = overlay.querySelector('#posr-cs-err');
+      var closingCash = Math.round(parseFloat(cashInp.value || '') * 100);
+      if (!isFinite(closingCash) || closingCash < 0) { errEl.textContent = 'Enter the counted cash amount.'; return; }
+      var declaredTips = Math.round(parseFloat(overlay.querySelector('#posr-cs-tips').value || '0') * 100);
+      if (!isFinite(declaredTips) || declaredTips < 0) declaredTips = 0;
+      var btn = overlay.querySelector('#posr-cs-confirm');
+      btn.disabled = true; btn.textContent = 'Closing…';
+      window.PLAT.client.rpc('pos_close_shift', {
+        p_shift:         shiftId,
+        p_closing_cash:  closingCash,
+        p_declared_tips: declaredTips,
+      }).then(function (r) {
+        if (r.error) {
+          errEl.textContent = 'Could not close the shift: ' + (r.error.message || 'unknown error');
+          btn.disabled = false; btn.textContent = 'Close shift & run Z';
+          return;
+        }
+        dismiss();
+        loadShifts(sectionEl, rest);                      // row flips to Closed
+        openZModal(shiftId, staffName, startedAt);         // straight into the Z-report
+      }).catch(function (err) {
+        console.error('[pos-reports] close shift error', err);
+        errEl.textContent = 'Connection error — the shift was not closed.';
+        btn.disabled = false; btn.textContent = 'Close shift & run Z';
+      });
     });
   }
 
