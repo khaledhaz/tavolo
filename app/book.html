@@ -1409,10 +1409,12 @@ async function _submitBookingInner() {
 
     if (result.ok) {
       state.booking = result;
-      /* Fire-and-forget confirmation email. Inert until the owner sets the
-         RESEND_API_KEY secret on the booking-confirmation function; never
-         blocks or breaks the confirmation screen. */
-      if (email && result.reservation_id) {
+      /* ── Confirmation email: OFF by design. To turn on later, flip this ONE
+         flag to true and set RESEND_API_KEY on the booking-confirmation edge
+         function (see outputs/tavolo-pos/backend/functions/booking-confirmation).
+         Nothing else to change — the call below is already complete. ── */
+      var BOOKING_EMAIL_ENABLED = false;
+      if (BOOKING_EMAIL_ENABLED && email && result.reservation_id) {
         try {
           sb.functions.invoke('booking-confirmation', { body: { reservation_id: result.reservation_id } })
             .catch(function () {});
