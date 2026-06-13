@@ -2258,6 +2258,12 @@ function openCheckoutSheet(){
 // ---- payment simulation ----
 async function doPayment(method){
   var rest = state.restaurant, session = state.session;
+  /* No live session (e.g. nothing ordered yet, or the table just turned):
+     fail soft with guidance instead of a null-deref mid-"processing". */
+  if(!session || !session.id || !state.items.length){
+    MESA.toast('Nothing to pay yet — add items to your order first','err');
+    return false;
+  }
   var cur = rest?rest.currency:'GBP';
   var math = MESA.billMath(state.items, rest?rest.service_charge_pct:0, rest?rest.tax_pct:0);
   var svcCents = 0;
