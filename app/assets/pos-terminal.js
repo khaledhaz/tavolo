@@ -55,6 +55,9 @@
     payTipCents:  0,
     payMethod:    'cash',
     pendingDiscounts: [],  /* m2: check-level discounts held as {id,kind,value,…} until pay */
+    /* guest receipt */
+    lastClosedSession: null, /* {id,label} of the most recently closed check (reprint) */
+    receiptReturnFocus: null, /* element to refocus when the receipt modal closes */
   };
 
   /* ---- PLAT helpers ---- */
@@ -262,6 +265,7 @@
      HOME SCREEN
      ============================================================ */
   function loadHomeData() {
+    updateLastReceiptBtn();
     var grid = el('table-grid');
     grid.innerHTML = '<div class="home-loading" role="status"><span class="spinner" aria-hidden="true"></span></div>';
 
@@ -1535,6 +1539,9 @@
     showScreen('screen-payment');
     var bill = state.payBill;
 
+    /* Receipt is meaningful once something has been paid on this check */
+    el('btn-pay-receipt').disabled = !(bill && bill.paid_cents > 0);
+
     /* Reset state (payPaidItemIds intentionally survives — it tracks split
        coverage across multiple payments on the same check) */
     state.paySplitMode     = 'whole';
@@ -1941,7 +1948,9 @@
         /* Refresh bill to check if fully paid */
         sb.rpc('pos_session_bill', { p_session: state.sessionId }).then(function(billR) {
           if (billR.data && (billR.data.remaining_cents <= 0 || billR.data.remaining_cents == null)) {
-            /* Fully paid — go home */
+            /* Fully paid — remember the check for guest-receipt reprint, then go home */
+            state.lastClosedSession = { id: state.sessionId, label: payerLabel };
+            toast('Receipt available — "Last receipt" on the floor', 'success');
             state.sessionId   = null;
             state.orderId     = null;
             state.bill        = null;
@@ -2100,7 +2109,9 @@
   el('btn-x-report').addEventListener('click', loadXReport);
 
   function loadXReport() {
-    sb.rpc('pos_x_report', { p_restaurant: RESTAURANT_ID })
+    /* local-midnight window — same "today" as the operator Reports page */
+    var d0 = new Date(); var since = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 0, 0, 0, 0).toISOString();
+    sb.rpc('pos_x_report', { p_restaurant: RESTAURANT_ID, p_since: since })
       .then(function(r) {
         if (r.error) { console.error('[POS] x-report error', r.error); return; }
         var d = r.data;
@@ -2123,6 +2134,154 @@
         console.error('[POS] x-report exception', err);
       });
   }
+
+  /* ============================================================
+     GUEST RECEIPT (#receipt-modal)
+     Renders from a FRESH pos_session_bill + succeeded mesa_payments
+     fetch so a reprint always reflects what was actually charged.
+     ============================================================ */
+  function methodLabel(m) {
+    if (m === 'cash') return 'Cash';
+    if (m === 'card') return 'Card';
+    return m ? m.charAt(0).toUpperCase() + m.slice(1) : 'Payment';
+  }
+
+  function openReceipt(sessionId, label) {
+    if (!sessionId) { toast('No receipt available', 'error'); return; }
+    state.receiptReturnFocus = document.activeElement;
+    el('receipt-paper').innerHTML = '<div class="receipt-loading" role="status" aria-label="Loading receipt"><span class="spinner" aria-hidden="true"></span></div>';
+    el('receipt-modal').classList.add('open');
+    el('btn-receipt-close').focus();
+
+    Promise.all([
+      sb.rpc('pos_session_bill', { p_session: sessionId }),
+      sb.from('mesa_payments')
+        .select('method,amount_cents,tip_cents,change_cents')
+        .eq('session_id', sessionId)
+        .eq('status', 'succeeded'),
+    ]).then(function(results) {
+      var billR = results[0];
+      var payR  = results[1];
+      if (billR.error || !billR.data) throw (billR.error || new Error('bill unavailable'));
+      /* payments are best-effort — a receipt without the tender lines still helps */
+      if (payR.error) console.error('[POS] receipt payments error', payR.error);
+      renderReceipt(billR.data, (payR.data || []), label);
+    }).catch(function(err) {
+      console.error('[POS] receipt load error', err);
+      closeReceiptModal();
+      toast('Could not load receipt — try again', 'error');
+    });
+  }
+
+  function renderReceipt(bill, payments, label) {
+    var now  = new Date();
+    var html = [];
+
+    /* Header */
+    html.push('<div class="rcpt-name">The Copper Table</div>');
+    html.push('<div class="rcpt-meta">' + localEsc(
+      now.toLocaleDateString([], {year:'numeric', month:'short', day:'numeric'}) +
+      ' · ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+    ) + '</div>');
+    var who = [];
+    if (label) who.push(label);
+    if (state.staff && state.staff.name) who.push('Server: ' + state.staff.name);
+    if (who.length) html.push('<div class="rcpt-meta">' + localEsc(who.join(' · ')) + '</div>');
+    html.push('<div class="rcpt-rule" aria-hidden="true"></div>');
+
+    /* Line items (voided lines never appear on a guest receipt) */
+    var items = (bill.items || []).filter(function(it) { return !it.voided; });
+    if (!items.length) {
+      html.push('<div class="rcpt-meta">No items on this check</div>');
+    }
+    items.forEach(function(it) {
+      html.push('<div class="rcpt-line"><span>' + localEsc(it.qty + '× ' + it.name) + '</span><span>' + localMoney(it.line_total_cents) + '</span></div>');
+      (it.modifiers || []).forEach(function(m) {
+        html.push('<div class="rcpt-mod">+ ' + localEsc(m.name) + '</div>');
+      });
+    });
+
+    /* Totals */
+    html.push('<div class="rcpt-rule" aria-hidden="true"></div>');
+    html.push('<div class="rcpt-line"><span>Subtotal</span><span>' + localMoney(bill.subtotal_cents || 0) + '</span></div>');
+    if (bill.discounts_cents > 0) {
+      html.push('<div class="rcpt-line"><span>Discounts</span><span>−' + localMoney(bill.discounts_cents) + '</span></div>');
+    }
+    if (bill.tax_cents > 0) {
+      html.push('<div class="rcpt-line"><span>' + localEsc(bill.tax_pct != null ? 'Tax (' + bill.tax_pct + '%)' : 'Tax') + '</span><span>' + localMoney(bill.tax_cents) + '</span></div>');
+    }
+    if (bill.service_charge_cents > 0) {
+      html.push('<div class="rcpt-line"><span>' + localEsc(bill.service_pct != null ? 'Service charge (' + bill.service_pct + '%)' : 'Service charge') + '</span><span>' + localMoney(bill.service_charge_cents) + '</span></div>');
+    }
+    html.push('<div class="rcpt-line rcpt-total"><span>Total</span><span>' + localMoney(bill.total_cents || 0) + '</span></div>');
+
+    /* Payments */
+    if (payments.length) {
+      html.push('<div class="rcpt-rule" aria-hidden="true"></div>');
+      var tipTotal = 0;
+      payments.forEach(function(p) {
+        html.push('<div class="rcpt-line"><span>' + localEsc(methodLabel(p.method)) + '</span><span>' + localMoney(p.amount_cents || 0) + '</span></div>');
+        if (p.tip_cents > 0) tipTotal += p.tip_cents;
+        if (p.method === 'cash' && p.change_cents > 0) {
+          html.push('<div class="rcpt-line"><span>Change</span><span>' + localMoney(p.change_cents) + '</span></div>');
+        }
+      });
+      if (tipTotal > 0) {
+        html.push('<div class="rcpt-line"><span>Tip</span><span>' + localMoney(tipTotal) + '</span></div>');
+      }
+    }
+    var due = (bill.total_cents || 0) - (bill.paid_cents || 0);
+    if (due > 0) {
+      html.push('<div class="rcpt-line rcpt-total"><span>Balance due</span><span>' + localMoney(due) + '</span></div>');
+    }
+
+    html.push('<div class="rcpt-rule" aria-hidden="true"></div>');
+    html.push('<div class="rcpt-foot">Thank you!</div>');
+
+    el('receipt-paper').innerHTML = html.join('');
+  }
+
+  function closeReceiptModal() {
+    el('receipt-modal').classList.remove('open');
+    var f = state.receiptReturnFocus;
+    state.receiptReturnFocus = null;
+    if (f && typeof f.focus === 'function' && document.contains(f)) f.focus();
+  }
+
+  el('btn-receipt-close').addEventListener('click', closeReceiptModal);
+  el('btn-receipt-done').addEventListener('click', closeReceiptModal);
+  el('receipt-modal').addEventListener('click', function(e) {
+    if (e.target === el('receipt-modal')) closeReceiptModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && el('receipt-modal').classList.contains('open')) closeReceiptModal();
+  });
+  el('btn-receipt-print').addEventListener('click', function() {
+    /* user-tapped Print is the one sanctioned native-dialog path */
+    window.print();
+  });
+
+  /* Floor header — reprint the most recently closed check */
+  el('btn-last-receipt').addEventListener('click', function() {
+    if (!state.lastClosedSession) { toast('No closed check yet', 'error'); return; }
+    openReceipt(state.lastClosedSession.id, state.lastClosedSession.label);
+  });
+
+  function updateLastReceiptBtn() {
+    var btn = el('btn-last-receipt');
+    if (!btn) return;
+    btn.classList.toggle('hidden', !state.lastClosedSession);
+    if (state.lastClosedSession) {
+      btn.setAttribute('aria-label', 'Show receipt for ' + state.lastClosedSession.label + ' (last closed check)');
+    }
+  }
+
+  /* Payment screen — receipt for the CURRENT session (enabled once paid_cents > 0) */
+  el('btn-pay-receipt').addEventListener('click', function() {
+    if (!state.sessionId) { toast('No active session', 'error'); return; }
+    var label = state.tabName || state.tableLabel || (state.orderType === 'takeout' ? 'Takeout' : 'Guest');
+    openReceipt(state.sessionId, label);
+  });
 
   /* ============================================================
      BOOT

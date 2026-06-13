@@ -101,6 +101,20 @@
   opacity: 0.8;\n\
 }\n\
 \n\
+/* CSV export (for the accountant) */\n\
+.posr-export-btn {\n\
+  display: inline-flex; align-items: center; gap: 6px;\n\
+  min-height: 36px; padding: 0 14px; margin-left: 10px;\n\
+  border-radius: 9px; cursor: pointer;\n\
+  background: rgba(194,112,61,0.12);\n\
+  border: 1px solid rgba(194,112,61,0.4);\n\
+  color: #c2703d; font-size: 12.5px; font-weight: 700;\n\
+  transition: background 150ms;\n\
+}\n\
+.posr-export-btn:hover { background: rgba(194,112,61,0.2); }\n\
+.posr-export-btn:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }\n\
+.posr-export-btn:disabled { opacity: 0.5; cursor: default; }\n\
+\n\
 /* X-Report "live" indicator */\n\
 .posr-live-dot {\n\
   display: inline-block;\n\
@@ -1329,6 +1343,53 @@
       });
   }
 
+  /* CSV export of the selected range — payments ledger + summary, for the
+     accountant. Client-side: query → CSV string → Blob download. */
+  function exportCsv(rest) {
+    var btn = document.getElementById('posr-export-csv');
+    if (btn) { btn.disabled = true; btn.textContent = 'Exporting…'; }
+    var since = rangeISO(_state.range);
+    var sb = window.PLAT.client;
+    sb.from('mesa_payments')
+      .select('created_at,method,amount_cents,tip_cents,change_cents,payer_label,session_id')
+      .eq('restaurant_id', rest.id).eq('status', 'succeeded')
+      .gte('created_at', since).order('created_at', { ascending: true })
+      .then(function (r) {
+        if (r.error) throw r.error;
+        var rows = r.data || [];
+        var esc2 = function (v) { v = (v == null ? '' : String(v)); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+        var lines = ['date,time,method,amount,tip,change,payer,session_id'];
+        var totAmt = 0, totTip = 0;
+        rows.forEach(function (p) {
+          var d = new Date(p.created_at);
+          totAmt += p.amount_cents || 0; totTip += p.tip_cents || 0;
+          lines.push([
+            d.toLocaleDateString(), d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            p.method, ((p.amount_cents || 0) / 100).toFixed(2), ((p.tip_cents || 0) / 100).toFixed(2),
+            p.change_cents != null ? (p.change_cents / 100).toFixed(2) : '',
+            esc2(p.payer_label), p.session_id,
+          ].join(','));
+        });
+        lines.push('');
+        lines.push('TOTAL,,,' + (totAmt / 100).toFixed(2) + ',' + (totTip / 100).toFixed(2) + ',,payments: ' + rows.length + ',range: ' + _state.range);
+        var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'tavolo-sales-' + _state.range + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      })
+      .catch(function (err) {
+        console.error('[pos-reports] export error', err);
+      })
+      .then(function () {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV';
+        }
+      });
+  }
+
   /* End-of-night from the back office: count the drawer, close the shift, get the Z. */
   function closeShiftFlow(shiftId, staffName, startedAt, sectionEl, rest) {
     var cashStr = window.prompt('Close ' + (staffName || 'this') + " shift\n\nCounted cash in drawer ($):", '');
@@ -1386,6 +1447,9 @@
       + '<div class="posr-seg" role="group" aria-label="Date range">'
       + segBtns
       + '</div>'
+      + '<button class="posr-export-btn" id="posr-export-csv" type="button" aria-label="Export the selected range as CSV">'
+      + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+      + ' Export CSV</button>'
       + '</div>'
 
       // X-REPORT — always live, always TODAY (the range selector below only
@@ -1556,6 +1620,8 @@
       _state.restaurant = rest;
       sectionEl.innerHTML = buildScaffold(_state.range);
       wireRangeBtns(sectionEl, rest);
+      var expBtn = sectionEl.querySelector('#posr-export-csv');
+      if (expBtn) expBtn.addEventListener('click', function () { exportCsv(rest); });
 
       var kpiEl = sectionEl.querySelector('#posr-xrpt-kpi');
       if (kpiEl) renderXReport(kpiEl, rest.id);
