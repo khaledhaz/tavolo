@@ -274,15 +274,32 @@ ul,ol{list-style:none}
   position:relative;overflow:hidden;
   background:var(--bg-deep);
 }
+/* Cinematic ambiance video behind the hero — the live venue in motion */
+.hero-video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;z-index:0;
+  /* slow ken-burns settle on first paint so even the still poster feels alive */
+  animation:heroVidIn 1.4s ease-out both;
+}
+@keyframes heroVidIn{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
+.hero-video-overlay{
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    linear-gradient(100deg,rgba(13,15,20,0.94) 0%,rgba(13,15,20,0.82) 40%,rgba(13,15,20,0.52) 72%,rgba(13,15,20,0.7) 100%),
+    linear-gradient(to top,var(--bg-deep) 1%,rgba(13,15,20,0.2) 26%,transparent 46%);
+}
 .hero::before{
   content:'';position:absolute;
   top:-10%;left:50%;transform:translateX(-50%);
   width:min(1000px,140vw);height:640px;
-  background:radial-gradient(ellipse 1000px 640px at 50% 0%,rgba(194,112,61,0.09),transparent 70%);
-  pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 1000px 640px at 50% 0%,rgba(194,112,61,0.16),transparent 70%);
+  pointer-events:none;z-index:1;mix-blend-mode:screen;
+}
+@media (prefers-reduced-motion: reduce){
+  .hero-video{animation:none}
 }
 .hero-content{
-  position:relative;z-index:1;
+  position:relative;z-index:2;
   display:grid;
   grid-template-columns:1fr 1.05fr;
   gap:clamp(36px,5vw,64px);
@@ -1558,6 +1575,12 @@ ul,ol{list-style:none}
      HERO — headline + live cycling product stage
      ===================================================== -->
 <section class="hero" aria-labelledby="hero-headline">
+  <video class="hero-video" autoplay muted loop playsinline preload="metadata"
+         poster="assets/video/hero-poster.jpg" aria-hidden="true" tabindex="-1">
+    <source src="assets/video/hero.webm" type="video/webm">
+    <source src="assets/video/hero.mp4" type="video/mp4">
+  </video>
+  <div class="hero-video-overlay" aria-hidden="true"></div>
   <div class="container">
     <div class="hero-content">
       <div class="hero-text">

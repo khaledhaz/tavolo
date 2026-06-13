@@ -10,6 +10,28 @@
    Pure class-toggling, no fetch, no framework.
    ============================================================= */
 (function () {
+  /* 0. Hero ambiance video — respect reduced-motion + save battery offscreen */
+  (function heroVideo() {
+    var v = document.querySelector('.hero-video');
+    if (!v) return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      try { v.removeAttribute('autoplay'); v.pause(); v.currentTime = 0; } catch (e) {}
+      return; /* poster frame stays — still cinematic, no motion */
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function(){}); }
+          else { try { v.pause(); } catch (e) {} }
+        });
+      }, { threshold: 0.05 });
+      io.observe(v);
+    }
+    var kick = function () { var p = v.play(); if (p && p.catch) p.catch(function(){}); };
+    if (v.readyState >= 2) kick(); else v.addEventListener('loadeddata', kick, { once: true });
+  })();
+
   'use strict';
 
   var REDUCED = window.matchMedia &&

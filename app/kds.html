@@ -294,6 +294,18 @@ body {
 .ticket[data-age="amber"] .ticket__timer { color: #f5c045; }
 .ticket[data-age="red"]   .ticket__timer { color: #f56565; }
 
+.ticket__print {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 7px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.55); cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.ticket__print:hover  { background: rgba(255,255,255,0.1); color: #fff; }
+.ticket__print:active { transform: scale(0.94); }
+.ticket__print:focus-visible { outline: 2px solid #63b3ed; outline-offset: 2px; }
+
 .ticket__guests {
   font-size: 12px;
   color: rgba(255,255,255,0.4);
@@ -716,6 +728,30 @@ body {
   .ticket[data-age="red"] { animation: none; }
   .ticket.ticket-new-flash { animation: none; }
   .kds-spinner { animation-duration: 2s; }
+}
+
+/* ---- Print one kitchen ticket as an 80mm chit (any/thermal printer) ---- */
+@media print {
+  body.kds-printing * { visibility: hidden !important; }
+  body.kds-printing .ticket.printing-this,
+  body.kds-printing .ticket.printing-this * { visibility: visible !important; }
+  body.kds-printing .ticket.printing-this {
+    position: fixed; left: 0; top: 0; width: 76mm; margin: 0; padding: 4mm;
+    background: #fff !important; color: #000 !important;
+    border: none !important; box-shadow: none !important; border-radius: 0 !important;
+    font-family: 'Courier New', ui-monospace, monospace;
+  }
+  body.kds-printing .ticket.printing-this * { color: #000 !important; background: transparent !important; }
+  body.kds-printing .ticket.printing-this .ticket__table { font-size: 18pt; font-weight: 800; }
+  body.kds-printing .ticket.printing-this .ticket__item-name { font-size: 13pt; font-weight: 700; }
+  body.kds-printing .ticket.printing-this .ticket__item-mods,
+  body.kds-printing .ticket.printing-this .ticket__item-notes { font-size: 11pt; }
+  body.kds-printing .ticket.printing-this .ticket__item-notes { font-weight: 700; text-transform: uppercase; }
+  body.kds-printing .ticket.printing-this .ticket__footer,
+  body.kds-printing .ticket.printing-this .ticket__print,
+  body.kds-printing .ticket.printing-this .ticket__item-status-dot { display: none !important; }
+  body.kds-printing .ticket.printing-this .ticket__bump-all { display: none !important; }
+  @page { margin: 0; }
 }
 </style>
 </head>
@@ -1197,7 +1233,9 @@ body {
         '</div>',
         '<div class="ticket__header-right">',
           '<div class="ticket__timer" data-sent-at="' + esc(sentAt || '') + '" aria-label="Elapsed time">' + esc(elapsed) + '</div>',
-          '<div class="ticket__guests" aria-hidden="true"></div>',
+          '<button class="ticket__print" type="button" data-action="print" aria-label="Print kitchen ticket for ' + esc(ticket.table_label) + '" title="Print ticket">',
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>',
+          '</button>',
         '</div>',
       '</header>',
       '<div class="ticket__body">',
@@ -1287,6 +1325,31 @@ body {
         }
       });
     });
+
+    /* Print kitchen ticket (works with any printer incl. 80mm thermal) */
+    var printBtn = card.querySelector('.ticket__print');
+    if (printBtn) {
+      var freshP = printBtn.cloneNode(true);
+      printBtn.parentNode.replaceChild(freshP, printBtn);
+      freshP.addEventListener('click', function(e) { e.stopPropagation(); printTicket(card); });
+    }
+  }
+
+  /* ---- Print one kitchen ticket ---- */
+  function printTicket(card) {
+    if (!card) return;
+    document.querySelectorAll('.ticket.printing-this').forEach(function(c){ c.classList.remove('printing-this'); });
+    card.classList.add('printing-this');
+    document.body.classList.add('kds-printing');
+    var cleanup = function() {
+      document.body.classList.remove('kds-printing');
+      card.classList.remove('printing-this');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    /* fallback cleanup if afterprint never fires */
+    setTimeout(cleanup, 8000);
+    window.print();
   }
 
   /* ---- Status progression ---- */
