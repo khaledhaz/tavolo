@@ -6,6 +6,19 @@
 <meta name="theme-color" content="#0d0f14">
 <meta name="description" content="Tavolo is the restaurant operating system: reservations, POS, kitchen display and QR pay-at-table in one platform. Watch it run live on this page.">
 <title>Tavolo — Run your whole floor from one screen.</title>
+<!-- Social cards -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tavolo">
+<meta property="og:title" content="Tavolo — Run your whole floor from one screen.">
+<meta property="og:description" content="Reservations, POS, kitchen display and QR pay-at-table — one platform, in motion. Watch it run live.">
+<meta property="og:url" content="https://khaledhaz.github.io/tavolo/">
+<meta property="og:image" content="https://khaledhaz.github.io/tavolo/assets/og-image.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tavolo — Run your whole floor from one screen.">
+<meta name="twitter:description" content="Reservations, POS, kitchen display and QR pay-at-table — one platform, in motion.">
+<meta name="twitter:image" content="https://khaledhaz.github.io/tavolo/assets/og-image.jpg">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2703d'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23fff'%3ET%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1366,18 +1379,44 @@ ul,ol{list-style:none}
    ============================================================ */
 .cta-section{
   padding:clamp(80px,10vw,128px) 0;
-  background:var(--bg-deep);
+  background:var(--bg-deep) url('assets/ambiance.jpg') center/cover no-repeat;
   text-align:center;
   position:relative;overflow:hidden;
 }
 .cta-section::before{
-  content:'';position:absolute;
-  top:50%;left:50%;transform:translate(-50%,-50%);
-  width:min(800px,120vw);height:400px;
-  background:radial-gradient(ellipse at center,rgba(194,112,61,0.1),transparent 70%);
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(rgba(10,12,16,0.82),rgba(10,12,16,0.74)),
+             radial-gradient(ellipse at center,rgba(194,112,61,0.12),transparent 70%);
   pointer-events:none;
 }
 .cta-inner{position:relative;z-index:1}
+
+/* ---- Real product screenshots ---- */
+.real-section{padding:clamp(72px,9vw,120px) 0;background:var(--bg-deep)}
+.real-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:18px;margin-top:44px;align-items:start}
+.real-col{display:grid;gap:18px}
+.real-card{
+  position:relative;border-radius:14px;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.09);
+  background:#0a0c10;
+  box-shadow:0 18px 50px rgba(0,0,0,0.45);
+}
+.real-card img{display:block;width:100%;height:100%;object-fit:cover;object-position:left top}
+.real-card-label{
+  position:absolute;left:12px;bottom:12px;z-index:2;
+  font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--text);background:rgba(10,12,16,0.78);border:1px solid rgba(255,255,255,0.12);
+  padding:6px 12px;border-radius:999px;backdrop-filter:blur(6px);
+}
+.real-card--wide{aspect-ratio:16/9}
+.real-card--phone{aspect-ratio:9/16;max-height:540px}
+.real-card--pay{aspect-ratio:16/10}
+.real-card--pay img{object-position:right top}
+@media (max-width:880px){
+  .real-grid{grid-template-columns:1fr}
+  .real-card--phone{max-width:300px;margin:0 auto;width:100%}
+}
+
 .cta-headline{
   font-family:var(--serif);
   font-size:clamp(40px,6vw,64px);
@@ -2154,6 +2193,35 @@ ul,ol{list-style:none}
 </section>
 
 <hr class="divider">
+
+<!-- =====================================================
+     THE REAL THING — actual product screenshots
+     ===================================================== -->
+<section class="section real-section" aria-labelledby="real-heading">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">No mockups</p>
+      <h2 class="section-headline" id="real-heading">This is the<br><em>actual product.</em></h2>
+      <p class="section-sub">Every panel animated above is real. Here are unretouched screenshots from the live demo restaurant — the same one you can open right now.</p>
+    </div>
+    <div class="real-grid reveal" style="--delay:1">
+      <div class="real-col">
+        <figure class="real-card real-card--wide">
+          <img src="assets/shots/kds.jpg" alt="Tavolo kitchen display showing live tickets with modifiers and allergy notes" loading="lazy" width="1440" height="900">
+          <figcaption class="real-card-label">Kitchen display — live</figcaption>
+        </figure>
+        <figure class="real-card real-card--pay">
+          <img src="assets/shots/pos-pay.jpg" alt="Tavolo POS payment screen with split options, tip presets and itemized charge" loading="lazy" width="1440" height="900">
+          <figcaption class="real-card-label">POS — split &amp; pay</figcaption>
+        </figure>
+      </div>
+      <figure class="real-card real-card--phone">
+        <img src="assets/shots/qr-bill.jpg" alt="Tavolo QR pay-at-table bill on a phone with itemized tax and service" loading="lazy" width="390" height="844">
+        <figcaption class="real-card-label">QR pay — guest's phone</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
 
 <!-- =====================================================
      PRICING
