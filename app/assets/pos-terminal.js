@@ -309,6 +309,7 @@
       }
     });
 
+    var loginInFlight = false;
     function doLogin() {
       if (buf.length < 4) {
         /* Feedback instead of a silent no-op — automation/users tapping Sign In
@@ -317,6 +318,10 @@
         loginCard.querySelector('.login-display').classList.add('error');
         return;
       }
+      /* Re-entry guard: the 4th-digit auto-submit + a Sign In tap (or Enter)
+         could fire doLogin twice in the same tick. Collapse to one request. */
+      if (loginInFlight) return;
+      loginInFlight = true;
       submit.disabled = true;
       submit.textContent = 'Checking…';
       errEl.textContent = '';
@@ -338,6 +343,7 @@
           errEl.textContent = msg;
           submit.disabled = false;
           submit.textContent = 'Sign In';
+          loginInFlight = false;
           return;
         }
         var staff = r.data;
@@ -348,6 +354,7 @@
         state.loginBuf = '';
         updateDisplay();
         submit.textContent = 'Sign In';
+        loginInFlight = false;
         onLoginSuccess();
       }).catch(function(err) {
         console.error('[POS] login error', err);
@@ -357,6 +364,7 @@
         updateDisplay();
         submit.disabled = false;
         submit.textContent = 'Sign In';
+        loginInFlight = false;
       });
     }
   }
