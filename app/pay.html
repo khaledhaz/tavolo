@@ -3110,8 +3110,12 @@ function init(){
   // email receipt
   var erb = $('#email-receipt-btn');
   if(erb) erb.addEventListener('click', function(){
-    var email = prompt('Enter your email for the receipt:');
-    if(email) MESA.toast('Receipt sent to '+email,'ok');
+    MESA.promptDialog('Enter your email for the receipt:', { type:'email', placeholder:'you@example.com' }).then(function(email){
+      if(email==null) return; // cancelled
+      email = email.trim();
+      if(!email || email.indexOf('@')===-1){ MESA.toast('Please enter a valid email','err'); return; }
+      MESA.toast('Receipt sent to '+email,'ok');
+    });
   });
 
   // done button

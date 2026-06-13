@@ -336,7 +336,7 @@
     var bl = _blackouts.find(function (b) { return b.id === blId; });
     if (!bl) return;
     var label = bl.reason || 'this blackout';
-    if (!confirm('Delete blackout "' + label + '"? This will restore availability for the affected window.')) return;
+    if (!(await window.PLAT.confirmDialog('Delete blackout "' + label + '"? This will restore availability for the affected window.', { confirmLabel: 'Delete', danger: true }))) return;
     try {
       await data.blackouts.remove(blId);
       _blackouts = _blackouts.filter(function (b) { return b.id !== blId; });

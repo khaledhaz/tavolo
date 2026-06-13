@@ -778,6 +778,27 @@
   }
 
   /* ==========================================================================
+     CATEGORY ITEM COUNTS
+  ========================================================================== */
+  var _catCounts = {};
+  function _refreshCatCounts(sectionEl) {
+    /* _items only holds the SELECTED category's rows — counting other
+       categories from it always produced 0. One light query keeps a map. */
+    var sb = _client();
+    if (!sb || !_mesaRest) return;
+    sb.from('mesa_menu_items').select('category_id').eq('restaurant_id', _mesaRest.id)
+      .then(function (res) {
+        if (res.error) return;
+        _catCounts = {};
+        (res.data || []).forEach(function (r) {
+          _catCounts[r.category_id] = (_catCounts[r.category_id] || 0) + 1;
+        });
+        _renderCatList(sectionEl);
+      })
+      .catch(function () {});
+  }
+
+  /* ==========================================================================
      RENDER CATEGORY LIST (left panel)
   ========================================================================== */
   function _renderCatList(sectionEl) {
@@ -790,7 +811,9 @@
     }
 
     var html = _categories.map(function (c) {
-      var count   = _items.filter(function (i) { return i.category_id === c.id; }).length;
+      var count   = _catCounts[c.id] != null
+        ? _catCounts[c.id]
+        : (_currentCat === c.id ? _items.length : 0);
       var active  = (_currentCat === c.id) ? ' active' : '';
       return '<div class="mesa-cat-item' + active + '" role="button" tabindex="0"'
            + ' data-cid="' + _esc(c.id) + '"'
@@ -964,17 +987,19 @@
     /* Wire delete buttons */
     bodyEl.querySelectorAll('.mm-del-item').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (!confirm('Delete "' + btn.dataset.name + '"? This cannot be undone.')) return;
-        var sb = _client();
-        if (!sb) { _toast('Client not ready.', 'err'); return; }
-        sb.from('mesa_menu_items').delete().eq('id', btn.dataset.iid)
-          .then(function (res) {
-            if (res.error) { _toast('Error deleting item.', 'err'); return; }
-            _items = _items.filter(function (i) { return i.id !== btn.dataset.iid; });
-            _renderItemsTable(sectionEl);
-            _renderCatList(sectionEl);
-            _toast('Item deleted.', 'ok');
-          });
+        window.PLAT.confirmDialog('Delete "' + btn.dataset.name + '"? This cannot be undone.', { confirmLabel: 'Delete', danger: true }).then(function (ok) {
+          if (!ok) return;
+          var sb = _client();
+          if (!sb) { _toast('Client not ready.', 'err'); return; }
+          sb.from('mesa_menu_items').delete().eq('id', btn.dataset.iid)
+            .then(function (res) {
+              if (res.error) { _toast('Error deleting item.', 'err'); return; }
+              _items = _items.filter(function (i) { return i.id !== btn.dataset.iid; });
+              _renderItemsTable(sectionEl);
+              _refreshCatCounts(sectionEl);
+              _toast('Item deleted.', 'ok');
+            });
+        });
       });
     });
   }
@@ -1087,28 +1112,31 @@
         if (!id) return;
         var cat = _categories.find(function (c) { return c.id === id; });
         var lbl = cat ? cat.name : 'this category';
-        if (!confirm('Delete "' + lbl + '"? All items in it will also be deleted.')) return;
-        var sb = _client();
-        if (!sb) { _toast('Client not ready.', 'err'); return; }
-        delBtn.disabled = true;
-        sb.from('mesa_menu_categories').delete().eq('id', id)
-          .then(function (res) {
-            delBtn.disabled = false;
-            if (res.error) { _toast('Error deleting category.', 'err'); return; }
-            _categories = _categories.filter(function (c) { return c.id !== id; });
-            _items      = _items.filter(function (i) { return i.category_id !== id; });
-            if (_currentCat === id) _currentCat = null;
-            _closeCatModal(sectionEl);
-            _renderCatList(sectionEl);
-            if (_categories.length) {
-              _selectCat(sectionEl, _categories[0].id);
-            } else {
-              _renderEmptyItems(sectionEl);
-              var addBtn = sectionEl.querySelector('#mm-add-item-btn');
-              if (addBtn) addBtn.style.display = 'none';
-            }
-            _toast('Category deleted.', 'ok');
-          });
+        window.PLAT.confirmDialog('Delete "' + lbl + '"? All items in it will also be deleted.', { confirmLabel: 'Delete', danger: true }).then(function (ok) {
+          if (!ok) return;
+          var sb = _client();
+          if (!sb) { _toast('Client not ready.', 'err'); return; }
+          delBtn.disabled = true;
+          sb.from('mesa_menu_categories').delete().eq('id', id)
+            .then(function (res) {
+              delBtn.disabled = false;
+              if (res.error) { _toast('Error deleting category.', 'err'); return; }
+              _categories = _categories.filter(function (c) { return c.id !== id; });
+              _items      = _items.filter(function (i) { return i.category_id !== id; });
+              if (_currentCat === id) _currentCat = null;
+              _closeCatModal(sectionEl);
+              _refreshCatCounts(sectionEl);
+              if (_categories.length) {
+                _selectCat(sectionEl, _categories[0].id);
+              } else {
+                _renderCatList(sectionEl);
+                _renderEmptyItems(sectionEl);
+                var addBtn = sectionEl.querySelector('#mm-add-item-btn');
+                if (addBtn) addBtn.style.display = 'none';
+              }
+              _toast('Category deleted.', 'ok');
+            });
+        });
       });
     }
   }
@@ -1324,7 +1352,7 @@
             _items.push(res.data);
           }
           _renderItemsTable(sectionEl);
-          _renderCatList(sectionEl);
+          _refreshCatCounts(sectionEl);
           _closeItemDrawer(sectionEl);
           _toast('Item saved.', 'ok');
         }).catch(function (err) {
@@ -1543,6 +1571,7 @@
         _items       = [];
         _currentCat  = null;
         _renderCatList(sectionEl);
+        _refreshCatCounts(sectionEl);
         if (_categories.length) {
           _selectCat(sectionEl, _categories[0].id);
         } else {

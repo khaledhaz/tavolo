@@ -951,6 +951,23 @@
   }
 
   /* ---------- CATEGORY LIST ---------- */
+  var _catCounts = {};
+  function _refreshCatCounts(sectionEl) {
+    /* _items only holds the SELECTED category's rows — counting other
+       categories from it always produced 0. One light query keeps a map. */
+    var sb = _client();
+    if (!sb || !_restRow) return;
+    sb.from('mesa_menu_items').select('category_id').eq('restaurant_id', _restRow.id)
+      .then(function (res) {
+        if (res.error) return;
+        _catCounts = {};
+        (res.data || []).forEach(function (r) {
+          _catCounts[r.category_id] = (_catCounts[r.category_id] || 0) + 1;
+        });
+        _renderCatList(sectionEl);
+      })
+      .catch(function () {});
+  }
   function _renderCatList(sectionEl) {
     var listEl = sectionEl.querySelector('#pm-cat-list');
     if (!listEl) return;
@@ -959,7 +976,9 @@
       return;
     }
     var html = _categories.map(function (c) {
-      var count = _items.filter(function (i) { return i.category_id === c.id; }).length;
+      var count = _catCounts[c.id] != null
+        ? _catCounts[c.id]
+        : (_currentCat === c.id ? _items.length : 0);
       var active = _currentCat === c.id ? ' active' : '';
       return '<div class="posmenu-list-item' + active + '" role="button" tabindex="0"'
         + ' data-cid="' + _esc(c.id) + '"'
@@ -1134,17 +1153,19 @@
       /* Wire delete buttons */
       bodyEl.querySelectorAll('.pm-del-item').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          if (!confirm('Delete "' + btn.dataset.name + '"? This cannot be undone.')) return;
-          var sbC = _client();
-          if (!sbC) { _toast('Client not ready.', 'err'); return; }
-          sbC.from('mesa_menu_items').delete().eq('id', btn.dataset.iid)
-            .then(function (r) {
-              if (r.error) { _toast('Error deleting item.', 'err'); return; }
-              _items = _items.filter(function (i) { return i.id !== btn.dataset.iid; });
-              _renderItemsTable(sectionEl);
-              _renderCatList(sectionEl);
-              _toast('Item deleted.', 'ok');
-            });
+          window.PLAT.confirmDialog('Delete "' + btn.dataset.name + '"? This cannot be undone.', { confirmLabel: 'Delete', danger: true }).then(function (ok) {
+            if (!ok) return;
+            var sbC = _client();
+            if (!sbC) { _toast('Client not ready.', 'err'); return; }
+            sbC.from('mesa_menu_items').delete().eq('id', btn.dataset.iid)
+              .then(function (r) {
+                if (r.error) { _toast('Error deleting item.', 'err'); return; }
+                _items = _items.filter(function (i) { return i.id !== btn.dataset.iid; });
+                _renderItemsTable(sectionEl);
+                _refreshCatCounts(sectionEl);
+                _toast('Item deleted.', 'ok');
+              });
+          });
         });
       });
     });
@@ -1240,36 +1261,38 @@
         if (!id) return;
         var cat = _categories.find(function (c) { return c.id === id; });
         var lbl = cat ? cat.name : 'this category';
-        if (!confirm('Delete "' + lbl + '"? All items in it will also be deleted.')) return;
-        var sb = _client();
-        if (!sb) { _toast('Client not ready.', 'err'); return; }
-        delBtn.disabled = true;
-        /* Delete items first (no ON DELETE CASCADE on the FK), then the category */
-        sb.from('mesa_menu_items').delete().eq('category_id', id)
-          .then(function () {
-            return sb.from('mesa_menu_categories').delete().eq('id', id);
-          })
-          .then(function (r) {
-            delBtn.disabled = false;
-            if (r.error) { _toast('Error deleting category.', 'err'); return; }
-            _categories = _categories.filter(function (c) { return c.id !== id; });
-            _items = _items.filter(function (i) { return i.category_id !== id; });
-            if (_currentCat === id) _currentCat = null;
-            _closeCatModal(sectionEl);
-            _renderCatList(sectionEl);
-            if (_categories.length) {
-              _selectCat(sectionEl, _categories[0].id);
-            } else {
-              _renderEmptyItems(sectionEl);
-              var addBtn = sectionEl.querySelector('#pm-add-item-btn');
-              if (addBtn) addBtn.style.display = 'none';
-            }
-            _toast('Category deleted.', 'ok');
-          })
-          .catch(function () {
-            delBtn.disabled = false;
-            _toast('Error deleting category.', 'err');
-          });
+        window.PLAT.confirmDialog('Delete "' + lbl + '"? All items in it will also be deleted.', { confirmLabel: 'Delete', danger: true }).then(function (ok) {
+          if (!ok) return;
+          var sb = _client();
+          if (!sb) { _toast('Client not ready.', 'err'); return; }
+          delBtn.disabled = true;
+          /* Delete items first (no ON DELETE CASCADE on the FK), then the category */
+          sb.from('mesa_menu_items').delete().eq('category_id', id)
+            .then(function () {
+              return sb.from('mesa_menu_categories').delete().eq('id', id);
+            })
+            .then(function (r) {
+              delBtn.disabled = false;
+              if (r.error) { _toast('Error deleting category.', 'err'); return; }
+              _categories = _categories.filter(function (c) { return c.id !== id; });
+              _items = _items.filter(function (i) { return i.category_id !== id; });
+              if (_currentCat === id) _currentCat = null;
+              _closeCatModal(sectionEl);
+              _refreshCatCounts(sectionEl);
+              if (_categories.length) {
+                _selectCat(sectionEl, _categories[0].id);
+              } else {
+                _renderEmptyItems(sectionEl);
+                var addBtn = sectionEl.querySelector('#pm-add-item-btn');
+                if (addBtn) addBtn.style.display = 'none';
+              }
+              _toast('Category deleted.', 'ok');
+            })
+            .catch(function () {
+              delBtn.disabled = false;
+              _toast('Error deleting category.', 'err');
+            });
+        });
       });
     }
   }
@@ -1518,7 +1541,7 @@
           /* Sync modifier group attachments */
           _syncItemModGroups(savedId, function () {
             _renderItemsTable(sectionEl);
-            _renderCatList(sectionEl);
+            _refreshCatCounts(sectionEl);
             _closeItemDrawer(sectionEl);
             _toast('Item saved.', 'ok');
           });
@@ -1570,6 +1593,7 @@
         _items      = [];
         _currentCat = null;
         _renderCatList(sectionEl);
+        _refreshCatCounts(sectionEl);
         if (_categories.length) {
           _selectCat(sectionEl, _categories[0].id);
         } else {
@@ -1735,16 +1759,18 @@
     /* Wire delete buttons */
     bodyEl.querySelectorAll('.pm-del-opt').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (!confirm('Delete option "' + btn.dataset.name + '"?')) return;
-        var sb = _client();
-        if (!sb) { _toast('Client not ready.', 'err'); return; }
-        sb.from('pos_modifiers').delete().eq('id', btn.dataset.oid)
-          .then(function (r) {
-            if (r.error) { _toast('Error deleting option.', 'err'); return; }
-            _groupOptions = _groupOptions.filter(function (o) { return o.id !== btn.dataset.oid; });
-            _renderOptionsTable(sectionEl);
-            _toast('Option deleted.', 'ok');
-          });
+        window.PLAT.confirmDialog('Delete option "' + btn.dataset.name + '"?', { confirmLabel: 'Delete', danger: true }).then(function (ok) {
+          if (!ok) return;
+          var sb = _client();
+          if (!sb) { _toast('Client not ready.', 'err'); return; }
+          sb.from('pos_modifiers').delete().eq('id', btn.dataset.oid)
+            .then(function (r) {
+              if (r.error) { _toast('Error deleting option.', 'err'); return; }
+              _groupOptions = _groupOptions.filter(function (o) { return o.id !== btn.dataset.oid; });
+              _renderOptionsTable(sectionEl);
+              _toast('Option deleted.', 'ok');
+            });
+        });
       });
     });
   }
@@ -1849,26 +1875,28 @@
         if (!id) return;
         var grp = _modGroups.find(function (g) { return g.id === id; });
         var lbl = grp ? grp.name : 'this group';
-        if (!confirm('Delete modifier group "' + lbl + '"? All its options will also be deleted.')) return;
-        var sb = _client();
-        if (!sb) { _toast('Client not ready.', 'err'); return; }
-        delBtn.disabled = true;
-        sb.from('pos_modifier_groups').delete().eq('id', id)
-          .then(function (r) {
-            delBtn.disabled = false;
-            if (r.error) { _toast('Error deleting group.', 'err'); return; }
-            _modGroups = _modGroups.filter(function (g) { return g.id !== id; });
-            if (_currentGroup === id) {
-              _currentGroup = null;
-              _groupOptions = [];
-              _renderEmptyOpts(sectionEl);
-              var addOptBtn = sectionEl.querySelector('#pm-add-opt-btn');
-              if (addOptBtn) addOptBtn.style.display = 'none';
-            }
-            _closeGroupModal(sectionEl);
-            _renderGroupList(sectionEl);
-            _toast('Group deleted.', 'ok');
-          }).catch(function () { delBtn.disabled = false; _toast('Error deleting group.', 'err'); });
+        window.PLAT.confirmDialog('Delete modifier group "' + lbl + '"? All its options will also be deleted.', { confirmLabel: 'Delete', danger: true }).then(function (ok) {
+          if (!ok) return;
+          var sb = _client();
+          if (!sb) { _toast('Client not ready.', 'err'); return; }
+          delBtn.disabled = true;
+          sb.from('pos_modifier_groups').delete().eq('id', id)
+            .then(function (r) {
+              delBtn.disabled = false;
+              if (r.error) { _toast('Error deleting group.', 'err'); return; }
+              _modGroups = _modGroups.filter(function (g) { return g.id !== id; });
+              if (_currentGroup === id) {
+                _currentGroup = null;
+                _groupOptions = [];
+                _renderEmptyOpts(sectionEl);
+                var addOptBtn = sectionEl.querySelector('#pm-add-opt-btn');
+                if (addOptBtn) addOptBtn.style.display = 'none';
+              }
+              _closeGroupModal(sectionEl);
+              _renderGroupList(sectionEl);
+              _toast('Group deleted.', 'ok');
+            }).catch(function () { delBtn.disabled = false; _toast('Error deleting group.', 'err'); });
+        });
       });
     }
   }

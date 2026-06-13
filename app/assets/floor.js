@@ -774,7 +774,7 @@
     var rest = getRestaurant();
     closeActionSheet();
     // Confirm
-    if (!confirm('Block table ' + table.label + '? This will create a 4-hour blackout starting now.')) return;
+    if (!(await window.PLAT.confirmDialog('Block table ' + table.label + '? This will create a 4-hour blackout starting now.', { confirmLabel: 'Block', danger: true }))) return;
     try {
       var now = new Date();
       var end = new Date(now.getTime() + 4 * 3600 * 1000);
@@ -818,7 +818,7 @@
 
   async function doNoShow(table, res) {
     closeActionSheet();
-    if (!confirm('Mark this reservation as a no-show?')) return;
+    if (!(await window.PLAT.confirmDialog('Mark this reservation as a no-show?', { danger: true }))) return;
     try {
       await d.reservations.updateStatus(res.id, 'no_show');
       _reservations = _reservations.map(function (r) {
@@ -1113,7 +1113,7 @@
       toast('Cannot delete "' + roomName + '" — move or delete all tables in it first.', 'warn');
       return;
     }
-    if (!confirm('Delete room "' + roomName + '"? This cannot be undone.')) return;
+    if (!(await window.PLAT.confirmDialog('Delete room "' + roomName + '"? This cannot be undone.', { confirmLabel: 'Delete', danger: true }))) return;
     try {
       await d.rooms.remove(roomId);
       _rooms = _rooms.filter(function (r) { return r.id !== roomId; });
@@ -1214,7 +1214,7 @@
       toast('Cannot delete — table has active/upcoming reservations. Reassign them first.', 'warn');
       return;
     }
-    if (!confirm('Delete table ' + label + '? This cannot be undone.')) return;
+    if (!(await window.PLAT.confirmDialog('Delete table ' + label + '? This cannot be undone.', { confirmLabel: 'Delete', danger: true }))) return;
     try {
       await d.tables.remove(tableId);
       _tables = _tables.filter(function (t) { return t.id !== tableId; });

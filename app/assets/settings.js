@@ -640,7 +640,7 @@
   async function deletePeriod(spId, sectionEl) {
     var sp = _periods.find(function (p) { return p.id === spId; });
     if (!sp) return;
-    if (!confirm('Delete service period "' + sp.name + '"? This will affect availability.')) return;
+    if (!(await window.PLAT.confirmDialog('Delete service period "' + sp.name + '"? This will affect availability.', { confirmLabel: 'Delete', danger: true }))) return;
     try {
       await data.servicePeriods.remove(spId);
       _periods = _periods.filter(function (p) { return p.id !== spId; });

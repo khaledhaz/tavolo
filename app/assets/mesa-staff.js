@@ -496,16 +496,18 @@
         btn.addEventListener('click', function () {
           var name = btn.dataset.name;
           var sid  = btn.dataset.sid;
-          if (!confirm('Remove "' + name + '" from the team?')) return;
-          (async function () {
-            var res = await sb.from('mesa_staff').delete().eq('id', sid);
-            if (res.error) { toast('Error removing team member', 'err'); return; }
-            _staff = _staff.filter(function (s) { return s.id !== sid; });
-            delete _tipMap[name];
-            renderKpi(sectionEl, _tipMap, currency);
-            renderTable(sectionEl, currency);
-            toast(name + ' removed', 'ok');
-          })();
+          window.PLAT.confirmDialog('Remove "' + name + '" from the team?', { confirmLabel: 'Remove', danger: true }).then(function (ok) {
+            if (!ok) return;
+            (async function () {
+              var res = await sb.from('mesa_staff').delete().eq('id', sid);
+              if (res.error) { toast('Error removing team member', 'err'); return; }
+              _staff = _staff.filter(function (s) { return s.id !== sid; });
+              delete _tipMap[name];
+              renderKpi(sectionEl, _tipMap, currency);
+              renderTable(sectionEl, currency);
+              toast(name + ' removed', 'ok');
+            })();
+          });
         });
       }(delBtns[i]));
     }

@@ -189,6 +189,120 @@
     }, duration);
   }
 
+  // ---- In-page dialogs (confirm/prompt replacements) -------------------------
+  // Native window.confirm/prompt/alert block the JS thread; under automation or
+  // kiosk shells the dialog is never answered and the page freezes forever.
+  // These Promise-based overlays are self-contained (inline styles only) so they
+  // work on every page regardless of which stylesheet is loaded.
+  var _DLG_BTN =
+    'min-height:44px;padding:10px 18px;border-radius:8px;font-size:15px;' +
+    'font-weight:600;cursor:pointer;font-family:inherit;';
+
+  function _dialogOpen(message, opts, withInput) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      var settled = false;
+
+      var wrap = document.createElement('div');
+      wrap.className = 'plat-dialog-overlay';
+      wrap.style.cssText =
+        'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;' +
+        'justify-content:center;padding:16px;background:rgba(0,0,0,.7);';
+
+      var card = document.createElement('div');
+      card.setAttribute('role', 'dialog');
+      card.setAttribute('aria-modal', 'true');
+      card.setAttribute('aria-label', message);
+      card.style.cssText =
+        'width:100%;max-width:340px;background:#1a1d24;color:#f0eff2;' +
+        'border-radius:12px;padding:20px;box-shadow:0 12px 48px rgba(0,0,0,.55);' +
+        'font-family:inherit;';
+
+      var msg = document.createElement('p');
+      msg.textContent = message;
+      msg.style.cssText = 'margin:0 0 16px;font-size:15px;line-height:1.45;';
+      card.appendChild(msg);
+
+      var input = null;
+      if (withInput) {
+        input = document.createElement('input');
+        input.type = opts.type || 'text';
+        if (opts.placeholder) input.placeholder = opts.placeholder;
+        if (opts.value != null) input.value = opts.value;
+        input.setAttribute('aria-label', message);
+        input.style.cssText =
+          'width:100%;box-sizing:border-box;margin:0 0 16px;padding:10px 12px;' +
+          'min-height:44px;border-radius:8px;border:1px solid rgba(240,239,242,.25);' +
+          'background:#11141a;color:#f0eff2;font-size:15px;font-family:inherit;';
+        card.appendChild(input);
+      }
+
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;';
+
+      var btnCancel = document.createElement('button');
+      btnCancel.type = 'button';
+      btnCancel.textContent = 'Cancel';
+      btnCancel.style.cssText = _DLG_BTN +
+        'background:transparent;color:#f0eff2;border:1px solid rgba(240,239,242,.3);';
+
+      var btnOk = document.createElement('button');
+      btnOk.type = 'button';
+      btnOk.textContent = opts.confirmLabel || (withInput ? 'OK' : 'Confirm');
+      btnOk.style.cssText = _DLG_BTN + 'border:1px solid transparent;' +
+        (opts.danger ? 'background:#fc8181;color:#1a1d24;'
+                     : 'background:#c2703d;color:#fff;');
+
+      row.appendChild(btnCancel);
+      row.appendChild(btnOk);
+      card.appendChild(row);
+      wrap.appendChild(card);
+
+      function finish(val) {
+        if (settled) return;
+        settled = true;
+        document.removeEventListener('keydown', onKey, true);
+        if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        resolve(val);
+      }
+      function okValue()     { return withInput ? input.value : true; }
+      function cancelValue() { return withInput ? null : false; }
+      function onKey(e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          finish(cancelValue());
+        } else if (e.key === 'Enter' && withInput && e.target === input) {
+          e.preventDefault();
+          finish(okValue());
+        }
+      }
+
+      wrap.addEventListener('mousedown', function (e) {
+        if (e.target === wrap) finish(cancelValue());
+      });
+      btnCancel.addEventListener('click', function () { finish(cancelValue()); });
+      btnOk.addEventListener('click',     function () { finish(okValue()); });
+      document.addEventListener('keydown', onKey, true);
+
+      document.body.appendChild(wrap);
+      (withInput ? input : btnOk).focus();
+    });
+  }
+
+  /* confirmDialog(message, opts) → Promise<boolean>
+     opts: { confirmLabel, danger } — Confirm resolves true;
+     Cancel / Escape / backdrop-click resolve false. */
+  function confirmDialog(message, opts) {
+    return _dialogOpen(message, opts, false);
+  }
+
+  /* promptDialog(message, opts) → Promise<string|null>
+     opts: { placeholder, value, type, confirmLabel } — OK / Enter resolve the
+     input value; Cancel / Escape / backdrop-click resolve null. */
+  function promptDialog(message, opts) {
+    return _dialogOpen(message, opts, true);
+  }
+
   // ---- Skeleton / date / slug helpers (COV) ---------------------------------
   function skeletonCards(n, cls) {
     var html = '';
@@ -846,6 +960,9 @@
 
     auth: auth,
 
+    confirmDialog: confirmDialog,
+    promptDialog:  promptDialog,
+
     data: {
       mesa: {
         loadTableBill:  loadTableBill,
@@ -916,6 +1033,8 @@
     h:                h,
     esc:              esc,
     toast:            toast,
+    confirmDialog:    confirmDialog,
+    promptDialog:     promptDialog,
     applyBrand:       applyBrand,
     contrastWithWhite: contrastWithWhite,
     loadTableBill:    loadTableBill,

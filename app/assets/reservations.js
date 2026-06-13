@@ -500,8 +500,8 @@
   async function doStatusAction(id, action) {
     var newStatus = ACTION_TO_STATUS[action];
     if (!newStatus) return;
-    if (action === 'cancel' && !confirm('Cancel this reservation?')) return;
-    if (action === 'noshow' && !confirm('Mark as no-show?')) return;
+    if (action === 'cancel' && !(await window.PLAT.confirmDialog('Cancel this reservation?', { danger: true }))) return;
+    if (action === 'noshow' && !(await window.PLAT.confirmDialog('Mark as no-show?', { danger: true }))) return;
     try {
       await data.reservations.updateStatus(id, newStatus);
       toast('Status updated to ' + STATUS_LABELS[newStatus], 'ok');

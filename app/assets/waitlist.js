@@ -451,7 +451,7 @@
     if (!res) return;
     var guest = res.cov_guests || {};
     var name  = guest.name || res._guestName || 'this guest';
-    if (!confirm('Remove ' + name + ' from the waitlist?')) return;
+    if (!(await window.PLAT.confirmDialog('Remove ' + name + ' from the waitlist?', { confirmLabel: 'Remove', danger: true }))) return;
     try {
       await data.reservations.updateStatus(resId, 'cancelled');
       _waitlist = _waitlist.filter(function (r) { return r.id !== resId; });
