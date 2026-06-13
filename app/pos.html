@@ -1303,6 +1303,45 @@ input  { font-family: inherit; }
 #btn-void-cancel:hover { background: rgba(255,255,255,0.09); }
 #btn-void-cancel:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
 
+/* Generic input prompt — non-blocking replacement for window.prompt
+   (native dialogs hang the page under automation/kiosk shells: M3) */
+#pos-prompt-modal {
+  position: fixed; inset: 0;
+  z-index: 550;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+#pos-prompt-modal.open { display: flex; }
+#pos-prompt-input {
+  width: 100%; min-height: 44px; padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0eff2; font-size: 15px;
+  outline: none;
+}
+#pos-prompt-input:focus { border-color: rgba(194,112,61,0.6); }
+#btn-pos-prompt-ok {
+  flex: 1; min-height: 44px; border-radius: 10px;
+  background: rgba(194,112,61,0.18);
+  border: 1.5px solid rgba(194,112,61,0.5);
+  color: #e08d57; font-size: 14px; font-weight: 700;
+  transition: background 150ms;
+}
+#btn-pos-prompt-ok:hover { background: rgba(194,112,61,0.28); }
+#btn-pos-prompt-ok:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+#btn-pos-prompt-cancel {
+  min-height: 44px; padding: 0 20px; border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 14px; font-weight: 600;
+}
+#btn-pos-prompt-cancel:hover { background: rgba(255,255,255,0.09); }
+#btn-pos-prompt-cancel:focus-visible { outline: 2px solid #c2703d; outline-offset: 2px; }
+
 /* Item-note and edit-note modals share void-card styles;
    add specific positioning identical to #void-modal */
 #item-note-modal,
@@ -1891,6 +1930,18 @@ input  { font-family: inherit; }
     <div class="void-actions">
       <button id="btn-void-confirm" type="button" aria-label="Confirm void">Void Item</button>
       <button id="btn-void-cancel"  type="button" aria-label="Cancel void">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generic input prompt — non-blocking replacement for window.prompt (M3) -->
+<div id="pos-prompt-modal" role="dialog" aria-modal="true" aria-labelledby="pos-prompt-title">
+  <div class="void-card">
+    <h2 id="pos-prompt-title">Input</h2>
+    <input id="pos-prompt-input" type="text" autocomplete="off" aria-labelledby="pos-prompt-title" />
+    <div class="void-actions">
+      <button id="btn-pos-prompt-ok" type="button" aria-label="Confirm">OK</button>
+      <button id="btn-pos-prompt-cancel" type="button" aria-label="Cancel">Cancel</button>
     </div>
   </div>
 </div>

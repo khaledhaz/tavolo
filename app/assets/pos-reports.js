@@ -90,6 +90,17 @@
   gap: var(--space-2);\n\
 }\n\
 \n\
+/* freshness stamp on the live X-report */\n\
+.posr-asof {\n\
+  margin-left: auto;\n\
+  font-size: 10.5px;\n\
+  font-weight: 600;\n\
+  letter-spacing: 0.04em;\n\
+  text-transform: none;\n\
+  color: var(--color-text-muted);\n\
+  opacity: 0.8;\n\
+}\n\
+\n\
 /* X-Report "live" indicator */\n\
 .posr-live-dot {\n\
   display: inline-block;\n\
@@ -855,6 +866,9 @@
           posrKpi('Voids',         voids,    'Voided items today', ''),
           posrKpi('Tips Collected',tips,     'Total tips paid today', 'copper'),
         ].join('');
+        /* staleness is self-evident: stamp every successful fetch */
+        var asof = document.getElementById('posr-xrpt-asof');
+        if (asof) asof.textContent = 'as of ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       })
       .catch(function () {
         kpiEl.innerHTML = errBar('Live report unavailable.', 'posr-xrpt-retry2');
@@ -1374,11 +1388,13 @@
       + '</div>'
       + '</div>'
 
-      // X-REPORT — always live (no date range)
+      // X-REPORT — always live, always TODAY (the range selector below only
+      // scopes the breakdowns). The "as of" stamp makes staleness self-evident.
       + '<div>'
       + '<div class="posr-section-head">'
       + '<span class="posr-live-dot" aria-hidden="true"></span>'
-      + 'Live X-Report'
+      + 'Live X-Report — today'
+      + '<span class="posr-asof" id="posr-xrpt-asof"></span>'
       + '</div>'
       + '<div id="posr-xrpt-kpi" class="posr-kpi-grid" aria-live="polite" role="status" aria-label="Live X-report metrics">'
       + kpiSkels(6)
@@ -1463,6 +1479,10 @@
           btn.setAttribute('aria-pressed', 'true');
           _state.range = btn.dataset.range;
           loadBreakdowns(sectionEl, rest, _state.range);
+          /* tiles are always-today by design, but refresh them here too so the
+             page never shows two ages of data side by side */
+          var kpiEl = sectionEl.querySelector('#posr-xrpt-kpi');
+          if (kpiEl) renderXReport(kpiEl, rest.id);
         });
         btn.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -1482,6 +1502,21 @@
 
     // Close any stale Z-report modal from previous render
     closeZModal();
+
+    // A backgrounded/zombie tab must re-fetch the moment it's looked at again
+    if (!_state.visListener) {
+      _state.visListener = true;
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState !== 'visible') return;
+        var rest = _state.restaurant;
+        var sec = document.querySelector('#section-pos-reports');
+        if (!rest || !sec || sec.style.display === 'none') return;
+        var kpiEl = sec.querySelector('#posr-xrpt-kpi');
+        if (kpiEl) renderXReport(kpiEl, rest.id);
+        loadBreakdowns(sec, rest, _state.range);
+        loadShifts(sec, rest);
+      });
+    }
 
     // Live X-report: auto-refresh every 30s while the section stays visible
     if (_state.refreshTimer) clearInterval(_state.refreshTimer);

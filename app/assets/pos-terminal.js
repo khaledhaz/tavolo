@@ -338,6 +338,41 @@
     }
   }
 
+  /* Non-blocking replacement for window.prompt — a native dialog blocks the
+     whole JS thread until answered, which under automation/kiosk shells means
+     a permanent renderer freeze with zero console errors (M3, same class as
+     the old Close-button confirm). Returns Promise<string|null>. */
+  function posPrompt(title, placeholder, defaultValue, inputType) {
+    return new Promise(function(resolve) {
+      var modal  = el('pos-prompt-modal');
+      var input  = el('pos-prompt-input');
+      var okBtn  = el('btn-pos-prompt-ok');
+      var cancel = el('btn-pos-prompt-cancel');
+      el('pos-prompt-title').textContent = title;
+      input.placeholder = placeholder || '';
+      input.type  = inputType || 'text';
+      input.value = defaultValue || '';
+      modal.classList.add('open');
+      setTimeout(function() { input.focus(); input.select(); }, 40);
+      function done(val) {
+        modal.classList.remove('open');
+        okBtn.removeEventListener('click', onOk);
+        cancel.removeEventListener('click', onCancel);
+        input.removeEventListener('keydown', onKey);
+        resolve(val);
+      }
+      function onOk()     { done(input.value); }
+      function onCancel() { done(null); }
+      function onKey(e) {
+        if (e.key === 'Enter')  { e.preventDefault(); onOk(); }
+        if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+      }
+      okBtn.addEventListener('click', onOk);
+      cancel.addEventListener('click', onCancel);
+      input.addEventListener('keydown', onKey);
+    });
+  }
+
   /* New order buttons */
   el('btn-new-dinein').addEventListener('click', function() {
     /* Prompt for guest count inline — use first available table */
@@ -345,10 +380,13 @@
     if (!available.length) {
       toast('No tables available', 'error'); return;
     }
-    var guests = parseInt(window.prompt('Guests (1-20):', '2'), 10);
-    if (!guests || guests < 1) guests = 2;
-    var t = available[0];
-    openNewSession('dine_in', t.id, t.label || t.table_code, null, Math.min(guests, 20));
+    posPrompt('New dine-in — guests', 'Guests (1-20)', '2', 'number').then(function(v) {
+      if (v === null) return; /* cancelled */
+      var guests = parseInt(v, 10);
+      if (!guests || guests < 1) guests = 2;
+      var t = available[0];
+      openNewSession('dine_in', t.id, t.label || t.table_code, null, Math.min(guests, 20));
+    });
   });
 
   el('btn-new-takeout').addEventListener('click', function() {
@@ -356,9 +394,12 @@
   });
 
   el('btn-new-bartab').addEventListener('click', function() {
-    var name = (window.prompt('Tab name:') || '').trim();
-    if (!name) name = 'Bar';
-    openNewSession('bar', null, 'Bar', name, 1);
+    posPrompt('New bar tab — name', 'Tab name (e.g. Marcus)', '', 'text').then(function(v) {
+      if (v === null) return; /* cancelled */
+      var name = (v || '').trim();
+      if (!name) name = 'Bar';
+      openNewSession('bar', null, 'Bar', name, 1);
+    });
   });
 
   function openNewSession(orderType, tableId, label, tabName, guests) {
