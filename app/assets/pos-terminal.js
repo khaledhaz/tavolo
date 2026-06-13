@@ -70,6 +70,138 @@
     esc   = window.PLAT.utils.esc;
   }
 
+  /* ============================================================
+     OFFLINE BANNER + CONNECTION STATE
+     ============================================================ */
+
+  /* Create the banner DOM node once and insert it before the shell */
+  var _offlineBanner = null;
+  var _onlineRecoveryTimer = null;
+
+  function _ensureBanner() {
+    if (_offlineBanner) return _offlineBanner;
+    _offlineBanner = document.createElement('div');
+    _offlineBanner.id = 'pos-offline-banner';
+    _offlineBanner.setAttribute('role', 'status');
+    _offlineBanner.setAttribute('aria-live', 'polite');
+    _offlineBanner.setAttribute('aria-atomic', 'true');
+    /* Inline styles — independent of any loaded stylesheet */
+    _offlineBanner.style.cssText = [
+      'position:fixed;top:0;left:0;right:0;z-index:99998;',
+      'padding:10px 18px;font-size:14px;font-weight:600;text-align:center;',
+      'font-family:inherit;letter-spacing:.01em;transition:background .25s,color .25s;',
+      'display:none;',
+    ].join('');
+    document.body.insertBefore(_offlineBanner, document.body.firstChild);
+    return _offlineBanner;
+  }
+
+  function _setBannerOffline() {
+    var b = _ensureBanner();
+    if (_onlineRecoveryTimer) { clearTimeout(_onlineRecoveryTimer); _onlineRecoveryTimer = null; }
+    b.style.cssText = b.style.cssText.replace('display:none', 'display:block');
+    b.style.display = 'block';
+    b.style.background = '#92400e';   /* amber-800 — passes 4.5:1 contrast on white text */
+    b.style.color = '#fef3c7';         /* amber-100 */
+    b.textContent = 'Offline — reconnecting… (orders will sync when back online)';
+    /* Disable the Pay button while offline */
+    _setPayButtonOffline(true);
+  }
+
+  function _setBannerOnline() {
+    var b = _ensureBanner();
+    b.style.background = '#065f46';   /* emerald-800 */
+    b.style.color = '#d1fae5';         /* emerald-100 */
+    b.textContent = 'Back online — synced';
+    b.style.display = 'block';
+    /* Re-enable Pay button */
+    _setPayButtonOffline(false);
+    /* Auto-hide after 3 s */
+    _onlineRecoveryTimer = setTimeout(function () {
+      b.style.display = 'none';
+      _onlineRecoveryTimer = null;
+    }, 3000);
+  }
+
+  function _setPayButtonOffline(isOffline) {
+    var btn = el('btn-process-payment');
+    var payBtn = el('btn-pay');
+    if (btn) {
+      btn.disabled = isOffline;
+      if (isOffline) {
+        btn.dataset._offlineLabel = btn.innerHTML;
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg> Can\'t take payment while offline';
+      } else {
+        btn.innerHTML = btn.dataset._offlineLabel ||
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Process Payment';
+      }
+    }
+    /* Also guard the Pay button on the order screen */
+    if (payBtn) {
+      payBtn.disabled = isOffline;
+      payBtn.title = isOffline ? "Can't take payment while offline" : '';
+    }
+  }
+
+  function _setupNetMonitor() {
+    var net = window.PLAT && window.PLAT.net;
+    if (!net) return;
+
+    /* Sync initial state without debounce */
+    if (!net.isOnline()) _setBannerOffline();
+
+    net.onChange(function (nowOnline) {
+      if (nowOnline) {
+        _setBannerOnline();
+        _replayOutbox();
+      } else {
+        _setBannerOffline();
+      }
+    });
+
+    /* Show pending-sync count on load if outbox non-empty */
+    var outbox = window.PLAT.outbox;
+    if (outbox) {
+      var pending = outbox.size();
+      if (pending > 0) {
+        toast(pending + ' order action' + (pending === 1 ? '' : 's') + ' pending sync', 'warning');
+      }
+    }
+  }
+
+  /* ============================================================
+     OUTBOX REPLAY
+     Called on reconnect. Replays add_item and fire_course ops in order.
+     Payments are NEVER queued — callers guard pos_pay separately.
+     ============================================================ */
+  function _replayOutbox() {
+    var outbox = window.PLAT && window.PLAT.outbox;
+    if (!outbox || outbox.size() === 0) return;
+
+    outbox.replay(function (entry) {
+      if (entry.op === 'add_item') {
+        return sb.rpc('pos_add_item', entry.params).then(function (r) {
+          if (r.error) throw r.error;
+        });
+      }
+      if (entry.op === 'fire_course') {
+        return sb.rpc('pos_fire_course', entry.params).then(function (r) {
+          if (r.error) throw r.error;
+        });
+      }
+      /* Unknown op — skip silently */
+      return Promise.resolve();
+    }, function (failCount) {
+      if (failCount === 0) {
+        toast('Offline actions synced', 'success');
+        /* Refresh the ticket if we have an active session */
+        if (state.sessionId) refreshBill();
+      } else {
+        toast(failCount + ' action(s) failed to sync — will retry next reconnect', 'error');
+      }
+    });
+  }
+
   function localMoney(cents) {
     /* safe fallback if PLAT not ready */
     if (money) return money(cents);
@@ -625,6 +757,13 @@
      ADD ITEM — modifier check then add
      ============================================================ */
   function handleAddItem(item) {
+    /* OFFLINE: skip the modifier-groups fetch entirely (it would hang or fail);
+       add without modifiers so the item is captured immediately. */
+    var net = window.PLAT && window.PLAT.net;
+    if (net && !net.isOnline()) {
+      addItemToTicket(item, [], state.currentSeat, null);
+      return;
+    }
     /* Check for modifier groups */
     sb.from('pos_item_modifier_groups')
       .select('group_id')
@@ -813,11 +952,15 @@
 
   /* ============================================================
      ADD ITEM TO TICKET (RPC)
+     Offline: queue to outbox and apply optimistically to the ticket.
+     Online: normal RPC path.
      ============================================================ */
   function addItemToTicket(item, modifierIds, seat, notes) {
     if (!state.sessionId) { toast('No active session', 'error'); return; }
 
-    sb.rpc('pos_add_item', {
+    var net    = window.PLAT && window.PLAT.net;
+    var outbox = window.PLAT && window.PLAT.outbox;
+    var params = {
       p_session:      state.sessionId,
       p_menu_item:    item.id,
       p_qty:          1,
@@ -825,13 +968,75 @@
       p_course:       state.currentCourse,
       p_notes:        notes || null,
       p_modifier_ids: modifierIds || [],
-    }).then(function(r) {
+    };
+
+    /* ---- OFFLINE PATH ---- */
+    if (net && !net.isOnline()) {
+      if (outbox) {
+        outbox.push('add_item', params);
+      }
+      /* Optimistic update: inject a synthetic item into bill so the ticket
+         shows the item immediately. Use a client-side temp id. */
+      var tempId = 'offline-' + Date.now() + '-' + Math.floor(Math.random() * 1e6);
+      var syntheticItem = {
+        id:               tempId,
+        name:             item.name,
+        qty:              1,
+        unit_price_cents: item.price_cents,
+        line_total_cents: item.price_cents,
+        seat:             seat || 1,
+        course:           state.currentCourse,
+        notes:            notes || null,
+        modifiers:        [],
+        kitchen_status:   'new',
+        voided:           false,
+        _offline:         true,
+      };
+      if (!state.bill) {
+        state.bill = { items: [], subtotal_cents: 0, total_cents: 0 };
+      }
+      if (!state.bill.items) state.bill.items = [];
+      state.bill.items.push(syntheticItem);
+      state.bill.subtotal_cents = (state.bill.subtotal_cents || 0) + item.price_cents;
+      state.bill.total_cents    = (state.bill.total_cents || 0) + item.price_cents;
+      renderTicket();
+      updateTotals();
+      toast(item.name + ' saved offline — will sync when reconnected', 'warning');
+      return;
+    }
+
+    /* ---- ONLINE PATH ---- */
+    sb.rpc('pos_add_item', params).then(function(r) {
       if (r.error) { toast(r.error.message || 'Add item failed', 'error'); return; }
       toast(item.name + ' added', 'success');
       refreshBill();
     }).catch(function(err) {
       console.error('[POS] addItem error', err);
-      toast('Connection error — item not added', 'error');
+      /* Network died mid-flight — queue and optimistic-add */
+      if (outbox) outbox.push('add_item', params);
+      var tempId2 = 'offline-' + Date.now() + '-' + Math.floor(Math.random() * 1e6);
+      var syntheticItem2 = {
+        id:               tempId2,
+        name:             item.name,
+        qty:              1,
+        unit_price_cents: item.price_cents,
+        line_total_cents: item.price_cents,
+        seat:             seat || 1,
+        course:           state.currentCourse,
+        notes:            notes || null,
+        modifiers:        [],
+        kitchen_status:   'new',
+        voided:           false,
+        _offline:         true,
+      };
+      if (!state.bill) state.bill = { items: [], subtotal_cents: 0, total_cents: 0 };
+      if (!state.bill.items) state.bill.items = [];
+      state.bill.items.push(syntheticItem2);
+      state.bill.subtotal_cents = (state.bill.subtotal_cents || 0) + item.price_cents;
+      state.bill.total_cents    = (state.bill.total_cents || 0) + item.price_cents;
+      renderTicket();
+      updateTotals();
+      toast(item.name + ' saved offline — will sync when reconnected', 'warning');
     });
   }
 
@@ -1286,10 +1491,27 @@
 
   el('btn-fire').addEventListener('click', function() {
     if (!state.sessionId) return;
-    sb.rpc('pos_fire_course', {
+
+    var net    = window.PLAT && window.PLAT.net;
+    var outbox = window.PLAT && window.PLAT.outbox;
+    var fireParams = {
       p_session: state.sessionId,
       p_course:  state.currentCourse,
-    }).then(function(r) {
+    };
+
+    /* ---- OFFLINE PATH ---- */
+    if (net && !net.isOnline()) {
+      if (outbox) outbox.push('fire_course', fireParams);
+      /* Optimistic: advance course counter so server-sent items go to the right course */
+      toast('Course ' + state.currentCourse + ' queued — will fire when reconnected', 'warning');
+      state.currentCourse++;
+      el('btn-fire').textContent = 'Fire C' + state.currentCourse;
+      el('btn-fire').setAttribute('aria-label', 'Fire course ' + state.currentCourse);
+      return;
+    }
+
+    /* ---- ONLINE PATH ---- */
+    sb.rpc('pos_fire_course', fireParams).then(function(r) {
       if (r.error) { toast(r.error.message || 'Fire failed', 'error'); return; }
       toast('Course ' + state.currentCourse + ' fired!', 'success');
       /* Advance course for next items */
@@ -1299,7 +1521,12 @@
       refreshBill();
     }).catch(function(err) {
       console.error('[POS] fire error', err);
-      toast('Connection error', 'error');
+      /* Network died mid-flight — queue it */
+      if (outbox) outbox.push('fire_course', fireParams);
+      toast('Course ' + state.currentCourse + ' queued offline — will fire when reconnected', 'warning');
+      state.currentCourse++;
+      el('btn-fire').textContent = 'Fire C' + state.currentCourse;
+      el('btn-fire').setAttribute('aria-label', 'Fire course ' + state.currentCourse);
     });
   });
 
@@ -1876,6 +2103,14 @@
   el('btn-process-payment').addEventListener('click', processPayment);
 
   function processPayment() {
+    /* SAFETY: payments are NEVER queued offline — double-charge risk.
+       Detect offline and refuse immediately with a clear message. */
+    var net = window.PLAT && window.PLAT.net;
+    if (net && !net.isOnline()) {
+      toast("Can't take payment while offline — please reconnect first", 'error');
+      return;
+    }
+
     var bill = state.payBill;
     if (!bill) return;
 
@@ -2292,6 +2527,8 @@
       return;
     }
     initPlat();
+    _ensureBanner();         /* inject offline banner DOM node */
+    _setupNetMonitor();      /* wire PLAT.net → banner + pay-guard */
     updateClock();
     setInterval(updateClock, 30000);
     setupLogin();

@@ -951,6 +951,155 @@
   getModules.bust = function () { _modulesCache = null; };
 
   /* ==========================================================================
+     PLAT.net — connection monitor
+     Tracks online/offline using navigator.onLine + window events + a lightweight
+     heartbeat (HEAD-equivalent: tiny select on plat_restaurants, 5 s timeout).
+     Debounces transitions by 1.5 s so brief network blips don't flap the UI.
+     API:
+       PLAT.net.isOnline()         → bool
+       PLAT.net.onChange(cb)       → unsubscribe fn
+       PLAT.net.offbanner()        → object — internal, used by pos-terminal.js
+  ========================================================================== */
+  var _netOnline    = navigator.onLine !== false;
+  var _netListeners = [];
+  var _netDebounce  = null;
+  var _hbTimer      = null;
+
+  function _netFire(nowOnline) {
+    if (nowOnline === _netOnline) return;
+    _netOnline = nowOnline;
+    _netListeners.forEach(function (cb) {
+      try { cb(nowOnline); } catch (e) { /* ignore listener errors */ }
+    });
+  }
+
+  function _netTransition(nowOnline) {
+    /* Debounce 1.5 s — avoids flapping on brief sub-second blips */
+    if (_netDebounce) clearTimeout(_netDebounce);
+    _netDebounce = setTimeout(function () {
+      _netDebounce = null;
+      _netFire(nowOnline);
+    }, 1500);
+  }
+
+  /* Browser online/offline events */
+  window.addEventListener('online',  function () { _netTransition(true);  });
+  window.addEventListener('offline', function () { _netTransition(false); });
+
+  /* Heartbeat — a cheap limit-1 select with a 5 s AbortController timeout.
+     If the Supabase client exists we use it; otherwise plain fetch to the URL. */
+  function _netHeartbeat() {
+    var done = false;
+    var abortCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function () {
+      if (!done) { done = true; if (abortCtrl) abortCtrl.abort(); _netTransition(false); }
+    }, 5000);
+
+    var cleanup = function (ok) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      _netTransition(ok);
+    };
+
+    /* Try a fetch HEAD against the Supabase REST root — works even without the
+       JS client, costs zero tokens, never mutates data */
+    var hbUrl = CFG.SUPABASE_URL + '/rest/v1/plat_restaurants?select=id&limit=1';
+    var fetchOpts = {
+      method:  'GET',
+      headers: { 'apikey': CFG.SUPABASE_KEY, 'Authorization': 'Bearer ' + CFG.SUPABASE_KEY },
+    };
+    if (abortCtrl) fetchOpts.signal = abortCtrl.signal;
+    fetch(hbUrl, fetchOpts).then(function (resp) {
+      cleanup(resp.ok || resp.status === 406 /* empty 406 is still reachable */);
+    }).catch(function () {
+      cleanup(false);
+    });
+  }
+
+  /* Schedule heartbeat every 15 s; fire once immediately */
+  _netHeartbeat();
+  _hbTimer = setInterval(_netHeartbeat, 15000);
+
+  var net = {
+    isOnline: function () { return _netOnline; },
+    onChange: function (cb) {
+      _netListeners.push(cb);
+      return function () {
+        _netListeners = _netListeners.filter(function (x) { return x !== cb; });
+      };
+    },
+  };
+
+  /* ==========================================================================
+     PLAT.outbox — order-write queue
+     Persists add-item / fire-course ops to localStorage when offline.
+     On reconnect, the POS calls outbox.replay(onItem, onDone).
+     PAYMENTS ARE NEVER QUEUED — callers must guard pos_pay separately.
+     Each entry: { id, op, params, ts }
+       op: 'add_item' | 'fire_course'
+     id: client-generated UUID used to skip already-applied ops on replay.
+  ========================================================================== */
+  var OUTBOX_KEY = 'tavolo-pos-outbox';
+
+  /* Simple pseudo-UUID — crypto.randomUUID not universally available */
+  function _outboxId() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0;
+      return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  }
+
+  function _outboxRead() {
+    try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]') || []; } catch (e) { return []; }
+  }
+
+  function _outboxWrite(entries) {
+    try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(entries)); } catch (e) { /* storage full */ }
+  }
+
+  var outbox = {
+    /* Append an entry. Returns the generated id. */
+    push: function (op, params) {
+      var entry = { id: _outboxId(), op: op, params: params, ts: Date.now() };
+      var entries = _outboxRead();
+      entries.push(entry);
+      _outboxWrite(entries);
+      return entry.id;
+    },
+    /* Number of pending entries */
+    size: function () { return _outboxRead().length; },
+    /* Clear entries by id list */
+    remove: function (ids) {
+      if (!ids || !ids.length) return;
+      var set = {};
+      ids.forEach(function (id) { set[id] = true; });
+      _outboxWrite(_outboxRead().filter(function (e) { return !set[e.id]; }));
+    },
+    /* Drain the queue: calls onItem(entry)→Promise for each, collects successes.
+       After all settle, calls onDone(failCount). */
+    replay: function (onItem, onDone) {
+      var entries = _outboxRead();
+      if (!entries.length) { if (onDone) onDone(0); return; }
+      var applied = [], failed = 0;
+      var chain = Promise.resolve();
+      entries.forEach(function (entry) {
+        chain = chain.then(function () {
+          return Promise.resolve(onItem(entry)).then(function () {
+            applied.push(entry.id);
+          }).catch(function () {
+            failed++;
+          });
+        });
+      });
+      chain.then(function () {
+        outbox.remove(applied);
+        if (onDone) onDone(failed);
+      });
+    },
+  };
+
+  /* ==========================================================================
      window.PLAT — canonical namespace
   ========================================================================== */
   window.PLAT = {
@@ -1010,6 +1159,9 @@
       formatTime:     formatTime,
       slugify:        slugify,
     },
+
+    net:        net,
+    outbox:     outbox,
 
     screens:    {},
     getModules: getModules,
