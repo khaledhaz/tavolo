@@ -268,8 +268,11 @@
     Promise.all([
       sb.from('mesa_tables').select('id,table_code,label,seats').order('table_code'),
       sb.from('mesa_sessions')
+        /* ALL live statuses — a QR guest's session is 'seated'; loading only
+           'open' made QR-occupied tables look available on the floor (and made
+           "first available table" pick them for a new dine-in). */
         .select('id,table_id,status,order_type,tab_name,server_staff_id,guest_count')
-        .eq('status','open'),
+        .in('status', ['open','seated','scanned','paying']),
     ]).then(function(results) {
       var tablesRes   = results[0];
       var sessionsRes = results[1];
