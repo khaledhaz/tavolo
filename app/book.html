@@ -1409,6 +1409,15 @@ async function _submitBookingInner() {
 
     if (result.ok) {
       state.booking = result;
+      /* Fire-and-forget confirmation email. Inert until the owner sets the
+         RESEND_API_KEY secret on the booking-confirmation function; never
+         blocks or breaks the confirmation screen. */
+      if (email && result.reservation_id) {
+        try {
+          sb.functions.invoke('booking-confirmation', { body: { reservation_id: result.reservation_id } })
+            .catch(function () {});
+        } catch (e) { /* ignore */ }
+      }
       renderConfirmation(result, { name, phone, email, requests });
       return;
     }
