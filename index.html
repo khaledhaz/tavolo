@@ -64,6 +64,9 @@ ul,ol{list-style:none}
   --faint:#555;
   --green:#3aa870;
   --shadow-card:0 0 0 1px rgba(255,255,255,0.05),0 8px 32px rgba(0,0,0,0.6);
+  --grain-opacity:0.028;
+  --copper-text-glow:rgba(194,112,61,0.55);
+  --scroll-line:rgba(194,112,61,0.35);
   --radius-sm:6px;
   --radius-md:10px;
   --radius-lg:16px;
@@ -1496,6 +1499,394 @@ ul,ol{list-style:none}
 .js-ready .reveal.visible{opacity:1;transform:none}
 
 /* ============================================================
+   V3 — FILM GRAIN OVERLAY (fixed, page-level, pointer-events:none)
+   ============================================================ */
+body::after{
+  content:'';
+  position:fixed;inset:0;z-index:9998;
+  pointer-events:none;
+  background-image:url('assets/grain.png');
+  background-size:200px 200px;
+  background-repeat:repeat;
+  opacity:var(--grain-opacity);
+  mix-blend-mode:overlay;
+}
+
+/* ============================================================
+   V3 — HERO HEADLINE STAGGER
+   Three lines enter sequentially (lines carry class .hero-hl-line)
+   ============================================================ */
+.hero-headline .hero-hl-line{
+  display:block;
+  opacity:1;transform:none;
+}
+@media(prefers-reduced-motion:no-preference){
+  .hero-headline .hero-hl-line{
+    opacity:0;transform:translateY(24px);
+    transition:opacity 0.6s cubic-bezier(0.2,0,0.1,1),
+               transform 0.6s cubic-bezier(0.2,0,0.1,1);
+  }
+  .hero-headline .hero-hl-line.visible{opacity:1;transform:none}
+  .hero-headline .hero-hl-line:nth-child(1){transition-delay:120ms}
+  .hero-headline .hero-hl-line:nth-child(2){transition-delay:240ms}
+  .hero-headline .hero-hl-line:nth-child(3){transition-delay:360ms}
+  .hero-subline-wrap{
+    opacity:0;transition:opacity 0.5s ease-out 0.5s;
+  }
+  .hero-subline-wrap.visible{opacity:1}
+  .hero-actions-wrap{
+    opacity:0;transform:translateY(12px);
+    transition:opacity 0.5s ease-out 0.62s,transform 0.5s ease-out 0.62s;
+  }
+  .hero-actions-wrap.visible{opacity:1;transform:none}
+}
+
+/* ============================================================
+   V3 — HERO STAGE: 2×2 GRID (replaces single-panel cycling)
+   ============================================================ */
+.stage-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  position:relative;
+}
+.stage-grid-cell{
+  padding:10px;
+  position:relative;
+  min-width:0;
+}
+.stage-grid-cell:nth-child(1),.stage-grid-cell:nth-child(2){
+  border-bottom:1px solid rgba(194,112,61,0.18);
+}
+.stage-grid-cell:nth-child(1),.stage-grid-cell:nth-child(3){
+  border-right:1px solid rgba(194,112,61,0.18);
+}
+/* Make previews smaller to fit 2x2 */
+.stage-grid .pv{
+  font-size:10px;padding:10px;max-width:none;
+}
+.stage-grid .pv-head{margin-bottom:8px;padding-bottom:7px}
+.stage-grid .pv-title{font-size:9px}
+.stage-grid .pvr-grid{grid-template-columns:repeat(4,1fr);gap:4px}
+.stage-grid .pvr-tbl{aspect-ratio:1.1}
+.stage-grid .pvr-st small{font-size:6px}
+.stage-grid .pvr-chipwrap{height:26px;margin-top:6px}
+.stage-grid .pvr-chip{font-size:9px;padding:0 7px}
+.stage-grid .pvp-rows{gap:3px;margin-bottom:6px}
+.stage-grid .pvp-row{padding:3px 5px}
+.stage-grid .pvp-q{font-size:9px;width:14px}
+.stage-grid .pvp-n{font-size:9px}
+.stage-grid .pvp-p{font-size:9px}
+.stage-grid .pvp-total{padding:6px 5px;margin-bottom:6px}
+.stage-grid .pvp-fire{padding:7px;font-size:10px}
+.stage-grid .pvk-card{padding:8px}
+.stage-grid .pvk-top b{font-size:9px}
+.stage-grid .pvk-items li{font-size:9px;padding:3px 5px}
+.stage-grid .pvk-items{gap:3px;margin-bottom:6px}
+.stage-grid .pvk-foot{padding-top:5px}
+.stage-grid .pvk-timer{font-size:9px}
+.stage-grid .pvk-ghost{padding:5px 8px;font-size:9px;margin-top:5px}
+.stage-grid .pvq-phone{width:110px}
+.stage-grid .pvq-notch{width:40px;height:9px;margin-bottom:5px}
+.stage-grid .pvq-screen{height:176px}
+.stage-grid .pvq-shead{padding:5px 6px}
+.stage-grid .pvq-shead b{font-size:9px}
+.stage-grid .pvq-shead span{font-size:7px}
+.stage-grid .pvq-stage{top:34px;padding:6px 8px;gap:4px}
+.stage-grid .pvq-row{font-size:8px;padding:3px 4px}
+.stage-grid .pvq-tot{font-size:9px;padding:3px 4px 0}
+.stage-grid .pvq-btn{padding:5px;font-size:8px}
+.stage-grid .pvq-cap{font-size:7px}
+.stage-grid .pvq-share{font-size:8px;padding:3px 5px}
+.stage-grid .pvq-tips{gap:3px;margin-top:2px}
+.stage-grid .pvq-tip{font-size:7px;padding:3px 0}
+.stage-grid .pvq-check{width:28px;height:28px}
+.stage-grid .pvq-paid{font-size:10px}
+.stage-grid .pvq-rcpt{font-size:7px}
+/* cell labels */
+.stage-cell-label{
+  font-size:8px;font-weight:600;color:var(--muted);
+  letter-spacing:0.07em;text-transform:uppercase;
+  margin-bottom:5px;
+}
+
+/* V3 hero stage entrance animation */
+@media(prefers-reduced-motion:no-preference){
+  .hero-stage-wrap{
+    opacity:0;
+    transform:translateY(32px) rotateX(4deg) rotateY(-6deg);
+    transition:opacity 0.9s cubic-bezier(0.2,0,0.1,1) 0.2s,
+               transform 0.9s cubic-bezier(0.2,0,0.1,1) 0.2s;
+  }
+  .hero-stage-wrap.visible{
+    opacity:1;
+    transform:translateY(0) rotateX(0deg) rotateY(0deg);
+  }
+}
+
+/* V3 hero trust line */
+.hero-trust{
+  margin-top:20px;
+  font-size:12px;font-weight:500;color:#6b6b6b;
+  letter-spacing:0.01em;
+  line-height:1.5;
+}
+@media(max-width:479px){.hero-trust{display:none}}
+
+/* V3 hero mobile scroll indicator */
+.hero-scroll-ind{
+  display:none;
+  position:absolute;
+  bottom:24px;
+  left:50%;transform:translateX(-50%);
+  flex-direction:column;
+  align-items:center;gap:0;
+  opacity:1;
+  transition:opacity 0.4s ease;
+}
+.hero-scroll-ind.hidden{opacity:0}
+.hero-scroll-line{
+  width:2px;height:40px;border-radius:2px;
+  background:rgba(194,112,61,0.25);
+  position:relative;overflow:hidden;
+}
+.hero-scroll-dot{
+  position:absolute;top:0;left:0;right:0;
+  height:8px;border-radius:2px;
+  background:var(--copper);
+  animation:scrollDot 1.6s ease-in-out infinite;
+}
+@keyframes scrollDot{
+  0%{top:0;opacity:1}
+  70%{top:32px;opacity:1}
+  85%,100%{top:32px;opacity:0}
+}
+@media(max-width:959px){
+  .hero-scroll-ind{display:flex}
+}
+
+/* ============================================================
+   V3 — SCROLL-DRIVEN "WATCH A SHIFT" SECTION
+   Sticky panel with vertical spine, 4 steps, crossfading right panel
+   ============================================================ */
+.shift-outer{
+  background:var(--surface);
+  position:relative;
+}
+.shift-scroll-container{
+  min-height:400vh;
+  position:relative;
+}
+@media(max-width:640px){
+  .shift-scroll-container{min-height:280vh}
+}
+.shift-sticky{
+  position:sticky;
+  top:68px;
+  height:calc(100vh - 68px);
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+}
+.shift-inner{
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:clamp(24px,4vw,56px);
+  align-items:center;
+  width:100%;
+  padding:clamp(24px,3vw,48px) 0;
+}
+@media(max-width:800px){
+  .shift-inner{
+    grid-template-columns:200px 1fr;
+    gap:16px;
+  }
+}
+@media(max-width:600px){
+  .shift-inner{
+    grid-template-columns:1fr;
+  }
+  .shift-spine-col{display:none}
+}
+
+/* Left: spine */
+.shift-spine-col{
+  position:relative;
+  align-self:stretch;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:0 0 0 20px;
+}
+.shift-spine-track{
+  position:absolute;left:24px;top:10%;bottom:10%;
+  width:2px;
+  background:rgba(255,255,255,0.08);
+  border-radius:2px;
+}
+.shift-spine-fill{
+  position:absolute;top:0;left:0;right:0;
+  background:linear-gradient(to bottom,var(--copper),var(--gold));
+  border-radius:2px;
+  height:0;
+  transition:height 0.1s linear;
+}
+.shift-steps{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(20px,4vh,36px);
+}
+.shift-step{
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+  opacity:0.38;
+  transition:opacity 0.4s ease;
+}
+.shift-step.active{opacity:1}
+.shift-node{
+  flex-shrink:0;width:12px;height:12px;border-radius:50%;
+  border:1.5px solid rgba(194,112,61,0.3);
+  background:transparent;
+  margin-top:4px;
+  transition:background 0.3s,border-color 0.3s;
+}
+.shift-step.active .shift-node{
+  background:var(--copper);
+  border-color:var(--copper);
+}
+.shift-time{
+  font-family:var(--serif);
+  font-size:18px;font-weight:400;
+  color:rgba(194,112,61,0.45);
+  line-height:1;margin-bottom:4px;
+  transition:color 0.3s;
+}
+.shift-step.active .shift-time{color:var(--copper)}
+.shift-step-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:2px}
+.shift-step-desc{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* Right: live preview panel */
+.shift-stage{
+  background:var(--bg-deep);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:20px;
+  overflow:hidden;
+  position:relative;
+  min-height:380px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.shift-pane{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  opacity:0;
+  transition:opacity 0.4s ease;
+  pointer-events:none;
+}
+.shift-pane.active{opacity:1;pointer-events:auto}
+
+/* Reduced-motion: static 4-step grid instead of scroll-driven */
+.shift-static{display:none}
+@media(prefers-reduced-motion:reduce){
+  .shift-scroll-container{min-height:unset}
+  .shift-sticky{position:static;height:auto}
+  .shift-inner{display:none}
+  .shift-static{display:block;padding:clamp(40px,5vw,64px) 0}
+}
+
+/* ============================================================
+   V3 — DEMO SECTION ENHANCEMENTS
+   Step chips + context bar + completion toast
+   ============================================================ */
+.demo-step-chips{
+  display:flex;flex-wrap:wrap;gap:10px;
+  margin-top:20px;
+}
+.demo-chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 14px;border-radius:var(--radius-full);
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+  font-size:12px;font-weight:500;color:var(--muted);
+  transition:border-color 0.2s,color 0.2s;
+}
+.demo-chip.step-done{
+  border-color:rgba(194,112,61,0.35);
+  color:var(--copper);
+}
+.demo-context-bar{
+  font-size:12px;font-weight:500;color:var(--muted);
+  padding:8px 20px;
+  border-bottom:1px solid var(--border);
+  background:rgba(194,112,61,0.03);
+  letter-spacing:0.02em;
+}
+.demo-closed-toast{
+  position:absolute;top:0;left:0;right:0;
+  background:var(--copper);color:#fff;
+  height:52px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:600;
+  transform:translateY(-100%);
+  transition:transform 0.35s cubic-bezier(0.2,0,0.1,1);
+  z-index:10;
+  border-radius:var(--radius-2xl) var(--radius-2xl) 0 0;
+}
+.demo-closed-toast.show{transform:translateY(0)}
+
+/* ============================================================
+   V3 — SCREENSHOT CARD 3D TILT (shared cursor handler)
+   ============================================================ */
+.real-card{
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transform-style:preserve-3d;
+  will-change:transform;
+  transition:transform 0.2s ease-out,box-shadow 0.2s ease-out;
+  perspective:1000px;
+}
+.real-card:hover{
+  box-shadow:0 24px 60px rgba(0,0,0,0.7);
+}
+
+/* ============================================================
+   V3 — FEATURED PRICING CARD SHIMMER
+   ============================================================ */
+@keyframes priceShimmer{
+  0%{background-position:0% 0%}
+  100%{background-position:200% 0%}
+}
+.price-card-featured::before{
+  background:linear-gradient(90deg,var(--copper),var(--gold),var(--copper));
+  background-size:200% 100%;
+  animation:priceShimmer 4s linear infinite;
+}
+
+/* ============================================================
+   V3 — LAZY IMAGE SHIMMER SKELETON
+   ============================================================ */
+.real-card.loading img{opacity:0}
+.real-card::before{
+  content:'';
+  position:absolute;inset:0;border-radius:14px;
+  background:linear-gradient(90deg,rgba(255,255,255,0.03) 0%,rgba(255,255,255,0.07) 50%,rgba(255,255,255,0.03) 100%);
+  background-size:200% 100%;
+  animation:shimmer 1.8s ease infinite;
+  pointer-events:none;
+  z-index:1;
+}
+@keyframes shimmer{
+  0%{background-position:-100% 0}
+  100%{background-position:100% 0}
+}
+.real-card.loaded::before{display:none}
+
+/* Footer copyright fix (contrast) */
+.footer-copy{color:#6b6b6b}
+
+/* ============================================================
    REDUCED MOTION — freeze every loop to its tasteful base state
    (base styles above are authored as the static keeper frames)
    ============================================================ */
@@ -1511,13 +1902,22 @@ ul,ol{list-style:none}
   .stage-tab.active::after,
   .dt.dt-paying,
   .flow-step .vg-chip,.flow-step .vg-row,.flow-step .vg-pill-new,
-  .flow-step .vg-pill-ready,.flow-step .vg-pop{
+  .flow-step .vg-pill-ready,.flow-step .vg-pop,
+  .hero-scroll-dot,.price-card-featured::before,
+  .real-card::before{
     animation:none !important;
   }
   .pvr-chip{opacity:1;transform:none}
   .hero-toast{opacity:0}
   .stage-panel,.flow-step,.flow-fill,.hero-stage{transition:none}
   .flow-step.active{transform:none}
+  /* V3 additions */
+  .hero-headline .hero-hl-line,.hero-subline-wrap,.hero-actions-wrap{
+    opacity:1 !important;transform:none !important;transition:none !important;
+  }
+  .hero-stage-wrap{opacity:1 !important;transform:none !important;transition:none !important}
+  .hero-scroll-ind{display:none !important}
+  .real-card{transform:none !important;transition:none !important}
 }
 </style>
 </head>
@@ -1586,49 +1986,51 @@ ul,ol{list-style:none}
       <div class="hero-text">
         <div class="hero-eyebrow" aria-label="Product status">
           <span class="eyebrow-dot" aria-hidden="true"></span>
-          The complete restaurant operating system
+          The restaurant operating system
         </div>
         <h1 class="hero-headline" id="hero-headline">
-          Run your whole floor<br>from <em>one screen.</em>
+          <span class="hero-hl-line">One platform.</span>
+          <span class="hero-hl-line"><em>Every seat, every order,</em></span>
+          <span class="hero-hl-line">every payment.</span>
         </h1>
-        <p class="hero-subline">
-          Bookings land on the floor map, orders fire to the kitchen, guests pay by QR —
-          <strong>one platform, in motion.</strong> The screen you're watching is the product, running live.
-        </p>
-        <div class="hero-actions">
-          <a href="app/" class="btn-primary">
-            Book a demo
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
-          <a href="#demo" class="btn-ghost">Try it live ↓</a>
+        <div class="hero-subline-wrap">
+          <p class="hero-subline">
+            Bookings land on the floor. Orders fire to the kitchen.
+            Guests pay by QR — no app download, no waiting for the check.
+          </p>
+        </div>
+        <div class="hero-actions-wrap">
+          <div class="hero-actions">
+            <a href="app/" class="btn-primary">
+              Book a demo →
+            </a>
+            <a href="#demo" class="btn-ghost">Try it live ↓</a>
+          </div>
+          <p class="hero-trust">No hardware required · Goes live in one shift · Cancel any time</p>
         </div>
       </div>
 
       <div class="hero-visual">
-        <div class="hero-stage-wrap">
+        <div class="hero-stage-wrap" id="hero-stage-wrap">
           <div class="hero-stage-glow" aria-hidden="true"></div>
-          <div class="hero-stage" id="hero-stage">
+          <div class="hero-stage" id="hero-stage" aria-hidden="true">
+            <!-- Title bar -->
             <div class="stage-bar">
-              <span class="stage-brand" aria-hidden="true">tav<b>o</b>lo</span>
-              <div class="stage-tabs" role="group" aria-label="Choose a product preview">
-                <button class="stage-tab active" type="button" aria-pressed="true" aria-label="Show the reservations floor preview">Floor</button>
-                <button class="stage-tab" type="button" aria-pressed="false" aria-label="Show the POS preview">POS</button>
-                <button class="stage-tab" type="button" aria-pressed="false" aria-label="Show the kitchen display preview">Kitchen</button>
-                <button class="stage-tab" type="button" aria-pressed="false" aria-label="Show the QR pay preview">QR Pay</button>
+              <span class="stage-brand">tav<b>o</b>lo</span>
+              <div style="display:flex;gap:8px;align-items:center;margin:0 auto">
+                <span style="width:10px;height:10px;border-radius:50%;background:#3a3b48;display:block"></span>
+                <span style="width:10px;height:10px;border-radius:50%;background:#3a3b48;display:block"></span>
+                <span style="width:10px;height:10px;border-radius:50%;background:#3a3b48;display:block"></span>
               </div>
-              <span class="stage-live" aria-hidden="true"><i></i>Live</span>
+              <span class="stage-live"><i></i>Live</span>
             </div>
-            <div class="stage-view" aria-hidden="true">
-
-              <!-- Panel 1 — Reservations floor -->
-              <div class="stage-panel on">
-                <div class="pv">
-                  <div class="pv-head">
-                    <span class="pv-dot"></span>
-                    <span class="pv-title">Floor · Friday 19:30</span>
-                    <span class="pv-live">Live</span>
-                  </div>
-                  <div class="pvr-grid">
+            <!-- 2×2 grid of all four live panels -->
+            <div class="stage-grid">
+              <!-- Top-left: Reservations floor -->
+              <div class="stage-grid-cell">
+                <p class="stage-cell-label">Floor</p>
+                <div class="pv" style="padding:8px">
+                  <div class="pvr-grid" style="grid-template-columns:repeat(4,1fr);gap:3px">
                     <div class="pvr-tbl"><span class="pvr-st pvr-seat" style="opacity:1">T1<small>Seated</small></span></div>
                     <div class="pvr-tbl pvr-anim">
                       <span class="pvr-st pvr-open">T2<small>Open</small></span>
@@ -1650,124 +2052,112 @@ ul,ol{list-style:none}
                     </div>
                     <div class="pvr-tbl"><span class="pvr-st pvr-dirty" style="opacity:1">T8<small>Clean</small></span></div>
                   </div>
-                  <div class="pvr-chipwrap">
-                    <div class="pvr-chip">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                      <span><b>New booking</b> — Sofia M. · 4 guests · 20:00</span>
+                  <div class="pvr-chipwrap" style="height:22px;margin-top:5px">
+                    <div class="pvr-chip" style="font-size:8px;padding:0 6px">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      <span><b>New booking</b> — Sofia M.</span>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <!-- Panel 2 — POS ticket -->
-              <div class="stage-panel">
-                <div class="pv">
-                  <div class="pv-head">
-                    <span class="pv-dot"></span>
-                    <span class="pv-title">POS · Table 12 · Course 1</span>
-                    <span class="pv-live">Open</span>
+              <!-- Top-right: POS ticket -->
+              <div class="stage-grid-cell">
+                <p class="stage-cell-label">POS · T12</p>
+                <div class="pv" style="padding:8px">
+                  <div class="pvp-rows" style="gap:2px;margin-bottom:6px">
+                    <div class="pvp-row pvp-r1" style="padding:2px 4px"><span class="pvp-q" style="font-size:8px;width:12px">1×</span><span class="pvp-n" style="font-size:8px">Ribeye</span><span class="pvp-p" style="font-size:8px">$48</span></div>
+                    <div class="pvp-row pvp-note pvp-r3" style="padding:2px 4px;font-size:8px">"No onion — allergy"</div>
+                    <div class="pvp-row pvp-r4" style="padding:2px 4px"><span class="pvp-q" style="font-size:8px;width:12px">2×</span><span class="pvp-n" style="font-size:8px">Truffle fries</span><span class="pvp-p" style="font-size:8px">$14</span></div>
                   </div>
-                  <div class="pvp-rows">
-                    <div class="pvp-row pvp-r1"><span class="pvp-q">1×</span><span class="pvp-n">Ribeye, 300g</span><span class="pvp-p">$48.00</span></div>
-                    <div class="pvp-row pvp-mod pvp-r2">+ Medium rare</div>
-                    <div class="pvp-row pvp-note pvp-r3">"No onion — allergy"</div>
-                    <div class="pvp-row pvp-r4"><span class="pvp-q">2×</span><span class="pvp-n">Truffle fries</span><span class="pvp-p">$14.00</span></div>
-                  </div>
-                  <div class="pvp-total">
+                  <div class="pvp-total" style="padding:4px 4px;margin-bottom:5px;font-size:10px">
                     <span>Total</span>
-                    <span class="pvp-amts"><b class="pvp-a1">$0.00</b><b class="pvp-a2">$48.00</b><b class="pvp-a3">$62.00</b></span>
+                    <span class="pvp-amts"><b class="pvp-a1">$0</b><b class="pvp-a2">$48</b><b class="pvp-a3">$62</b></span>
                   </div>
-                  <div class="pvp-fire">
+                  <div class="pvp-fire" style="padding:5px;font-size:9px">
                     <span class="pvp-f1">Fire to kitchen</span>
-                    <span class="pvp-f2">Fired to kitchen ✓</span>
+                    <span class="pvp-f2">Fired ✓</span>
                   </div>
                 </div>
               </div>
-
-              <!-- Panel 3 — Kitchen display -->
-              <div class="stage-panel">
-                <div class="pv">
-                  <div class="pv-head">
-                    <span class="pv-dot"></span>
-                    <span class="pv-title">Kitchen display · Grill</span>
-                    <span class="pv-live">2 open</span>
-                  </div>
-                  <div class="pvk-card">
+              <!-- Bottom-left: Kitchen display -->
+              <div class="stage-grid-cell">
+                <p class="stage-cell-label">Kitchen</p>
+                <div class="pv" style="padding:8px">
+                  <div class="pvk-card" style="padding:7px">
                     <span class="pvk-edge pvk-e1"></span>
                     <span class="pvk-edge pvk-e2"></span>
                     <span class="pvk-edge pvk-e3"></span>
-                    <div class="pvk-top">
-                      <b>#214 · Table 12</b>
+                    <div class="pvk-top" style="margin-bottom:6px">
+                      <b style="font-size:9px">#214 · T12</b>
                       <span class="pvk-pillbox">
-                        <i class="pvk-pill pvk-p-new">New</i>
-                        <i class="pvk-pill pvk-p-prep">Preparing</i>
-                        <i class="pvk-pill pvk-p-ready">Ready</i>
+                        <i class="pvk-pill pvk-p-new" style="font-size:7px">New</i>
+                        <i class="pvk-pill pvk-p-prep" style="font-size:7px">Prep</i>
+                        <i class="pvk-pill pvk-p-ready" style="font-size:7px">Ready</i>
                       </span>
                     </div>
-                    <ul class="pvk-items">
-                      <li><b>1×</b> Ribeye — medium rare</li>
-                      <li class="pvk-warn">No onion — allergy</li>
-                      <li><b>2×</b> Truffle fries</li>
+                    <ul class="pvk-items" style="gap:2px;margin-bottom:5px">
+                      <li style="font-size:8px;padding:2px 4px"><b>1×</b> Ribeye</li>
+                      <li class="pvk-warn" style="font-size:8px;padding:2px 4px">No onion — allergy</li>
+                      <li style="font-size:8px;padding:2px 4px"><b>2×</b> Truffle fries</li>
                     </ul>
-                    <div class="pvk-foot">
-                      <span class="pvk-timer"><i class="pvk-t1">0:08</i><i class="pvk-t2">3:42</i><i class="pvk-t3">7:15</i></span>
-                      <span class="pvk-bump">Bump ✓</span>
+                    <div class="pvk-foot" style="padding-top:4px">
+                      <span class="pvk-timer" style="font-size:8px"><i class="pvk-t1">0:08</i><i class="pvk-t2">3:42</i><i class="pvk-t3">7:15</i></span>
+                      <span class="pvk-bump" style="font-size:8px">Bump ✓</span>
                     </div>
                   </div>
-                  <div class="pvk-ghost"><span>#215 · Table 4 — Sea Bass ×2</span><span>queued</span></div>
                 </div>
               </div>
-
-              <!-- Panel 4 — QR Pay phone -->
-              <div class="stage-panel">
+              <!-- Bottom-right: QR Pay -->
+              <div class="stage-grid-cell" style="display:flex;align-items:center;justify-content:center">
+                <p class="stage-cell-label" style="position:absolute;top:10px;left:10px">QR Pay</p>
                 <div class="pvq">
-                  <div class="pvq-phone">
-                    <div class="pvq-notch"></div>
-                    <div class="pvq-screen">
-                      <div class="pvq-shead"><b>The Ember Room</b><span>Table 9 · 3 guests</span></div>
-                      <div class="pvq-stage pvq-s1">
-                        <div class="pvq-row"><span>Burrata</span><b>$18.00</b></div>
-                        <div class="pvq-row"><span>2× Sea Bass</span><b>$68.00</b></div>
-                        <div class="pvq-row"><span>Bottle Rosé</span><b>$38.00</b></div>
-                        <div class="pvq-tot"><span>Total</span><b>$124.00</b></div>
-                        <div class="pvq-btn">Split the bill</div>
+                  <div class="pvq-phone" style="width:100px">
+                    <div class="pvq-notch" style="width:36px;height:8px;margin-bottom:4px"></div>
+                    <div class="pvq-screen" style="height:156px">
+                      <div class="pvq-shead" style="padding:4px 6px"><b style="font-size:8px">The Ember Room</b><span style="font-size:7px">T9 · 3 guests</span></div>
+                      <div class="pvq-stage pvq-s1" style="top:30px;padding:5px 7px;gap:3px">
+                        <div class="pvq-row" style="font-size:7px;padding:2px 3px"><span>Burrata</span><b>$18</b></div>
+                        <div class="pvq-row" style="font-size:7px;padding:2px 3px"><span>Sea Bass</span><b>$68</b></div>
+                        <div class="pvq-tot" style="font-size:8px;padding:3px 3px 0"><span>Total</span><b>$124</b></div>
+                        <div class="pvq-btn" style="padding:4px;font-size:7px">Split the bill</div>
                       </div>
-                      <div class="pvq-stage pvq-s2">
-                        <p class="pvq-cap">Split 3 ways</p>
-                        <div class="pvq-share pvq-sh1 pvq-me"><span>You</span><b>$41.33</b></div>
-                        <div class="pvq-share pvq-sh2"><span>Aya</span><b>$41.33</b></div>
-                        <div class="pvq-share pvq-sh3"><span>Marco</span><b>$41.34</b></div>
-                        <div class="pvq-tips">
-                          <span class="pvq-tip">15%</span>
-                          <span class="pvq-tip">18%<i class="pvq-tipsel">18%</i></span>
-                          <span class="pvq-tip">20%</span>
+                      <div class="pvq-stage pvq-s2" style="top:30px;padding:5px 7px;gap:3px">
+                        <p class="pvq-cap" style="font-size:6px">Split 3 ways</p>
+                        <div class="pvq-share pvq-sh1 pvq-me" style="font-size:7px;padding:2px 4px"><span>You</span><b>$41.33</b></div>
+                        <div class="pvq-share pvq-sh2" style="font-size:7px;padding:2px 4px"><span>Aya</span><b>$41.33</b></div>
+                        <div class="pvq-tips" style="gap:2px;margin-top:2px">
+                          <span class="pvq-tip" style="font-size:6px;padding:3px 0">15%</span>
+                          <span class="pvq-tip" style="font-size:6px;padding:3px 0">18%<i class="pvq-tipsel" style="font-size:6px">18%</i></span>
+                          <span class="pvq-tip" style="font-size:6px;padding:3px 0">20%</span>
                         </div>
-                        <div class="pvq-btn">Pay $48.77</div>
+                        <div class="pvq-btn" style="padding:4px;font-size:7px">Pay $48.77</div>
                       </div>
-                      <div class="pvq-stage pvq-s3">
-                        <span class="pvq-check">
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <div class="pvq-stage pvq-s3" style="top:30px;padding:5px 7px;gap:4px">
+                        <span class="pvq-check" style="width:26px;height:26px">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         </span>
-                        <b class="pvq-paid">Paid · $48.77</b>
-                        <span class="pvq-rcpt">Receipt sent to your phone</span>
+                        <b class="pvq-paid" style="font-size:9px">Paid · $48.77</b>
+                        <span class="pvq-rcpt" style="font-size:7px">Receipt sent</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <!-- Floating live toasts -->
-              <div class="hero-toast hero-toast-1">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <span><b>New booking</b> — Sofia M. · 4 guests</span>
-              </div>
-              <div class="hero-toast hero-toast-2">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                <span><span class="tg">Paid</span> — Table 9 settled $124.00</span>
-              </div>
-
+            </div>
+            <!-- Floating live toasts (positioned over the stage) -->
+            <div class="hero-toast hero-toast-1" style="top:44px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span><b>New booking</b> — Sofia M. · 4 guests</span>
+            </div>
+            <div class="hero-toast hero-toast-2" style="top:44px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><span class="tg">Paid</span> — Table 9 settled $124.00</span>
             </div>
           </div>
+        </div>
+        <!-- Mobile scroll indicator -->
+        <div class="hero-scroll-ind" id="hero-scroll-ind" aria-hidden="true">
+          <div class="hero-scroll-line"><div class="hero-scroll-dot"></div></div>
         </div>
       </div>
     </div>
@@ -1806,58 +2196,173 @@ ul,ol{list-style:none}
 <hr class="divider">
 
 <!-- =====================================================
-     HOW A SHIFT FLOWS — one connected animated story
+     WATCH A SHIFT FLOW — V3 scroll-driven sticky section
      ===================================================== -->
-<section class="section flow-section" id="flow" aria-labelledby="flow-heading">
-  <div class="container">
-    <div class="flow-intro reveal">
+<section class="shift-outer" id="flow" aria-labelledby="flow-heading">
+  <!-- Section header (outside sticky container so it scrolls normally) -->
+  <div class="container" style="padding-top:clamp(72px,8vw,112px)">
+    <div class="flow-intro reveal" style="max-width:560px;margin-bottom:clamp(40px,5vw,64px)">
       <p class="section-label">One shift, one flow</p>
-      <h2 class="section-headline" id="flow-heading">Watch a shift <em>flow.</em></h2>
-      <p class="section-sub">From the booking to the bumped ticket to the paid bill — every step hands off to the next, automatically.</p>
-    </div>
-    <div class="flow-track reveal" aria-hidden="true"><span class="flow-fill" id="flow-fill"></span></div>
-    <div class="flow-steps" id="flow-steps">
-      <div class="flow-step reveal">
-        <p class="flow-time">19:30</p>
-        <h3 class="flow-title">Booking lands</h3>
-        <p class="flow-desc">Sofia books online. The floor map reserves T12 by itself — no phone call, no notebook.</p>
-        <div class="flow-vg" aria-hidden="true">
-          <span class="vg-chip"><span>Sofia M. · 4 guests · T12</span><span class="vg-ok">✓</span></span>
-        </div>
-      </div>
-      <div class="flow-step reveal" style="--delay:1">
-        <p class="flow-time">19:34</p>
-        <h3 class="flow-title">Seated &amp; ordering</h3>
-        <p class="flow-desc">The host seats the party against the booking; orders go in tableside on the POS.</p>
-        <div class="flow-vg" aria-hidden="true">
-          <div class="vg-rows">
-            <span class="vg-row vg-row1"><span>Ribeye — medium rare</span><b>1×</b></span>
-            <span class="vg-row vg-row2"><span>Truffle fries</span><b>2×</b></span>
-          </div>
-        </div>
-      </div>
-      <div class="flow-step reveal" style="--delay:2">
-        <p class="flow-time">19:41</p>
-        <h3 class="flow-title">Kitchen fires</h3>
-        <p class="flow-desc">The ticket hits the grill screen the second it's sent — and gets bumped when it's plated.</p>
-        <div class="flow-vg" aria-hidden="true">
-          <span class="vg-pills">
-            <span class="vg-pill vg-pill-new">New</span>
-            <span class="vg-pill vg-pill-ready">Ready</span>
-          </span>
-          <span class="vg-id">#214</span>
-        </div>
-      </div>
-      <div class="flow-step reveal" style="--delay:3">
-        <p class="flow-time">20:52</p>
-        <h3 class="flow-title">Paid by QR, table turns</h3>
-        <p class="flow-desc">Guests scan, split three ways, tip, done. T12 flips back to open for the next party.</p>
-        <div class="flow-vg" aria-hidden="true">
-          <span class="vg-chip vg-pop"><span class="vg-ok">✓</span><span>Paid $124.00 · T12 → open</span></span>
-        </div>
-      </div>
+      <h2 class="section-headline" id="flow-heading">Watch a shift<br><em>flow.</em></h2>
+      <p class="section-sub">From the first booking to the final payment — every step hands off automatically.</p>
     </div>
   </div>
+
+  <!-- Scroll container — 400vh tall; sticky panel sits inside -->
+  <div class="shift-scroll-container" id="shift-scroll-container">
+    <div class="shift-sticky">
+      <div class="container" style="width:100%">
+        <div class="shift-inner">
+
+          <!-- Left: vertical spine + step labels -->
+          <div class="shift-spine-col" aria-hidden="true">
+            <div class="shift-spine-track">
+              <div class="shift-spine-fill" id="shift-fill"></div>
+            </div>
+            <div class="shift-steps" id="shift-steps">
+              <div class="shift-step active" data-step="0">
+                <div class="shift-node"></div>
+                <div>
+                  <p class="shift-time">19:30</p>
+                  <p class="shift-step-title">Booking lands</p>
+                  <p class="shift-step-desc">Sofia books online. Floor reserves T12 automatically.</p>
+                </div>
+              </div>
+              <div class="shift-step" data-step="1">
+                <div class="shift-node"></div>
+                <div>
+                  <p class="shift-time">19:34</p>
+                  <p class="shift-step-title">Seated &amp; ordering</p>
+                  <p class="shift-step-desc">Host seats the party. POS opens against the reservation.</p>
+                </div>
+              </div>
+              <div class="shift-step" data-step="2">
+                <div class="shift-node"></div>
+                <div>
+                  <p class="shift-time">19:41</p>
+                  <p class="shift-step-title">Kitchen fires</p>
+                  <p class="shift-step-desc">Ticket hits the grill screen the second it's sent.</p>
+                </div>
+              </div>
+              <div class="shift-step" data-step="3">
+                <div class="shift-node"></div>
+                <div>
+                  <p class="shift-time">20:52</p>
+                  <p class="shift-step-title">Paid by QR, table turns</p>
+                  <p class="shift-step-desc">Guests scan, split, tip, done. T12 resets for the next party.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: live preview panel crossfading between modules -->
+          <div class="shift-stage" id="shift-stage" aria-hidden="true">
+            <!-- Pane 0: Reservations -->
+            <div class="shift-pane active" id="shift-pane-0">
+              <div class="pv" style="max-width:360px;width:100%">
+                <div class="pv-head">
+                  <span class="pv-dot"></span>
+                  <span class="pv-title">Floor · The Ember Room · Friday 19:30</span>
+                  <span class="pv-live">Live</span>
+                </div>
+                <div class="pvr-grid">
+                  <div class="pvr-tbl"><span class="pvr-st pvr-seat" style="opacity:1">T1<small>Seated</small></span></div>
+                  <div class="pvr-tbl pvr-anim"><span class="pvr-st pvr-open">T2<small>Open</small></span><span class="pvr-st pvr-rsv pvr-keep">T2<small>Reserved</small></span><span class="pvr-st pvr-seat">T2<small>Seated</small></span></div>
+                  <div class="pvr-tbl"><span class="pvr-st pvr-open" style="opacity:1">T3<small>Open</small></span></div>
+                  <div class="pvr-tbl"><span class="pvr-st pvr-rsv" style="opacity:1">T4<small>Reserved</small></span></div>
+                  <div class="pvr-tbl pvr-anim pvr-d1"><span class="pvr-st pvr-open">T5<small>Open</small></span><span class="pvr-st pvr-rsv">T5<small>Reserved</small></span><span class="pvr-st pvr-seat pvr-keep">T5<small>Seated</small></span></div>
+                  <div class="pvr-tbl"><span class="pvr-st pvr-seat" style="opacity:1">T6<small>Seated</small></span></div>
+                  <div class="pvr-tbl pvr-anim pvr-d2"><span class="pvr-st pvr-open pvr-keep">T7<small>Open</small></span><span class="pvr-st pvr-rsv">T7<small>Reserved</small></span><span class="pvr-st pvr-seat">T7<small>Seated</small></span></div>
+                  <div class="pvr-tbl"><span class="pvr-st pvr-dirty" style="opacity:1">T8<small>Clean</small></span></div>
+                </div>
+                <div class="pvr-chipwrap">
+                  <div class="pvr-chip">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c2703d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span><b>New booking</b> — Sofia M. · 4 guests · 20:00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Pane 1: POS -->
+            <div class="shift-pane" id="shift-pane-1">
+              <div class="pv" style="max-width:320px;width:100%">
+                <div class="pv-head"><span class="pv-dot"></span><span class="pv-title">POS · Table 12 · Course 1</span><span class="pv-live">Open</span></div>
+                <div class="pvp-rows">
+                  <div class="pvp-row pvp-r1"><span class="pvp-q">1×</span><span class="pvp-n">Ribeye, 300g</span><span class="pvp-p">$48.00</span></div>
+                  <div class="pvp-row pvp-mod pvp-r2">+ Medium rare</div>
+                  <div class="pvp-row pvp-note pvp-r3">"No onion — allergy"</div>
+                  <div class="pvp-row pvp-r4"><span class="pvp-q">2×</span><span class="pvp-n">Truffle fries</span><span class="pvp-p">$14.00</span></div>
+                </div>
+                <div class="pvp-total"><span>Total</span><span class="pvp-amts"><b class="pvp-a1">$0.00</b><b class="pvp-a2">$48.00</b><b class="pvp-a3">$62.00</b></span></div>
+                <div class="pvp-fire"><span class="pvp-f1">Fire to kitchen</span><span class="pvp-f2">Fired to kitchen ✓</span></div>
+              </div>
+            </div>
+            <!-- Pane 2: KDS -->
+            <div class="shift-pane" id="shift-pane-2">
+              <div class="pv" style="max-width:320px;width:100%">
+                <div class="pv-head"><span class="pv-dot"></span><span class="pv-title">Kitchen display · Grill</span><span class="pv-live">2 open</span></div>
+                <div class="pvk-card">
+                  <span class="pvk-edge pvk-e1"></span><span class="pvk-edge pvk-e2"></span><span class="pvk-edge pvk-e3"></span>
+                  <div class="pvk-top"><b>#214 · Table 12</b><span class="pvk-pillbox"><i class="pvk-pill pvk-p-new">New</i><i class="pvk-pill pvk-p-prep">Preparing</i><i class="pvk-pill pvk-p-ready">Ready</i></span></div>
+                  <ul class="pvk-items"><li><b>1×</b> Ribeye — medium rare</li><li class="pvk-warn">No onion — allergy</li><li><b>2×</b> Truffle fries</li></ul>
+                  <div class="pvk-foot"><span class="pvk-timer"><i class="pvk-t1">0:08</i><i class="pvk-t2">3:42</i><i class="pvk-t3">7:15</i></span><span class="pvk-bump">Bump ✓</span></div>
+                </div>
+                <div class="pvk-ghost"><span>#215 · Table 4 — Sea Bass ×2</span><span>queued</span></div>
+              </div>
+            </div>
+            <!-- Pane 3: QR Pay -->
+            <div class="shift-pane" id="shift-pane-3">
+              <div class="pvq">
+                <div class="pvq-phone">
+                  <div class="pvq-notch"></div>
+                  <div class="pvq-screen">
+                    <div class="pvq-shead"><b>The Ember Room</b><span>Table 9 · 3 guests</span></div>
+                    <div class="pvq-stage pvq-s1">
+                      <div class="pvq-row"><span>Burrata</span><b>$18.00</b></div>
+                      <div class="pvq-row"><span>2× Sea Bass</span><b>$68.00</b></div>
+                      <div class="pvq-row"><span>Bottle Rosé</span><b>$38.00</b></div>
+                      <div class="pvq-tot"><span>Total</span><b>$124.00</b></div>
+                      <div class="pvq-btn">Split the bill</div>
+                    </div>
+                    <div class="pvq-stage pvq-s2">
+                      <p class="pvq-cap">Split 3 ways</p>
+                      <div class="pvq-share pvq-sh1 pvq-me"><span>You</span><b>$41.33</b></div>
+                      <div class="pvq-share pvq-sh2"><span>Aya</span><b>$41.33</b></div>
+                      <div class="pvq-share pvq-sh3"><span>Marco</span><b>$41.34</b></div>
+                      <div class="pvq-tips">
+                        <span class="pvq-tip">15%</span>
+                        <span class="pvq-tip">18%<i class="pvq-tipsel">18%</i></span>
+                        <span class="pvq-tip">20%</span>
+                      </div>
+                      <div class="pvq-btn">Pay $48.77</div>
+                    </div>
+                    <div class="pvq-stage pvq-s3">
+                      <span class="pvq-check"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3aa870" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                      <b class="pvq-paid">Paid · $48.77</b>
+                      <span class="pvq-rcpt">Receipt sent to your phone</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /.shift-inner -->
+      </div>
+    </div><!-- /.shift-sticky -->
+
+    <!-- Reduced-motion static fallback (shown by CSS when reduce is set) -->
+    <div class="shift-static container">
+      <div class="flow-steps" id="flow-steps" style="grid-template-columns:repeat(2,1fr)">
+        <div class="flow-step active"><p class="flow-time">19:30</p><h3 class="flow-title">Booking lands</h3><p class="flow-desc">Sofia books online. Floor reserves T12 automatically.</p></div>
+        <div class="flow-step active" style="--delay:1"><p class="flow-time">19:34</p><h3 class="flow-title">Seated &amp; ordering</h3><p class="flow-desc">Host seats the party. POS opens against the reservation.</p></div>
+        <div class="flow-step active" style="--delay:2"><p class="flow-time">19:41</p><h3 class="flow-title">Kitchen fires</h3><p class="flow-desc">Ticket hits the grill screen the second it's sent.</p></div>
+        <div class="flow-step active" style="--delay:3"><p class="flow-time">20:52</p><h3 class="flow-title">Paid by QR, table turns</h3><p class="flow-desc">Guests scan, split, tip, done. T12 resets for the next party.</p></div>
+      </div>
+    </div>
+  </div><!-- /.shift-scroll-container -->
+
+  <div style="padding-bottom:clamp(72px,8vw,112px)"></div>
 </section>
 
 <hr class="divider">
@@ -2110,9 +2615,21 @@ ul,ol{list-style:none}
       <p class="section-label">Proof by touch</p>
       <h2 class="section-headline" id="demo-heading">Don't just watch.<br><em>Drive it.</em></h2>
       <p class="section-sub">This is the real floor interface. Click an occupied table to open its order, then hit Pay and run the full payment flow yourself.</p>
+      <!-- V3: step chips -->
+      <div class="demo-step-chips" aria-label="Demo steps">
+        <span class="demo-chip" id="demo-chip-1" aria-live="polite">1 — Click a table</span>
+        <span class="demo-chip" id="demo-chip-2" aria-live="polite">2 — Review the order</span>
+        <span class="demo-chip" id="demo-chip-3" aria-live="polite">3 — Pay and close</span>
+      </div>
     </div>
     <div class="demo-wrap">
-      <div class="demo-floor-wrap reveal" style="--delay:1">
+      <div class="demo-floor-wrap reveal" style="--delay:1;position:relative">
+        <!-- V3: completion toast -->
+        <div class="demo-closed-toast" id="demo-closed-toast" aria-live="assertive" aria-atomic="true">
+          Table closed. Nice work. That's how a shift runs.
+        </div>
+        <!-- V3: context bar -->
+        <div class="demo-context-bar" aria-hidden="true">Friday · 19:30 service · 8 tables</div>
         <div class="demo-floor-header">
           <div class="demo-floor-header-left">
             <span class="demo-live-dot" aria-hidden="true"></span>
@@ -2229,17 +2746,23 @@ ul,ol{list-style:none}
     </div>
     <div class="real-grid reveal" style="--delay:1">
       <div class="real-col">
-        <figure class="real-card real-card--wide">
-          <img src="assets/shots/kds.jpg" alt="Tavolo kitchen display showing live tickets with modifiers and allergy notes" loading="lazy" width="1440" height="900">
+        <figure class="real-card real-card--wide loading" id="rc-kds">
+          <img src="assets/shots/kds.jpg" alt="Tavolo kitchen display showing live tickets with modifiers and allergy notes" loading="lazy" width="1440" height="900"
+               onload="this.closest('.real-card').classList.remove('loading');this.closest('.real-card').classList.add('loaded')"
+               onerror="this.closest('.real-card').classList.remove('loading');this.closest('.real-card').classList.add('loaded');this.style.display='none'">
           <figcaption class="real-card-label">Kitchen display — live</figcaption>
         </figure>
-        <figure class="real-card real-card--pay">
-          <img src="assets/shots/pos-pay.jpg" alt="Tavolo POS payment screen with split options, tip presets and itemized charge" loading="lazy" width="1440" height="900">
+        <figure class="real-card real-card--pay loading" id="rc-pos">
+          <img src="assets/shots/pos-pay.jpg" alt="Tavolo POS payment screen with split options, tip presets and itemized charge" loading="lazy" width="1440" height="900"
+               onload="this.closest('.real-card').classList.remove('loading');this.closest('.real-card').classList.add('loaded')"
+               onerror="this.closest('.real-card').classList.remove('loading');this.closest('.real-card').classList.add('loaded');this.style.display='none'">
           <figcaption class="real-card-label">POS — split &amp; pay</figcaption>
         </figure>
       </div>
-      <figure class="real-card real-card--phone">
-        <img src="assets/shots/qr-bill.jpg" alt="Tavolo QR pay-at-table bill on a phone with itemized tax and service" loading="lazy" width="390" height="844">
+      <figure class="real-card real-card--phone loading" id="rc-qr">
+        <img src="assets/shots/qr-bill.jpg" alt="Tavolo QR pay-at-table bill on a phone with itemised items and tip selector" loading="lazy" width="390" height="844"
+             onload="this.closest('.real-card').classList.remove('loading');this.closest('.real-card').classList.add('loaded')"
+             onerror="this.closest('.real-card').classList.remove('loading');this.closest('.real-card').classList.add('loaded');this.style.display='none'">
         <figcaption class="real-card-label">QR pay — guest's phone</figcaption>
       </figure>
     </div>

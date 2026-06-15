@@ -498,4 +498,236 @@
       .replace(/"/g, '&quot;');
   }
 
+  /* ----------------------------------------------------------
+     V3: Demo step chips — mark done as user progresses
+  ---------------------------------------------------------- */
+  var chip1 = document.getElementById('demo-chip-1');
+  var chip2 = document.getElementById('demo-chip-2');
+  var chip3 = document.getElementById('demo-chip-3');
+  var closedToast = document.getElementById('demo-closed-toast');
+  var chip1done = false, chip2done = false;
+
+  /* Step 1 done: table clicked (openPanel already called above).
+     We hook into openPanel by patching closePanel to track state. */
+  var _origOpen = typeof openPanel === 'function' ? openPanel : null;
+  /* Instead, listen for the pay button being clicked (step 2 → done) and
+     the payment completing (step 3 → done) via MutationObserver on payAnim */
+  if (payBtn && chip1) {
+    /* Step 1 complete when panel opens — watch aria-hidden on panelEl */
+    if (panelEl) {
+      new MutationObserver(function () {
+        if (panelEl.getAttribute('aria-hidden') === 'false' && !chip1done) {
+          chip1done = true;
+          if (chip1) chip1.classList.add('step-done');
+          if (chip2) chip2.classList.add('step-done');
+        }
+      }).observe(panelEl, { attributes: true, attributeFilter: ['aria-hidden'] });
+    }
+  }
+  /* Step 3 complete: payment animation shows green check — watch payAnim innerHTML */
+  if (payAnim && chip3) {
+    new MutationObserver(function () {
+      if (payAnim.classList.contains('active') &&
+          payAnim.innerHTML.indexOf('pay-step-check') !== -1) {
+        chip3.classList.add('step-done');
+        /* Show "table closed" toast */
+        if (closedToast) {
+          closedToast.classList.add('show');
+          setTimeout(function () { closedToast.classList.remove('show'); }, 4000);
+        }
+      }
+    }).observe(payAnim, { attributes: true, childList: true, subtree: false });
+  }
+
+})();
+
+/* =============================================================
+   V3 — HERO STAGGER ENTRANCE
+   Runs after DOMContentLoaded; triggers .visible on headline lines
+   ============================================================= */
+(function heroStagger() {
+  var REDUCED = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (REDUCED) return;
+
+  function makeVisible() {
+    var lines = document.querySelectorAll('.hero-hl-line');
+    var sub   = document.querySelector('.hero-subline-wrap');
+    var acts  = document.querySelector('.hero-actions-wrap');
+    var wrap  = document.getElementById('hero-stage-wrap');
+    lines.forEach(function (l) { l.classList.add('visible'); });
+    if (sub)  sub.classList.add('visible');
+    if (acts) acts.classList.add('visible');
+    if (wrap) wrap.classList.add('visible');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', makeVisible);
+  } else {
+    /* already parsed — small rAF so CSS transition has a frame to start from */
+    requestAnimationFrame(makeVisible);
+  }
+})();
+
+/* =============================================================
+   V3 — PROOF STRIP COUNT-UP
+   Numbers animate from 0 when the strip scrolls into view
+   ============================================================= */
+(function proofCountUp() {
+  var REDUCED = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var strip = document.querySelector('.proof-strip');
+  if (!strip) return;
+
+  var nums = strip.querySelectorAll('.proof-num');
+  var done = false;
+
+  function animateStar(el) {
+    var full = '★★★★★';
+    var i = 0;
+    el.textContent = '';
+    var t = setInterval(function () {
+      el.textContent = full.slice(0, ++i);
+      if (i >= 5) clearInterval(t);
+    }, 200);
+  }
+
+  function animateNum(el, end, prefix, suffix, duration) {
+    var start = 0;
+    var startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var progress = Math.min((ts - startTime) / duration, 1);
+      var val = Math.floor(progress * end);
+      el.textContent = prefix + val + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+      else el.textContent = prefix + end + suffix;
+    }
+    requestAnimationFrame(step);
+  }
+
+  function runCountUp() {
+    if (done) return;
+    done = true;
+    nums.forEach(function (el) {
+      var txt = el.textContent.trim();
+      if (txt === '★★★★★') { animateStar(el); return; }
+      if (txt === '50→500+') { animateNum(el, 500, '50→', '+', 1200); return; }
+      /* other stats just fade in — already visible via CSS */
+    });
+  }
+
+  if (REDUCED) return; /* leave pre-rendered final values */
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) runCountUp();
+    }, { threshold: 0.5 }).observe(strip);
+  } else {
+    runCountUp();
+  }
+})();
+
+/* =============================================================
+   V3 — SCROLL-DRIVEN "WATCH A SHIFT" SECTION
+   Scroll progress 0→1 across 4×vh container drives step + pane
+   ============================================================= */
+(function shiftScroll() {
+  var REDUCED = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (REDUCED) return;
+
+  var outer = document.getElementById('shift-scroll-container');
+  var fill  = document.getElementById('shift-fill');
+  var steps = document.querySelectorAll('#shift-steps .shift-step');
+  var panes = document.querySelectorAll('#shift-stage .shift-pane');
+  if (!outer || !steps.length || !panes.length) return;
+
+  /* progress thresholds per pane */
+  var thresholds = [0, 0.28, 0.56, 0.82];
+
+  var rafPending = false;
+
+  function update() {
+    rafPending = false;
+    var rect = outer.getBoundingClientRect();
+    var totalScroll = outer.offsetHeight - window.innerHeight;
+    if (totalScroll <= 0) return;
+    var scrolled = -rect.top;
+    var p = Math.max(0, Math.min(1, scrolled / totalScroll));
+
+    /* spine fill */
+    if (fill) fill.style.height = (p * 100) + '%';
+
+    /* active step */
+    var activeStep = 0;
+    thresholds.forEach(function (t, i) { if (p >= t) activeStep = i; });
+
+    steps.forEach(function (s, i) {
+      s.classList.toggle('active', i === activeStep);
+    });
+    panes.forEach(function (pn, i) {
+      pn.classList.toggle('active', i === activeStep);
+    });
+  }
+
+  function onScroll() {
+    if (!rafPending) {
+      rafPending = true;
+      requestAnimationFrame(update);
+    }
+  }
+
+  var inView = false;
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      inView = entries[0].isIntersecting;
+      if (inView) window.addEventListener('scroll', onScroll, { passive: true });
+      else window.removeEventListener('scroll', onScroll);
+    }, { threshold: 0 }).observe(outer);
+  } else {
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+  update();
+})();
+
+/* =============================================================
+   V3 — SCREENSHOT CARD 3D TILT
+   ============================================================= */
+(function screenshotTilt() {
+  var REDUCED = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (REDUCED) return;
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+
+  document.querySelectorAll('.real-card').forEach(function (card) {
+    card.addEventListener('mousemove', function (e) {
+      var r  = card.getBoundingClientRect();
+      var x  = (e.clientX - r.left) / r.width  - 0.5;
+      var y  = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.setProperty('--rx', (-y * 3).toFixed(2) + 'deg');
+      card.style.setProperty('--ry', ( x * 4).toFixed(2) + 'deg');
+    });
+    card.addEventListener('mouseleave', function () {
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
+    });
+  });
+})();
+
+/* =============================================================
+   V3 — HERO MOBILE SCROLL INDICATOR
+   Fades out after the visitor starts scrolling
+   ============================================================= */
+(function scrollIndicator() {
+  var ind = document.getElementById('hero-scroll-ind');
+  if (!ind) return;
+  var scrolled = false;
+  window.addEventListener('scroll', function () {
+    if (!scrolled && window.scrollY > 10) {
+      scrolled = true;
+      ind.classList.add('hidden');
+    }
+  }, { passive: true });
 })();
