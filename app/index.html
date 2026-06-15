@@ -233,10 +233,12 @@ body{background:var(--color-bg);min-height:100vh}
 .topbar-title{font-size:20px;font-weight:600;letter-spacing:-0.01em;color:var(--color-text-primary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar-right{display:flex;align-items:center;gap:var(--space-4);flex-shrink:0}
 .hamburger{
-  display:none;width:40px;height:40px;border-radius:var(--radius-sm);background:none;border:none;
-  cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;
+  display:none;min-width:44px;height:40px;border-radius:var(--radius-sm);background:none;border:none;
+  cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex-shrink:0;
+  padding:0 6px;
 }
 .hamburger span{display:block;width:20px;height:2px;background:var(--color-text-primary);border-radius:2px}
+.hamburger-label{font-size:10px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;line-height:1}
 .content-area{flex:1;padding:var(--space-8);min-width:0}
 
 /* ===== SECTION TRANSITIONS ===== */
@@ -745,8 +747,9 @@ body{background:var(--color-bg);min-height:100vh}
   <div class="main-area">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="hamburger" id="hamburger-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+        <button class="hamburger" id="hamburger-btn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="sidebar">
           <span></span><span></span><span></span>
+          <span class="hamburger-label" aria-hidden="true">More</span>
         </button>
         <h1 class="topbar-title" id="topbar-title">Dashboard</h1>
       </div>

@@ -898,8 +898,14 @@ body {
     var totalSec = Math.floor((Date.now() - sent) / 1000);
     if (totalSec < 0) return '0:00';
     var m = Math.floor(totalSec / 60);
-    var s = totalSec % 60;
-    return m + ':' + (s < 10 ? '0' : '') + s;
+    // Under an hour: live mm:ss (kitchen standard — cooks track the seconds).
+    if (m < 60) {
+      var s = totalSec % 60;
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+    // 1h+ (rare/stale ticket): human-readable so it never shows an absurd number.
+    var h = Math.floor(m / 60);
+    return h + 'h ' + (m % 60 < 10 ? '0' : '') + (m % 60) + 'm';
   }
 
   function ageClass(sentAtISO) {

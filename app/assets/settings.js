@@ -186,10 +186,17 @@
           '<div class="set-section-body">' +
             '<div class="set-grid-2">' +
               field('set-name',    'Restaurant name',  '<input id="set-name" class="input" type="text" autocomplete="organization" value="' + esc(r.name||'') + '" required>') +
-              field('set-slug',    'Booking page address',
-                '<input id="set-slug" class="input" type="text" pattern="[a-z0-9-]+" placeholder="my-restaurant" value="' + esc(r.slug||'') + '" aria-describedby="set-slug-hint">') +
+              field('set-slug',    'Booking link (unique name)',
+                '<input id="set-slug" class="input" type="text" pattern="[a-z0-9-]+" placeholder="my-restaurant" value="' + esc(r.slug||'') + '" aria-describedby="set-slug-hint set-slug-url-preview">') +
             '</div>' +
-            '<p id="set-slug-hint" style="font-size:13px;color:var(--color-text-muted);margin-top:-12px;margin-bottom:var(--space-4)">The short name in your booking link (letters, numbers, hyphens). Changing it breaks your current link.</p>' +
+            '<div id="set-slug-url-preview" style="font-size:13px;background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-top:-8px;margin-bottom:var(--space-3);word-break:break-all;color:var(--color-text-secondary)">' +
+              '<span style="color:var(--color-text-muted)">Your guests book here: </span>' +
+              '<span id="set-slug-live-url" style="color:var(--shell-copper);font-weight:500">' + esc(bookingUrl) + '</span>' +
+            '</div>' +
+            '<p id="set-slug-hint" style="font-size:13px;color:var(--color-text-muted);margin-top:0;margin-bottom:var(--space-4)">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px;color:#c47c20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+              '<strong>Warning:</strong> changing this breaks your existing booking link. Update any printed menus, QR codes, or website links if you change it.' +
+            '</p>' +
             '<div class="set-grid-2">' +
               field('set-phone',   'Phone number',     '<input id="set-phone" class="input" type="tel" autocomplete="tel" value="' + esc(r.phone||'') + '">') +
               field('set-tz',      'Timezone',         '<select id="set-tz" class="input select">' + tzOpts + '</select>') +
@@ -344,6 +351,17 @@
         tzSel.insertBefore(opt, tzSel.firstChild);
         tzSel.value = storedTzWire;
       }
+    }
+
+    /* slug → live URL preview */
+    var slugInput   = sectionEl.querySelector('#set-slug');
+    var liveUrlEl   = sectionEl.querySelector('#set-slug-live-url');
+    var baseBookUrl = window.location.origin + window.location.pathname.replace(/\/index\.html$/, '/').replace(/\/[^/]*$/, '/') + 'book.html?r=';
+    if (slugInput && liveUrlEl) {
+      slugInput.addEventListener('input', function () {
+        var val = slugInput.value.trim() || '(your-name)';
+        liveUrlEl.textContent = baseBookUrl + encodeURIComponent(val);
+      });
     }
 
     /* colour sync */
