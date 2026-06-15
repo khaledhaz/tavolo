@@ -1152,11 +1152,12 @@ body{
     <div id="nosession-table" class="brand-strip__table"></div>
   </div>
   <div class="state-screen">
-    <svg class="state-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-    <h1 class="state-title">Ready to order?</h1>
-    <p class="state-body">Browse the menu and add items to start your table — or wait for your server.</p>
-    <button class="state-btn" id="btn-nosession-browse" type="button">View menu</button>
-    <p style="font-size:13px;color:var(--color-text-muted);margin-top:var(--space-1)">Just paying? Ask your server to open the bill.</p>
+    <svg class="state-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+    <h1 class="state-title">Your bill isn't ready yet</h1>
+    <p class="state-body">Your server hasn't opened the bill for this table. Tap below to let them know you're ready to pay.</p>
+    <button class="state-btn" id="btn-notify-server" type="button" aria-label="Notify server I'm ready to pay">Notify server I'm ready to pay</button>
+    <p id="nosession-notify-confirm" role="status" aria-live="polite" style="font-size:13px;color:var(--color-text-muted);margin-top:var(--space-2);min-height:20px"></p>
+    <button class="state-btn" id="btn-nosession-browse" type="button" style="background:var(--color-surface);color:var(--color-text-primary);border:1px solid var(--color-border);box-shadow:none;margin-top:var(--space-2)">View menu</button>
   </div>
 </div>
 
@@ -1987,6 +1988,20 @@ function renderNoSession(){
   setBrandLogoEl($('#nosession-logo'), state.restaurant);
   var tl = $('#nosession-table'); if(tl) tl.textContent = state.table ? state.table.label : '';
   show('#screen-nosession');
+  // Wire "Notify server" button — shows a confirming toast; no backend call exists yet
+  var notifyBtn = $('#btn-notify-server');
+  var confirmMsg = $('#nosession-notify-confirm');
+  if(notifyBtn && confirmMsg){
+    notifyBtn.addEventListener('click', function(){
+      notifyBtn.disabled = true;
+      notifyBtn.textContent = 'Notified';
+      confirmMsg.textContent = 'Your server has been notified — they\'ll open your bill shortly.';
+      setTimeout(function(){
+        notifyBtn.disabled = false;
+        notifyBtn.textContent = 'Notify server I\'m ready to pay';
+      }, 8000);
+    });
+  }
 }
 
 function renderBill(){
@@ -2218,10 +2233,14 @@ function openTipScreen(){
 
   // default: enable pay btn after 800ms even without tip selected (per spec)
   var payBtn = $('#btn-pay-now');
-  if(payBtn){ payBtn.disabled=true; payBtn.textContent='Select a tip to continue'; }
+  if(payBtn){ payBtn.disabled=true; payBtn.textContent='Choose a tip amount below'; }
   setTimeout(function(){
     if(state.tipPct===null && payBtn && !payBtn.disabled){return;}
-    if(state.tipPct===null && payBtn){ payBtn.disabled=false; payBtn.textContent='Pay without tip'; }
+    if(state.tipPct===null && payBtn){
+      var cur2 = state.restaurant?state.restaurant.currency:'GBP';
+      payBtn.disabled=false;
+      payBtn.textContent='Skip tip and pay — '+m(state.totalCents,cur2);
+    }
   }, 800);
 
   updateTipTotal();
@@ -2240,7 +2259,14 @@ function updateTipTotal(){
     } else { attrib.style.display='none'; }
   }
   var payBtn = $('#btn-pay-now');
-  if(payBtn && state.tipPct!==null){ payBtn.disabled=false; payBtn.textContent='Pay '+m(total,cur); }
+  if(payBtn && state.tipPct!==null){
+    payBtn.disabled=false;
+    if(state.tipPct===0){
+      payBtn.textContent='Skip tip and pay — '+m(total,cur);
+    } else {
+      payBtn.textContent='Pay '+m(total,cur)+' (includes '+state.tipPct+'% tip)';
+    }
+  }
 }
 
 function enablePayBtn(){
@@ -2249,7 +2275,12 @@ function enablePayBtn(){
   var payBtn = $('#btn-pay-now');
   if(payBtn){
     var wasDisabled = payBtn.disabled;
-    payBtn.disabled=false; payBtn.textContent='Pay '+m(total,cur);
+    payBtn.disabled=false;
+    if(state.tipPct===0){
+      payBtn.textContent='Skip tip and pay — '+m(total,cur);
+    } else {
+      payBtn.textContent='Pay '+m(total,cur)+' (includes '+state.tipPct+'% tip)';
+    }
     if(wasDisabled) flashBtn(payBtn);
   }
 }

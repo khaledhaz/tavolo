@@ -836,7 +836,7 @@ async function bootBooking(slug) {
   try {
     var { data: rows, error } = await sb
       .from('cov_restaurants')
-      .select('id,name,slug,timezone,brand_color,logo_url,address,booking_enabled,max_party_online,default_turn_minutes')
+      .select('id,name,slug,timezone,brand_color,logo_url,address,phone,booking_enabled,max_party_online,default_turn_minutes')
       .eq('slug', slug)
       .eq('booking_enabled', true)
       .limit(1);
@@ -1119,18 +1119,24 @@ function buildSlotsHTML(slots) {
   ];
 
   if (!slots || slots.length === 0) {
+    var noSlotDateStr = fmtDate(state.date + 'T12:00:00', state.restaurant.timezone);
+    var phoneHtml = '';
+    var restPhone = state.restaurant && state.restaurant.phone;
+    if (restPhone) {
+      phoneHtml = ' or call us: <a href="tel:' + esc(restPhone) + '" style="color:var(--bk-copper);font-weight:600;white-space:nowrap">' + esc(restPhone) + '</a>';
+    }
     parts.push([
       '<div class="bk-status" role="status" aria-live="polite">',
         '<div class="bk-status-icon empty" aria-hidden="true">',
           '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#635d58" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
         '</div>',
-        '<p class="bk-status-title">No availability</p>',
-        '<p class="bk-status-desc">There are no available times for that date and party size. Try a different date.</p>',
+        '<p class="bk-status-title">No times available on ' + esc(noSlotDateStr) + '</p>',
+        '<p class="bk-status-desc">Try a different date' + phoneHtml + '.</p>',
       '</div>',
       '<div class="bk-actions">',
         '<button class="bk-btn-back" id="slots-back">',
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
-          'Try another date',
+          'Choose a different date',
         '</button>',
       '</div>',
     ].join(''));
