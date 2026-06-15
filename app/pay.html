@@ -49,8 +49,9 @@ body{
   background:var(--color-surface);
   border-bottom:1px solid var(--color-border);
 }
-.brand-strip__logo{display:flex;align-items:center;gap:var(--space-2);color:var(--color-text-primary);min-width:0}
-.brand-strip__logo img{height:32px;width:auto;object-fit:contain}
+.brand-strip__logo{display:flex;align-items:center;gap:var(--space-2);color:var(--color-text-primary);min-width:0;overflow:hidden}
+.brand-strip__logo img{height:32px;width:auto;object-fit:contain;max-width:100%}
+.brand-strip__logo svg{flex-shrink:0;max-width:100%}
 .brand-strip__table{font-size:13px;font-weight:500;color:var(--color-text-secondary);white-space:nowrap;flex-shrink:0}
 
 /* ---- scrollable content with bottom padding for CTA ---- */
@@ -353,8 +354,8 @@ body{
 }
 @keyframes tipSelect{0%{transform:scale(1)}40%{transform:scale(1.07)}100%{transform:scale(1)}}
 .tip-chip.no-tip.selected{border-color:var(--color-border-strong);background:var(--color-surface-raised);box-shadow:none}
-.tip-chip__pct{font-size:18px;font-weight:600;color:var(--color-text-primary)}
-.tip-chip__amt{font-size:11px;color:var(--color-text-muted);font-variant-numeric:tabular-nums}
+.tip-chip__pct{font-size:clamp(14px,4.5vw,18px);font-weight:600;color:var(--color-text-primary);white-space:nowrap}
+.tip-chip__amt{font-size:11px;color:var(--color-text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .tip-custom-link{text-align:center;margin:var(--space-3) var(--space-4) 0;font-size:13px;font-weight:500;color:var(--color-primary);cursor:pointer;border:none;background:none;width:100%}
 .custom-tip-input-row{margin:var(--space-3) var(--space-4) 0;display:flex;align-items:center;gap:var(--space-2)}
 .tip-total-row{
@@ -587,6 +588,17 @@ body{
 /* On phones the menu header's logo is absolutely centered; hide the back label so the
    icon-only button can't collide with it. aria-label still announces the destination. */
 @media (max-width:439px){ #back-from-menu .back-btn__label{ position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap; } }
+/* Absolutely-centered logos on claim/tip/menu screens: constrain width so they can't
+   overlap the back button or table label at very narrow viewports (≤360px). */
+@media (max-width:360px){
+  #claim-logo,#tip-logo,#menu-logo{
+    max-width:calc(100% - 180px); /* 90px clearance each side for back btn + table label */
+    overflow:hidden;
+  }
+  #claim-logo svg,#tip-logo svg,#menu-logo svg{
+    max-width:100%;
+  }
+}
 
 /* ---- view menu link ---- */
 .view-menu-link{
