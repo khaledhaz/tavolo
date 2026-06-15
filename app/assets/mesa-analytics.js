@@ -663,29 +663,18 @@
 
       if (serverEl) serverEl.innerHTML = buildServerTable(srvArr, cur);
 
-      /* ----- Top items query (joins sessions for date filtering) ----- */
-      sb.from('mesa_order_items')
-        .select('name,unit_price_cents,qty,mesa_sessions!inner(restaurant_id,status,created_at)')
-        .eq('mesa_sessions.restaurant_id', rid)
-        .in('mesa_sessions.status', ['paid', 'closed'])
-        .gte('mesa_sessions.created_at', sinceISO)
+      /* ----- Top items query — RPC (no 1000-row cap) ----- */
+      sb.rpc('pos_item_report', { p_restaurant: rid, p_since: sinceISO, p_top: 8 })
         .then(function (res) {
           if (res.error) {
             if (itemsEl) itemsEl.innerHTML = '<p style="color:var(--color-text-muted);font-size:14px">'
               + 'Could not load item data.</p>';
             return;
           }
-          var orderItems = res.data || [];
-          var itemMap = {};
-          for (var m = 0; m < orderItems.length; m++) {
-            var it = orderItems[m];
-            if (!itemMap[it.name]) itemMap[it.name] = 0;
-            itemMap[it.name] += (it.unit_price_cents || 0) * (it.qty || 1);
-          }
-          var topItems = Object.keys(itemMap)
-            .map(function (n) { return { name: n, rev: itemMap[n] }; })
-            .sort(function (a, b) { return b.rev - a.rev; })
-            .slice(0, 8);
+          var rpcItems = (res.data && res.data.items) || [];
+          var topItems = rpcItems.map(function (it) {
+            return { name: it.name, rev: it.revenue_cents };
+          });
 
           if (itemsEl) itemsEl.innerHTML = buildBarChart(topItems, cur);
         });

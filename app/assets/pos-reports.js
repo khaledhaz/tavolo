@@ -793,6 +793,9 @@
           lines.push({ sep: true });
           lines.push({ label: 'Cash Collected', val: money(num(z.tenders.cash)) });
           lines.push({ label: 'Card Collected', val: money(num(z.tenders.card)) });
+          if (num(z.tenders.digital_wallet) > 0) {
+            lines.push({ label: 'Digital Wallet', val: money(num(z.tenders.digital_wallet)) });
+          }
         }
 
         lines.push({ sep: true });
@@ -884,17 +887,19 @@
         var voids    = voidsCnt != null ? String(Math.round(voidsCnt)) : '0';
 
         // tender mix — tenders_today (actual key) or tender_mix (contract alias)
-        var tender  = x.tenders_today || x.tender_mix || {};
-        var cashAmt = safeNum(tender.cash) != null ? money(safeNum(tender.cash)) : '—';
-        var cardAmt = safeNum(tender.card) != null ? money(safeNum(tender.card)) : '—';
+        var tender      = x.tenders_today || x.tender_mix || {};
+        var cashAmt     = safeNum(tender.cash)           != null ? money(safeNum(tender.cash))           : '—';
+        var cardAmt     = safeNum(tender.card)           != null ? money(safeNum(tender.card))           : '—';
+        var walletAmt   = safeNum(tender.digital_wallet) != null ? money(safeNum(tender.digital_wallet)) : '—';
 
         kpiEl.innerHTML = [
-          posrKpi('Open Sessions', openSess, 'Active tables/tabs right now', ''),
-          posrKpi('Sales Today',   salesAmt, 'Revenue, net of tips', 'copper'),
-          posrKpi('Cash Tender',   cashAmt,  'Cash collected today', ''),
-          posrKpi('Card Tender',   cardAmt,  'Card collected today', ''),
-          posrKpi('Voids',         voids,    'Voided items today', ''),
-          posrKpi('Tips Collected',tips,     'Total tips paid today', 'copper'),
+          posrKpi('Open Sessions', openSess,  'Active tables/tabs right now', ''),
+          posrKpi('Sales Today',   salesAmt,  'Revenue, net of tips', 'copper'),
+          posrKpi('Cash Tender',   cashAmt,   'Cash collected today', ''),
+          posrKpi('Card Tender',   cardAmt,   'Card collected today', ''),
+          posrKpi('Wallet Tender', walletAmt, 'Apple Pay / Google Pay', ''),
+          posrKpi('Voids',         voids,     'Voided items today', ''),
+          posrKpi('Tips Collected',tips,      'Total tips paid today', 'copper'),
         ].join('');
         /* staleness is self-evident: stamp every successful fetch */
         var asof = document.getElementById('posr-xrpt-asof');
@@ -950,11 +955,18 @@
       .eq('status', 'succeeded')
       .gte('created_at', since);
 
-    // ── Order items (by item / category / voids) ──
+    // ── Order items: RPC for by-item + by-category (no 1000-row cap) ──
+    var pItemRpt = sb.rpc('pos_item_report', { p_restaurant: rid, p_since: since, p_top: 15 });
+
+    // ── By-server sales: RPC (server-side aggregate, no 1000-row cap) ──
+    var pServerRpt = sb.rpc('pos_server_report', { p_restaurant: rid, p_since: since });
+
+    // ── Order items: voided only (small subset, safe within cap) — for voids panel ──
     var pItems = sb.from('mesa_order_items')
       .select('name,unit_price_cents,qty,voided,mesa_sessions!inner(restaurant_id,created_at,server_staff_id,status)')
       .eq('mesa_sessions.restaurant_id', rid)
-      .gte('mesa_sessions.created_at', since);
+      .gte('mesa_sessions.created_at', since)
+      .eq('voided', true);
 
     // ── Staff lookup ──
     var pStaff = sb.from('mesa_staff')
@@ -980,14 +992,16 @@
       .select('amount_cents,discount_id,created_at')
       .gte('created_at', since);
 
-    Promise.all([pPayments, pItems, pStaff, pMenu, pSessions, pDiscounts])
+    Promise.all([pPayments, pItems, pStaff, pMenu, pSessions, pDiscounts, pItemRpt, pServerRpt])
       .then(function (results) {
-        var pmtsRes  = results[0];
-        var itemsRes = results[1];
-        var staffRes = results[2];
-        var menuRes  = results[3];
-        var sessRes  = results[4];
-        var discRes  = results[5];
+        var pmtsRes      = results[0];
+        var itemsRes     = results[1];
+        var staffRes     = results[2];
+        var menuRes      = results[3];
+        var sessRes      = results[4];
+        var discRes      = results[5];
+        var itemRptRes   = results[6];
+        var serverRptRes = results[7];
 
         // Build staff id→name map
         var staffMap = {};
@@ -1019,46 +1033,23 @@
           // Here we fall back to per-server session aggregation via order items.
         });
 
-        // Use order items to derive server sales (server_staff_id on session)
-        var serverSales = {};
-        orderItems.forEach(function (oi) {
-          if (oi.voided) return;
-          var sess  = oi.mesa_sessions;
-          var sid   = sess && sess.server_staff_id;
-          if (!sid) return;
-          if (!serverSales[sid]) serverSales[sid] = { name: staffMap[sid] || 'Unknown', revenue: 0, qty: 0 };
-          serverSales[sid].revenue += (oi.unit_price_cents || 0) * (oi.qty || 1);
-          serverSales[sid].qty     += (oi.qty || 1);
+        // Server sales from RPC (server-side aggregate — no 1000-row cap)
+        var rpcServers = (serverRptRes && serverRptRes.data && serverRptRes.data.servers) || [];
+        var serverArr  = rpcServers.map(function (s) {
+          return { name: s.name || (staffMap[s.staff_id] || 'Unknown'), revenue: s.revenue_cents || 0, qty: s.qty || 0 };
         });
-        var serverArr = Object.keys(serverSales)
-          .map(function (k) { return serverSales[k]; })
-          .sort(function (a, b) { return b.revenue - a.revenue; });
 
-        // ── By item ──
-        var itemSales = {};
-        orderItems.forEach(function (oi) {
-          if (oi.voided) return;
-          if (!itemSales[oi.name]) itemSales[oi.name] = { name: oi.name, revenue: 0, qty: 0 };
-          itemSales[oi.name].revenue += (oi.unit_price_cents || 0) * (oi.qty || 1);
-          itemSales[oi.name].qty     += (oi.qty || 1);
+        // ── By item — from RPC (no row cap) ──
+        var rpcItems = (itemRptRes.data && itemRptRes.data.items) || [];
+        var itemArr  = rpcItems.map(function (it) {
+          return { name: it.name, revenue: it.revenue_cents, qty: it.qty };
         });
-        var itemArr = Object.keys(itemSales)
-          .map(function (k) { return itemSales[k]; })
-          .sort(function (a, b) { return b.revenue - a.revenue; })
-          .slice(0, 10);
 
-        // ── By category ──
-        var catSales = {};
-        orderItems.forEach(function (oi) {
-          if (oi.voided) return;
-          var cat = catMap[oi.name] || 'Uncategorised';
-          if (!catSales[cat]) catSales[cat] = { name: cat, revenue: 0, qty: 0 };
-          catSales[cat].revenue += (oi.unit_price_cents || 0) * (oi.qty || 1);
-          catSales[cat].qty     += (oi.qty || 1);
+        // ── By category — from RPC (no row cap) ──
+        var rpcCats = (itemRptRes.data && itemRptRes.data.categories) || [];
+        var catArr  = rpcCats.map(function (c) {
+          return { name: c.name, revenue: c.revenue_cents };
         });
-        var catArr = Object.keys(catSales)
-          .map(function (k) { return catSales[k]; })
-          .sort(function (a, b) { return b.revenue - a.revenue; });
 
         // ── By hour (based on sessions created_at) ──
         var hourSales = {};
