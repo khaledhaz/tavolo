@@ -244,7 +244,10 @@ body{background:var(--color-bg);min-height:100vh}
 /* ===== SECTION TRANSITIONS ===== */
 .section{display:none}
 .section.active{display:block;animation:section-in .18s var(--easing-standard) both}
-@keyframes section-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* end state is transform:none (not translateY(0)) — animation-fill-mode:both retains the
+   final frame, and a non-none transform would make .section.active a containing block for any
+   position:fixed descendant (see pay.html cart-bar bug, a2d7b29). none = no containing block. */
+@keyframes section-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 /* ===== DASHBOARD KPIs ===== */
 .kpi-grid{
@@ -259,7 +262,7 @@ body{background:var(--color-bg);min-height:100vh}
   animation:kpi-in .3s var(--easing-standard) both;
 }
 .kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
-@keyframes kpi-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes kpi-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .kpi-card:nth-child(1){animation-delay:.04s}
 .kpi-card:nth-child(2){animation-delay:.08s}
 .kpi-card:nth-child(3){animation-delay:.12s}
@@ -364,7 +367,7 @@ body{background:var(--color-bg);min-height:100vh}
   padding:var(--space-8);width:100%;max-width:440px;box-shadow:var(--shadow-xl);
   animation:modal-in .2s var(--easing-decelerate) both;
 }
-@keyframes modal-in{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes modal-in{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
 .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5)}
 .modal-title{font-size:20px;font-weight:600;letter-spacing:-0.01em}
 .icon-btn{
