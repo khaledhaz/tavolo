@@ -383,6 +383,7 @@
 
   /* Logout */
   el('btn-logout').addEventListener('click', function() {
+    teardownPosSession();   /* drop realtime channels for the open session */
     state.staff = null;
     state.sessionId = null;
     state.orderId = null;
@@ -682,6 +683,14 @@
 
     /* Load bill */
     refreshBill();
+
+    /* Open realtime channels for this session so QR-placed orders and
+       cross-terminal voids/settles reach this open ticket live. This is the
+       single chokepoint for all session-activation paths (new dine-in / bar /
+       takeout, table-tap resume, duplicate-session resume) — each one ends in
+       loadMenuAndBill(), so subscribing here covers them all and re-subscribes
+       (with teardown) whenever the active session changes. */
+    subscribePosSession();
   }
 
   function renderCategoryTabs() {
@@ -1225,6 +1234,83 @@
   }
 
   /* ============================================================
+     REALTIME — keep the open ticket in sync with QR/other clients
+     The terminal previously had NO subscription and NO poll, so a
+     QR-placed order (or a void from another terminal) didn't reach the
+     cashier's open ticket until a local action re-ran refreshBill(). We
+     open two channels when a session becomes active:
+       1. mesa_order_items filtered to the active session  → debounced
+          refreshBill() (one RPC call per burst of multi-row QR inserts).
+       2. mesa_sessions filtered to the active session      → refreshBill()
+          so status changes (e.g. flipped to paying/paid elsewhere) repaint.
+     Both are in the realtime publication. Topics use a per-(re)subscribe
+     sequence suffix (the _chSeq pattern, see platform.js:914 / kds.html)
+     to avoid the supabase-js "callbacks after subscribe" bug, and are torn
+     down on every session change/close.
+     ============================================================ */
+  var _posItemsCh   = null;
+  var _posSessCh    = null;
+  var _posChSeq     = 0;
+  var _posRefreshTimer = null;
+
+  /* Debounced refreshBill — a single QR order inserts several rows at once;
+     150ms matches the KDS debounce (kds.html:1586) so a burst collapses into
+     ONE pos_session_bill RPC instead of a refresh storm. */
+  function debouncedRefreshBill() {
+    clearTimeout(_posRefreshTimer);
+    _posRefreshTimer = setTimeout(function() {
+      if (state.sessionId) refreshBill();
+    }, 150);
+  }
+
+  function teardownPosSession() {
+    clearTimeout(_posRefreshTimer);
+    _posRefreshTimer = null;
+    if (_posItemsCh) { try { sb.removeChannel(_posItemsCh); } catch (e) {} _posItemsCh = null; }
+    if (_posSessCh)  { try { sb.removeChannel(_posSessCh);  } catch (e) {} _posSessCh  = null; }
+  }
+
+  function subscribePosSession() {
+    /* Always tear down any prior channels first (session change/resume). */
+    teardownPosSession();
+    if (!state.sessionId) return;
+
+    _posChSeq++;
+    var seq = _posChSeq;
+    var sid = state.sessionId;
+
+    try {
+      _posItemsCh = sb.channel('pos-items-' + sid + '-' + seq)
+        .on('postgres_changes', {
+          event:  '*',
+          schema: 'public',
+          table:  'mesa_order_items',
+          filter: 'session_id=eq.' + sid,
+        }, function() {
+          if (seq !== _posChSeq) return;          /* stale subscription guard */
+          if (state.sessionId !== sid) return;    /* session changed under us */
+          debouncedRefreshBill();
+        })
+        .subscribe();
+    } catch (e) { console.warn('[POS] items realtime error', e); }
+
+    try {
+      _posSessCh = sb.channel('pos-sess-' + sid + '-' + seq)
+        .on('postgres_changes', {
+          event:  '*',
+          schema: 'public',
+          table:  'mesa_sessions',
+          filter: 'id=eq.' + sid,
+        }, function() {
+          if (seq !== _posChSeq) return;
+          if (state.sessionId !== sid) return;
+          debouncedRefreshBill();
+        })
+        .subscribe();
+    } catch (e) { console.warn('[POS] session realtime error', e); }
+  }
+
+  /* ============================================================
      BILL / TICKET
      ============================================================ */
   function refreshBill() {
@@ -1463,6 +1549,9 @@
     closeOrderBusy = true;
     btn.disabled = true;
     btn.textContent = 'Closing…';
+    /* Leaving the order screen for the floor either way — drop the realtime
+       channels now (the session resumes from the floor with fresh ones). */
+    teardownPosSession();
     function closeDone() {
       closeOrderBusy = false;
       btn.disabled = false;
@@ -2194,6 +2283,7 @@
             /* Fully paid — remember the check for guest-receipt reprint, then go home */
             state.lastClosedSession = { id: state.sessionId, label: payerLabel };
             toast('Receipt available — "Last receipt" on the floor', 'success');
+            teardownPosSession();   /* session closed — drop realtime channels */
             state.sessionId   = null;
             state.orderId     = null;
             state.bill        = null;

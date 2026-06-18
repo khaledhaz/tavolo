@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/tokens.css?v=20260613e">
+<link rel="stylesheet" href="assets/tokens.css?v=20260618a">
 <style>
 /* ---- page shell ---- */
 html,body{height:100%;overflow-x:hidden}
@@ -1571,7 +1571,7 @@ body{
 </div><!-- #app -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/platform.js?v=20260613e"></script>
+<script src="assets/platform.js?v=20260618a"></script>
 <script>
 (function(){
 'use strict';
@@ -1590,6 +1590,7 @@ var state = {
   totalCents: 0,          // what this diner owes (before tip)
   paymentRecord: null,
   realtimeCh: null,
+  sessSub: null,          // GAP 3: mesa_sessions status channel (settle/paid → close UI)
   paid: false,            // PAY-TWICE guard: true after successful payment
 };
 
@@ -1673,7 +1674,7 @@ function taxShareOf(cents){
   var pct = state.restaurant ? Number(state.restaurant.tax_pct || 0) / 100 : 0;
   return Math.round(cents * pct);
 }
-function myItems(){ return state.items.filter(function(it){ return it.claimed_by === state.myLabel; }); }
+function myItems(){ return state.items.filter(function(it){ return !it.voided && it.claimed_by === state.myLabel; }); }
 function mySubtotal(){ return myItems().reduce(function(s,it){ return s + it.unit_price_cents * it.qty; }, 0); }
 
 // ---- cart helpers ----
@@ -2073,12 +2074,18 @@ async function placeCartOrder(){
 // ---- render bill items ----
 function renderBillItems(container, claimable){
   container.innerHTML = '';
-  if(!state.items.length){
+  // Live (non-voided) items only — a bill of all-voided lines is effectively empty.
+  var liveItems = state.items.filter(function(x){ return !x.voided; });
+  if(!liveItems.length){
     container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 16px;text-align:center"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="10" x2="28" y2="10"/><line x1="8" y1="10" x2="8" y2="26"/><line x1="20" y1="10" x2="20" y2="26"/></svg><p style="font-size:18px;font-weight:600">Your bill is empty</p><p style="font-size:15px;color:var(--color-text-secondary)">Items will appear here once the kitchen has sent them through.</p></div>';
     return;
   }
   var cur = state.restaurant ? state.restaurant.currency : 'GBP';
   state.items.forEach(function(it){
+    // Voided lines were removed by staff on the POS — hide them from the diner
+    // entirely (cleaner than struck-through; the item no longer exists for them).
+    // billMath already drops them from the total, so the two stay in sync.
+    if(it.voided) return;
     var isMine = it.claimed_by && it.claimed_by === state.myLabel;
     var isOthers = it.claimed_by && it.claimed_by !== state.myLabel;
     var div = document.createElement('div');
@@ -2335,8 +2342,9 @@ function renderBill(){
   var rn = $('#bill-restaurant-name'); if(rn) rn.textContent = rest ? rest.name : '';
   var bt = $('#bill-total');
   if(bt){ var _prevBillTotal = bt.textContent; bt.textContent = m(math.total_before_tip_cents, cur); if(_prevBillTotal && _prevBillTotal !== bt.textContent) flashAmount(bt); }
-  var unclaimed = state.items.filter(function(x){return !x.claimed_by}).length;
-  var sl = $('#bill-summary-line'); if(sl) sl.textContent = state.items.length+' items · '+unclaimed+' unclaimed';
+  var liveItems = state.items.filter(function(x){return !x.voided});
+  var unclaimed = liveItems.filter(function(x){return !x.claimed_by}).length;
+  var sl = $('#bill-summary-line'); if(sl) sl.textContent = liveItems.length+(liveItems.length===1?' item':' items')+' · '+unclaimed+' unclaimed';
   // totals
   var bsub = $('#bill-subtotal'); if(bsub) bsub.textContent = m(math.subtotal_cents,cur);
   var btax = $('#bill-tax-row');
@@ -2358,7 +2366,7 @@ function renderBill(){
     if(state.paid){
       btn.disabled=true;
       btn.textContent='Bill paid — thank you!';
-    } else if(state.items.length===0){
+    } else if(liveItems.length===0){
       btn.disabled=true;
       btn.textContent='Nothing to pay yet';
     } else {
@@ -2371,7 +2379,7 @@ function renderBill(){
 
 function renderPresence(){
   var names = [];
-  state.items.forEach(function(it){ if(it.claimed_by && names.indexOf(it.claimed_by)<0) names.push(it.claimed_by); });
+  state.items.forEach(function(it){ if(!it.voided && it.claimed_by && names.indexOf(it.claimed_by)<0) names.push(it.claimed_by); });
   if(state.myLabel && names.indexOf(state.myLabel)<0) names.push(state.myLabel);
   var avatarsCont = $('#presence-avatars');
   var labelEl = $('#presence-label');
@@ -2442,7 +2450,9 @@ function subscribeRealtime(){
             return;
           }
 
-          // UPDATE: existing row changed (e.g. claimed_by)
+          // UPDATE: existing row changed (e.g. claimed_by, or POS void flipping
+          // voided=true). renderBill() is included so a void updates the totals,
+          // item count and pay-button live — not just the line list.
           var updated = payload.new;
           if(!updated) return;
           for(var i=0;i<state.items.length;i++){
@@ -2453,9 +2463,57 @@ function subscribeRealtime(){
           renderBillItems($('#bill-items-list'), false);
           renderBillItems($('#claim-items-list'), true);
           renderPresence(); updateMyTotal();
+          renderBill();
         })
       .subscribe();
   } catch(e){ console.warn('[mesa] realtime error', e); }
+
+  // GAP 3: also watch the SESSION row. When the POS settles (pos_pay) or any
+  // client flips the session to paid/closed, no item DELETE fires — items stay
+  // on the page — so without this the diner never learns the bill closed.
+  // mesa_sessions is in the realtime publication. Seq-suffix topic per the
+  // _chSeq pattern (avoids the "callbacks after subscribe" bug); torn down
+  // alongside the items channel below.
+  if(state.sessSub){
+    try { MESA.sb.removeChannel(state.sessSub); } catch(e){}
+    state.sessSub = null;
+  }
+  _sessChSeq++;
+  var sseq = _sessChSeq;
+  try {
+    state.sessSub = MESA.sb.channel('mesa-sess-'+state.session.id+'-'+sseq)
+      .on('postgres_changes',{event:'*',schema:'public',table:'mesa_sessions',filter:'id=eq.'+state.session.id},
+        function(payload){
+          if(sseq !== _sessChSeq) return; // stale subscription guard
+          var row = payload.new || {};
+          var st = row.status;
+          if(st === 'paid' || st === 'closed'){
+            onSessionClosedRemotely();
+          }
+        })
+      .subscribe();
+  } catch(e){ console.warn('[mesa] session realtime error', e); }
+}
+
+// Module-level sequence counter for the session channel topic (mirrors platform
+// _chSeq / kds rtChannelSeq) so every (re)subscribe gets a unique topic name.
+var _sessChSeq = 0;
+
+// The bill closed underneath the diner (settled on the POS, or paid by another
+// client). Reuse the existing local paid path: mark paid so renderBill() shows
+// the "Bill paid — thank you!" state and re-entry is blocked, then refresh.
+function onSessionClosedRemotely(){
+  if(state.paid) return; // already in the paid/closed UI — nothing to do
+  state.paid = true;
+  // If a sheet/checkout is open, close it so the stale flow can't be submitted.
+  if(typeof closeAllSheets === 'function'){ try { closeAllSheets(); } catch(e){} }
+  // Only repaint the bill if the diner is currently looking at it; the success
+  // screen (this client just paid) and menu flows manage their own UI.
+  var billScreen = $('#screen-bill');
+  if(billScreen && billScreen.classList.contains('active')){
+    renderBill();
+    MESA.toast('This bill has been settled — thank you!','ok');
+  }
 }
 
 // ---- split sheet ----

@@ -755,7 +755,11 @@
 
     if (session) {
       var rItems = await sb.from('mesa_order_items')
-        .select('id,name,unit_price_cents,qty,claimed_by,menu_item_id')
+        /* `voided` is needed so the QR bill can drop staff-voided lines live
+           (POS pos_void_item SOFT-deletes: voided=true, kitchen_status='void'
+           — the row stays). Without it the bill keeps showing/charging a
+           line the cashier already removed. */
+        .select('id,name,unit_price_cents,qty,claimed_by,menu_item_id,voided')
         .eq('session_id', session.id).order('created_at', { ascending: true });
       if (rItems.error) throw rItems.error;
       items = rItems.data || [];
@@ -769,8 +773,11 @@
 
   function billMath(items, serviceChargePct, taxPct) {
     /* Mirrors pos_session_bill: total = items + tax + service. The QR flow used
-       to omit tax entirely, so QR and POS disagreed on the same items. */
+       to omit tax entirely, so QR and POS disagreed on the same items.
+       Voided lines (POS soft-delete) are excluded here so QR totals match the
+       POS bill RPC, which also ignores voided rows. */
     var subtotal = (items || []).reduce(function (s, it) {
+      if (it.voided) return s;
       return s + it.unit_price_cents * it.qty;
     }, 0);
     var service = Math.round(subtotal * (Number(serviceChargePct || 0) / 100));

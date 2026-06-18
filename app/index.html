@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/tokens.css?v=20260613e">
+<link rel="stylesheet" href="assets/tokens.css?v=20260618a">
 <style>
 
 /* ===== APP SHELL ===== */
@@ -191,6 +191,19 @@ body{background:var(--color-bg);min-height:100vh}
   background:var(--shell-copper);color:#fff;font-size:10px;font-weight:700;
   display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;
 }
+/* "Soon" pill for gated reservations nav items */
+.nav-soon{
+  margin-left:auto;height:18px;border-radius:var(--radius-full);
+  background:rgba(194,112,61,.12);color:var(--shell-copper);
+  border:1px solid rgba(194,112,61,.3);
+  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  display:inline-flex;align-items:center;justify-content:center;padding:0 7px;flex-shrink:0;
+}
+.bottom-tab{position:relative}
+.bottom-tab .nav-soon{
+  margin-left:0;position:absolute;top:2px;left:50%;transform:translateX(2px);
+  height:13px;padding:0 4px;font-size:8px;letter-spacing:.04em;pointer-events:none;
+}
 
 .sidebar-bottom{
   padding:var(--space-4);border-top:1px solid var(--shell-border);
@@ -294,6 +307,53 @@ body{background:var(--color-bg);min-height:100vh}
 .panel-empty{text-align:center;padding:var(--space-10) var(--space-5);color:var(--color-text-muted);font-size:14px}
 .panel-empty svg{margin:0 auto var(--space-3)}
 .panel-empty p{font-size:15px;font-weight:500;color:var(--color-text-secondary);margin-bottom:var(--space-1)}
+
+/* ===== "COMING SOON" GATE (reservations module — presentational) ===== */
+.soon-gate{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;min-height:60vh;padding:var(--space-10) var(--space-5);
+}
+.soon-gate-icon{
+  width:72px;height:72px;border-radius:20px;flex-shrink:0;
+  background:rgba(194,112,61,.1);border:1px solid rgba(194,112,61,.28);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--shell-copper);margin-bottom:var(--space-5);
+}
+.soon-gate-pill{
+  display:inline-flex;align-items:center;gap:6px;margin-bottom:var(--space-4);
+  padding:4px 12px;border-radius:var(--radius-full);
+  background:rgba(194,112,61,.12);color:var(--shell-copper);
+  border:1px solid rgba(194,112,61,.3);
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+}
+.soon-gate h2{
+  font-size:24px;font-weight:600;letter-spacing:-0.01em;
+  color:var(--color-text-primary);margin-bottom:var(--space-3);max-width:30ch;
+}
+.soon-gate p{
+  font-size:15px;line-height:1.7;color:var(--color-text-secondary);
+  max-width:46ch;margin:0 auto;
+}
+.soon-gate p strong{color:var(--color-text-primary);font-weight:600}
+
+/* Compact dashboard "coming soon" card */
+.soon-card{
+  display:flex;align-items:center;gap:var(--space-4);
+  padding:var(--space-5);min-width:0;
+}
+.soon-card-icon{
+  width:48px;height:48px;border-radius:14px;flex-shrink:0;
+  background:rgba(194,112,61,.1);border:1px solid rgba(194,112,61,.28);
+  display:flex;align-items:center;justify-content:center;color:var(--shell-copper);
+}
+.soon-card-body{min-width:0;flex:1}
+.soon-card-body .soon-card-pill{
+  display:inline-block;margin-bottom:6px;padding:2px 9px;border-radius:var(--radius-full);
+  background:rgba(194,112,61,.12);color:var(--shell-copper);border:1px solid rgba(194,112,61,.3);
+  font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+}
+.soon-card-body h2{font-size:16px;font-weight:600;color:var(--color-text-primary);margin-bottom:3px;letter-spacing:-0.01em}
+.soon-card-body p{font-size:13px;line-height:1.55;color:var(--color-text-muted)}
 
 /* Upcoming reservations list */
 .res-list{display:flex;flex-direction:column;gap:2px}
@@ -598,15 +658,18 @@ body{background:var(--color-bg);min-height:100vh}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
       <span>Dash</span>
     </button>
-    <button class="bottom-tab" data-section="floor" aria-label="Floor">
+    <button class="bottom-tab" data-section="floor" aria-label="Floor — coming soon">
+      <span class="nav-soon" aria-hidden="true">Soon</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       <span>Floor</span>
     </button>
-    <button class="bottom-tab" data-section="reservations" aria-label="Reservations">
+    <button class="bottom-tab" data-section="reservations" aria-label="Reservations — coming soon">
+      <span class="nav-soon" aria-hidden="true">Soon</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <span>Reservations</span>
     </button>
-    <button class="bottom-tab" data-section="guests" aria-label="Guests">
+    <button class="bottom-tab" data-section="guests" aria-label="Guests — coming soon">
+      <span class="nav-soon" aria-hidden="true">Soon</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <span>Guests</span>
     </button>
@@ -634,29 +697,35 @@ body{background:var(--color-bg);min-height:100vh}
       <!-- RESERVATIONS group — hidden if modules.reservations is false -->
       <div id="nav-group-reservations">
         <div class="sidebar-section-label" aria-hidden="true">Reservations</div>
-        <button class="nav-item" data-section="floor" role="listitem">
+        <button class="nav-item" data-section="floor" role="listitem" aria-label="Live Floor — coming soon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span class="nav-item-label">Live Floor</span>
+          <span class="nav-soon" aria-hidden="true">Soon</span>
         </button>
-        <button class="nav-item" data-section="timeline" role="listitem">
+        <button class="nav-item" data-section="timeline" role="listitem" aria-label="Timeline — coming soon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/><line x1="8" y1="3" x2="8" y2="21"/></svg>
           <span class="nav-item-label">Timeline</span>
+          <span class="nav-soon" aria-hidden="true">Soon</span>
         </button>
-        <button class="nav-item" data-section="reservations" role="listitem">
+        <button class="nav-item" data-section="reservations" role="listitem" aria-label="Reservations — coming soon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span class="nav-item-label">Reservations</span>
+          <span class="nav-soon" aria-hidden="true">Soon</span>
         </button>
-        <button class="nav-item" data-section="guests" role="listitem">
+        <button class="nav-item" data-section="guests" role="listitem" aria-label="Guests — coming soon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span class="nav-item-label">Guests</span>
+          <span class="nav-soon" aria-hidden="true">Soon</span>
         </button>
-        <button class="nav-item" data-section="waitlist" role="listitem">
+        <button class="nav-item" data-section="waitlist" role="listitem" aria-label="Waitlist — coming soon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           <span class="nav-item-label">Waitlist</span>
+          <span class="nav-soon" aria-hidden="true">Soon</span>
         </button>
-        <button class="nav-item" data-section="blackouts" role="listitem">
+        <button class="nav-item" data-section="blackouts" role="listitem" aria-label="Closed dates — coming soon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
           <span class="nav-item-label">Closed dates</span>
+          <span class="nav-soon" aria-hidden="true">Soon</span>
         </button>
       </div>
 
@@ -767,7 +836,10 @@ body{background:var(--color-bg);min-height:100vh}
 
       <!-- DASHBOARD (built fully) -->
       <section id="section-dashboard" class="section active" aria-label="Dashboard">
-        <div class="quick-actions" id="dash-quick-actions">
+        <!-- Quick actions hidden while the reservations module is gated
+             (both actions create reservations). Presentational only —
+             remove style="display:none" to restore. -->
+        <div class="quick-actions" id="dash-quick-actions" style="display:none">
           <button class="quick-btn quick-btn-primary" id="btn-add-reservation" aria-label="Add reservation">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Reservation
@@ -786,17 +858,18 @@ body{background:var(--color-bg);min-height:100vh}
         </div>
 
         <div class="dash-grid">
-          <div class="panel" aria-label="Upcoming reservations">
-            <div class="panel-head">
-              <h2 class="panel-title">Upcoming - next 2 hours</h2>
-              <button class="btn btn-secondary" id="view-all-res-btn" style="min-height:36px;font-size:13px;padding:0 var(--space-4);border-radius:var(--radius-full)">View all</button>
+          <!-- Reservations module gated (presentational) — replaces the
+               "Upcoming reservations" panel and the booking-link panel. -->
+          <section class="panel soon-card" aria-label="Reservations coming soon">
+            <div class="soon-card-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>
             </div>
-            <div id="upcoming-res-body" class="panel-body">
-              <div class="skel-text" style="width:80%;margin-bottom:12px" aria-hidden="true"></div>
-              <div class="skel-text" style="width:65%;margin-bottom:12px" aria-hidden="true"></div>
-              <div class="skel-text" style="width:72%" aria-hidden="true"></div>
+            <div class="soon-card-body">
+              <span class="soon-card-pill">Coming soon</span>
+              <h2>Reservations — coming soon</h2>
+              <p>Online bookings, waitlist, and guest CRM are on the way. Your QR ordering &amp; POS are fully live.</p>
             </div>
-          </div>
+          </section>
 
           <div style="display:flex;flex-direction:column;gap:var(--space-4)">
             <div class="panel">
@@ -804,19 +877,6 @@ body{background:var(--color-bg);min-height:100vh}
                 <h2 class="panel-title" id="dash-date-label">Today</h2>
               </div>
               <div class="panel-body" id="dash-date-body" style="font-size:13px;color:var(--color-text-secondary);line-height:1.7"></div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-head">
-                <h2 class="panel-title">Booking link</h2>
-              </div>
-              <div class="panel-body">
-                <div id="booking-link-display" style="font-size:12px;color:var(--color-text-muted);overflow-wrap:anywhere;word-break:break-all"></div>
-                <button id="copy-booking-link" class="btn btn-secondary" style="min-height:36px;font-size:13px;padding:0 var(--space-4);border-radius:var(--radius-full);margin-top:var(--space-3)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  Copy link
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -871,7 +931,7 @@ body{background:var(--color-bg);min-height:100vh}
 
 <!-- Supabase + unified platform runtime (replaces data.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/platform.js?v=20260613e"></script>
+<script src="assets/platform.js?v=20260618a"></script>
 
 <script>
 (function () {
@@ -930,6 +990,35 @@ var SECTION_LABELS = {
 };
 
 /* =====================================================================
+   RESERVATIONS GATE (presentational — module not yet live)
+   These 6 sections render a "coming soon" panel instead of the cov_
+   feature module. POS / QR sections are NOT gated. To re-enable the
+   reservations module, set RESERVATIONS_GATED = {} (and remove the
+   .nav-soon pills + dashboard soon-card markup). All cov_ data/RPC code
+   is left intact and dormant. */
+var RESERVATIONS_GATED = {
+  floor: true, timeline: true, reservations: true,
+  guests: true, waitlist: true, blackouts: true,
+};
+
+function renderReservationsComingSoon(el) {
+  el.innerHTML =
+    '<div class="soon-gate">' +
+      '<div class="soon-gate-icon" aria-hidden="true">' +
+        '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+          'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>' +
+          '<line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' +
+          '<path d="M9 16l2 2 4-4"/></svg>' +
+      '</div>' +
+      '<span class="soon-gate-pill">Coming soon</span>' +
+      '<h2>Reservations — coming soon</h2>' +
+      '<p>Online bookings, waitlist, and guest CRM are on the way. ' +
+        'Your <strong>QR ordering &amp; POS are fully live</strong> and ready to use today.</p>' +
+    '</div>';
+}
+
+/* =====================================================================
    MODULE FLAGS
 ===================================================================== */
 function applyModuleFlags(modules) {
@@ -983,6 +1072,17 @@ function route(hash) {
   $('#topbar-title').textContent = SECTION_LABELS[sec] || 'Tavolo';
 
   if (sec === 'dashboard') loadDashboard();
+
+  /* ── RESERVATIONS MODULE GATED (presentational only) ──────────────────
+     The 6 reservations sections render a branded "coming soon" panel and
+     the cov_ feature render is deliberately NOT invoked. POS (pos-*) and
+     QR (qr-*) sections fall through to their live module render below.
+     Flip RESERVATIONS_GATED to {} to restore the full module. */
+  if (RESERVATIONS_GATED[sec]) {
+    if (el) renderReservationsComingSoon(el);
+    closeSidebar();
+    return;
+  }
 
   /* Feature module contract: assets/<sec>.js registers
      window.COV.screens[sec] = { render(sectionEl) }
@@ -1493,10 +1593,13 @@ async function loadDashboard() {
   }).format(new Date());
   $('#dash-date-label').textContent = dateLabel;
 
+  /* Booking-link display is gated out of the dashboard (reservations module
+     not yet live); guard the lookup so the dashboard still loads. */
   var bookingUrl = window.location.origin +
     window.location.pathname.replace('index.html', '') +
     'book.html?r=' + (rest.slug || '');
-  $('#booking-link-display').textContent = bookingUrl;
+  var bookingDisplay = $('#booking-link-display');
+  if (bookingDisplay) bookingDisplay.textContent = bookingUrl;
 
   $('#dash-date-body').innerHTML = [
     '<div style="font-size:14px;font-weight:600;color:var(--color-text-primary);margin-bottom:4px">' + esc(rest.name || 'Your Restaurant') + '</div>',
@@ -1507,46 +1610,13 @@ async function loadDashboard() {
       : '<span style="color:var(--color-destructive);font-weight:500">Off</span>') + '</div>',
   ].join('');
 
+  // Reservations module is "coming soon" — don't fetch or render reservation KPIs
+  // (Guests today / Upcoming / Tables in use / No-shows) or the upcoming list, which
+  // would be empty and contradict the coming-soon state. Hide the KPI grid; the
+  // dashboard keeps the Today panel + the reservations coming-soon card. Reinstate
+  // the Promise.all fetch + renderKPIs/renderUpcoming below when reservations ships.
   var kpiGrid = $('#kpi-grid');
-  kpiGrid.innerHTML = [
-    '<div class="skel-card" style="height:120px" aria-hidden="true"></div>',
-    '<div class="skel-card" style="height:120px" aria-hidden="true"></div>',
-    '<div class="skel-card" style="height:120px" aria-hidden="true"></div>',
-    '<div class="skel-card" style="height:120px" aria-hidden="true"></div>',
-  ].join('');
-
-  $('#upcoming-res-body').innerHTML = [
-    '<div class="skel-text" style="width:80%;margin-bottom:12px" aria-hidden="true"></div>',
-    '<div class="skel-text" style="width:65%;margin-bottom:12px" aria-hidden="true"></div>',
-    '<div class="skel-text" style="width:72%" aria-hidden="true"></div>',
-  ].join('');
-
-  try {
-    var results = await Promise.all([
-      data.reservations.countCoversForDate(rest.id, today),
-      data.reservations.listUpcoming(rest.id, 2),
-      data.reservations.noShowRate30d(rest.id),
-      data.tables.list(rest.id),
-    ]);
-    var covers     = results[0];
-    var upcoming   = results[1] || [];
-    var noShowRate = results[2];
-    var allTables  = results[3] || [];
-
-    var seatedNow   = upcoming.filter(function (r) { return r.status === 'seated'; }).length;
-    var totalTables = allTables.filter(function (t) { return t.is_active; }).length;
-    var occupancy   = totalTables > 0 ? Math.round((seatedNow / totalTables) * 100) : 0;
-
-    renderKPIs(covers, upcoming.length, occupancy, noShowRate);
-    renderUpcoming(upcoming, rest.timezone);
-  } catch (e) {
-    kpiGrid.innerHTML =
-      '<div class="panel" style="grid-column:1/-1;padding:var(--space-5);text-align:center;color:var(--color-destructive)">' +
-        'Failed to load dashboard data. ' +
-        '<button onclick="loadDashboard()" style="color:var(--shell-copper);background:none;border:none;cursor:pointer;text-decoration:underline">Retry</button>' +
-      '</div>';
-    console.error('[tavolo] dashboard load error', e);
-  }
+  if (kpiGrid) kpiGrid.style.display = 'none';
 }
 
 function getTodayInTz(tz) {
@@ -1599,6 +1669,7 @@ function kpiCard(label, value, sub, iconClass, iconPath) {
 
 function renderUpcoming(reservations, tz) {
   var body = $('#upcoming-res-body');
+  if (!body) return; /* gated out of dashboard */
   if (!reservations || !reservations.length) {
     body.innerHTML =
       '<div class="panel-empty">' +
@@ -1662,8 +1733,12 @@ $('#res-modal').addEventListener('click', function (e) {
 $('#res-modal').addEventListener('keydown', function (e) {
   if (e.key === 'Escape') this.classList.remove('open');
 });
-$('#copy-booking-link').addEventListener('click', function () {
-  var txt = $('#booking-link-display').textContent;
+/* Booking-link copy + "view all reservations" controls are gated out of the
+   dashboard (reservations module not yet live); attach only if present. */
+var copyBookingBtn = $('#copy-booking-link');
+if (copyBookingBtn) copyBookingBtn.addEventListener('click', function () {
+  var disp = $('#booking-link-display');
+  var txt = disp ? disp.textContent : '';
   if (!txt) return;
   navigator.clipboard.writeText(txt).then(function () {
     toast('Booking link copied!', 'ok');
@@ -1671,7 +1746,8 @@ $('#copy-booking-link').addEventListener('click', function () {
     toast('Could not copy to clipboard', 'err');
   });
 });
-$('#view-all-res-btn').addEventListener('click', function () {
+var viewAllResBtn = $('#view-all-res-btn');
+if (viewAllResBtn) viewAllResBtn.addEventListener('click', function () {
   location.hash = '#/reservations';
 });
 
@@ -1691,22 +1767,22 @@ $('#view-all-res-btn').addEventListener('click', function () {
 </script>
 
 <!-- Feature modules — each registers window.COV.screens.<name> = { render(sectionEl) } -->
-<script src="assets/floor.js?v=20260613e"></script>
-<script src="assets/timeline.js?v=20260613e"></script>
-<script src="assets/reservations.js?v=20260613e"></script>
-<script src="assets/guests.js?v=20260613e"></script>
-<script src="assets/waitlist.js?v=20260613e"></script>
-<script src="assets/blackouts.js?v=20260613e"></script>
-<script src="assets/settings.js?v=20260613e"></script>
-<script src="assets/mesa-floor.js?v=20260613e"></script>
-<script src="assets/mesa-menu.js?v=20260613e"></script>
-<script src="assets/mesa-tables.js?v=20260613e"></script>
-<script src="assets/mesa-analytics.js?v=20260613e"></script>
-<script src="assets/mesa-staff.js?v=20260613e"></script>
-<script src="assets/pos-reports.js?v=20260613e"></script>
-<script src="assets/pos-floor.js?v=20260613e"></script>
-<script src="assets/pos-menu.js?v=20260613e"></script>
-<script src="assets/pos-staff.js?v=20260613e"></script>
-<script src="assets/pos-settings.js?v=20260613e"></script>
+<script src="assets/floor.js?v=20260618a"></script>
+<script src="assets/timeline.js?v=20260618a"></script>
+<script src="assets/reservations.js?v=20260618a"></script>
+<script src="assets/guests.js?v=20260618a"></script>
+<script src="assets/waitlist.js?v=20260618a"></script>
+<script src="assets/blackouts.js?v=20260618a"></script>
+<script src="assets/settings.js?v=20260618a"></script>
+<script src="assets/mesa-floor.js?v=20260618a"></script>
+<script src="assets/mesa-menu.js?v=20260618a"></script>
+<script src="assets/mesa-tables.js?v=20260618a"></script>
+<script src="assets/mesa-analytics.js?v=20260618a"></script>
+<script src="assets/mesa-staff.js?v=20260618a"></script>
+<script src="assets/pos-reports.js?v=20260618a"></script>
+<script src="assets/pos-floor.js?v=20260618a"></script>
+<script src="assets/pos-menu.js?v=20260618a"></script>
+<script src="assets/pos-staff.js?v=20260618a"></script>
+<script src="assets/pos-settings.js?v=20260618a"></script>
 </body>
 </html>
