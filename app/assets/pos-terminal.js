@@ -1252,6 +1252,7 @@
   var _posSessCh    = null;
   var _posChSeq     = 0;
   var _posRefreshTimer = null;
+  var _posPollTimer = null;   /* fallback poll when realtime drops */
 
   /* Debounced refreshBill — a single QR order inserts several rows at once;
      150ms matches the KDS debounce (kds.html:1586) so a burst collapses into
@@ -1263,9 +1264,24 @@
     }, 150);
   }
 
+  /* Fallback poll: if realtime drops (CHANNEL_ERROR / TIMED_OUT / CLOSED — e.g. a
+     wifi blip), refresh the open ticket every 12s so the cashier never silently
+     stops seeing QR orders. Stopped as soon as realtime re-SUBSCRIBES. */
+  function startPosFallbackPoll() {
+    if (_posPollTimer) return;
+    _posPollTimer = setInterval(function() {
+      if (state.sessionId) refreshBill();
+    }, 12000);
+  }
+  function stopPosFallbackPoll() {
+    clearInterval(_posPollTimer);
+    _posPollTimer = null;
+  }
+
   function teardownPosSession() {
     clearTimeout(_posRefreshTimer);
     _posRefreshTimer = null;
+    stopPosFallbackPoll();
     if (_posItemsCh) { try { sb.removeChannel(_posItemsCh); } catch (e) {} _posItemsCh = null; }
     if (_posSessCh)  { try { sb.removeChannel(_posSessCh);  } catch (e) {} _posSessCh  = null; }
   }
@@ -1291,7 +1307,11 @@
           if (state.sessionId !== sid) return;    /* session changed under us */
           debouncedRefreshBill();
         })
-        .subscribe();
+        .subscribe(function(status) {
+          if (seq !== _posChSeq) return;   /* stale */
+          if (status === 'SUBSCRIBED') { stopPosFallbackPoll(); }
+          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') { startPosFallbackPoll(); }
+        });
     } catch (e) { console.warn('[POS] items realtime error', e); }
 
     try {

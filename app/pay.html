@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/tokens.css?v=20260618a">
+<link rel="stylesheet" href="assets/tokens.css?v=20260618b">
 <style>
 /* ---- page shell ---- */
 html,body{height:100%;overflow-x:hidden}
@@ -1571,7 +1571,7 @@ body{
 </div><!-- #app -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/platform.js?v=20260618a"></script>
+<script src="assets/platform.js?v=20260618b"></script>
 <script>
 (function(){
 'use strict';
@@ -2417,6 +2417,7 @@ function subscribeRealtime(){
     try { MESA.sb.removeChannel(state.realtimeCh); } catch(e){}
     state.realtimeCh = null;
   }
+  stopQrFallbackPoll();  // reset any fallback poll; the new subscription re-arms it on error
 
   try {
     state.realtimeCh = MESA.sb.channel('mesa-items-'+state.session.id)
@@ -2465,7 +2466,12 @@ function subscribeRealtime(){
           renderPresence(); updateMyTotal();
           renderBill();
         })
-      .subscribe();
+      .subscribe(function(status){
+        // Fallback poll if the items channel drops (wifi blip) — recover without
+        // a manual refresh; stop once realtime re-SUBSCRIBES.
+        if(status === 'SUBSCRIBED'){ stopQrFallbackPoll(); }
+        else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){ startQrFallbackPoll(); }
+      });
   } catch(e){ console.warn('[mesa] realtime error', e); }
 
   // GAP 3: also watch the SESSION row. When the POS settles (pos_pay) or any
@@ -2498,6 +2504,34 @@ function subscribeRealtime(){
 // Module-level sequence counter for the session channel topic (mirrors platform
 // _chSeq / kds rtChannelSeq) so every (re)subscribe gets a unique topic name.
 var _sessChSeq = 0;
+
+// Fallback poll for the QR bill if realtime drops (wifi blip): re-fetch the bill
+// every 12s WITHOUT re-subscribing, until the items channel re-SUBSCRIBES. Mirrors
+// the POS + KDS fallback so a dropped channel can't silently freeze the diner's bill.
+var _qrPollTimer = null;
+function startQrFallbackPoll(){
+  if(_qrPollTimer) return;
+  _qrPollTimer = setInterval(pollBillItems, 12000);
+}
+function stopQrFallbackPoll(){
+  clearInterval(_qrPollTimer); _qrPollTimer = null;
+}
+async function pollBillItems(){
+  if(!state.code || state.paid) return;
+  try {
+    var data = await MESA.loadTableBill(state.code);
+    if(!data || data.notFound) return;
+    // Session settled/closed remotely while realtime was down → loadTableBill
+    // returns no live session; flip to the paid/closed UI.
+    if(!data.session || data.session.status==='paid' || data.session.status==='closed'){
+      onSessionClosedRemotely(); return;
+    }
+    state.items = data.items || [];
+    renderBillItems($('#bill-items-list'), false);
+    renderBillItems($('#claim-items-list'), true);
+    renderPresence(); updateMyTotal(); renderBill();
+  } catch(e){}
+}
 
 // The bill closed underneath the diner (settled on the POS, or paid by another
 // client). Reuse the existing local paid path: mark paid so renderBill() shows
