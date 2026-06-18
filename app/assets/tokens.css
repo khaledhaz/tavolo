@@ -22,6 +22,7 @@
   /* ---- Platform identity: Midnight & Copper ---- */
   /* Primary — Copper (replaces Mesa sienna) */
   --color-primary:#c2703d; --color-primary-hover:#a85e30; --color-primary-light:#f5ebe0;
+  --color-primary-subtle:#f5ebe0; /* subtle brand-tinted background (selected option, Required badge) — was undefined, fell back to grey */
   --color-primary-foreground:#FFFFFF;
   /* Accent — Honey-gold (replaces amber) */
   --color-accent:#f0b51d; --color-accent-hover:#c99616; --color-accent-light:#fef9e7;

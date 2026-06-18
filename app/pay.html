@@ -216,7 +216,7 @@ body{
 .mod-group{margin-bottom:var(--space-5)}
 .mod-group__head{display:flex;align-items:baseline;gap:8px;margin-bottom:var(--space-3);flex-wrap:wrap}
 .mod-group__name{font-size:15px;font-weight:600;color:var(--color-text-primary)}
-.mod-group__hint{font-size:12px;color:var(--color-text-muted)}
+.mod-group__hint{font-size:12px;color:var(--color-text-secondary)}
 .mod-group__req{font-size:11px;font-weight:600;color:var(--color-primary);background:var(--color-primary-subtle,rgba(0,0,0,0.05));border-radius:var(--radius-full);padding:2px 8px}
 .mod-option{
   display:flex;align-items:center;gap:12px;
@@ -2790,7 +2790,10 @@ function openMenuScreen(){
   setBrandLogoEl($('#menu-logo'), state.restaurant);
   var tl = $('#menu-table-label'); if(tl) tl.textContent = state.table ? state.table.label : '';
   show('#screen-menu');
+  // reset scroll on the ACTUAL scroller (body is the scroll box here, so window.scrollTo is a no-op)
   window.scrollTo(0,0);
+  document.body.scrollTop = 0;
+  if(document.scrollingElement){ document.scrollingElement.scrollTop = 0; }
   // sync back-button label/text depending on whether there's a session
   var bfm = $('#back-from-menu');
   if(bfm){
@@ -3142,16 +3145,19 @@ function attachNavScrollSpy(activeCats){
     });
   }
 
-  // Fix 13: single scroll listener on window (body scrolls, window fires)
+  // The page scrolls on <body> (an overflow scroll box, because body has overflow-x:hidden
+  // while html is height:100%), NOT the window — so window 'scroll' never fires. A capturing
+  // listener on document catches the scroll event from whichever element actually scrolls
+  // (body, html, or window), so the spy works regardless of the scroll container.
   var _scrollHandler = function(){ updateActiveChip(); };
-  window.addEventListener('scroll', _scrollHandler, {passive:true});
+  document.addEventListener('scroll', _scrollHandler, {passive:true, capture:true});
 
   // Run once immediately so initial state is correct
   updateActiveChip();
 
   // Fix 13: remove listener on ANY exit from menu screen, not only back button
   function teardownScrollSpy(){
-    window.removeEventListener('scroll', _scrollHandler);
+    document.removeEventListener('scroll', _scrollHandler, {capture:true});
   }
 
   var backBtn = document.getElementById('back-from-menu');
