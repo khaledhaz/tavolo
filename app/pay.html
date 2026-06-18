@@ -952,9 +952,12 @@ body{
     animation:screenIn var(--duration-normal) var(--easing-decelerate) both;
   }
 }
+/* opacity-only entrance — NO transform: a transform on .screen.active would become the
+   containing block for position:fixed descendants (cart bar, modifier sheet) and pin them
+   to the bottom of the scrollable content instead of the viewport. */
 @keyframes screenIn{
-  from{opacity:0;transform:translateY(6px)}
-  to{opacity:1;transform:translateY(0)}
+  from{opacity:0}
+  to{opacity:1}
 }
 
 /* ---- animated number flash: applied when a money value changes ---- */
@@ -1113,7 +1116,8 @@ body{
   font-size:13px;color:var(--color-text-secondary);font-variant-numeric:tabular-nums;
 }
 .cart-bar__btn{
-  flex-shrink:0;min-width:140px;min-height:48px;
+  flex-shrink:0;width:auto;min-width:140px;min-height:48px;
+  padding-left:var(--space-5);padding-right:var(--space-5);
   border-radius:var(--radius-full);
   font-size:15px;font-weight:600;
 }
