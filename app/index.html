@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/tokens.css?v=20260618b">
+<link rel="stylesheet" href="assets/tokens.css?v=20260618c">
 <style>
 
 /* ===== APP SHELL ===== */
@@ -931,7 +931,7 @@ body{background:var(--color-bg);min-height:100vh}
 
 <!-- Supabase + unified platform runtime (replaces data.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/platform.js?v=20260618b"></script>
+<script src="assets/platform.js?v=20260618c"></script>
 
 <script>
 (function () {
@@ -1610,13 +1610,90 @@ async function loadDashboard() {
       : '<span style="color:var(--color-destructive);font-weight:500">Off</span>') + '</div>',
   ].join('');
 
-  // Reservations module is "coming soon" — don't fetch or render reservation KPIs
-  // (Guests today / Upcoming / Tables in use / No-shows) or the upcoming list, which
-  // would be empty and contradict the coming-soon state. Hide the KPI grid; the
-  // dashboard keeps the Today panel + the reservations coming-soon card. Reinstate
-  // the Promise.all fetch + renderKPIs/renderUpcoming below when reservations ships.
+  // Reservations module is "coming soon", so the reservation-derived KPI grid
+  // (Guests today / Upcoming / Tables in use / No-shows) is gone. Instead we
+  // surface LIVE POS/QR metrics for today so the dashboard reflects the product
+  // that IS live. Reinstate renderKPIs/renderUpcoming here when reservations ships.
   var kpiGrid = $('#kpi-grid');
-  if (kpiGrid) kpiGrid.style.display = 'none';
+  if (!kpiGrid) return;
+  kpiGrid.style.display = ''; // ensure visible (was force-hidden previously)
+  kpiGrid.setAttribute('aria-label', "Today's POS metrics");
+
+  try {
+    var m = await window.PLAT.data.mesa.posDashboardMetrics(rest);
+    if (!m || !m.available) {
+      // No POS (mesa) restaurant linked to this account — show a neutral
+      // unconfigured state rather than misleading zeros.
+      renderPosKPIs(null);
+      return;
+    }
+    renderPosKPIs(m);
+  } catch (e) {
+    console.warn('[tavolo] POS dashboard metrics failed', e);
+    renderPosKPIsError();
+  }
+}
+
+/* Render the 4 live POS/QR KPI cards (today, restaurant-local). All values are
+   zero-safe; money() formats in the restaurant currency. Icons reuse the same
+   stroke-SVG + .kpi-icon chip style as the original reservation KPIs. */
+function renderPosKPIs(m) {
+  var kpiGrid = $('#kpi-grid');
+  if (!kpiGrid) return;
+  kpiGrid.setAttribute('role', 'list');
+
+  if (!m) {
+    // Account has no POS module linked — honest "not set up" state.
+    var dashIcon = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+    kpiGrid.innerHTML = [
+      kpiCard('Orders today', '—', 'QR & POS not set up for this account yet', 'gold', dashIcon),
+      kpiCard('Revenue today', '—', 'Connect your POS to see live sales', 'green', dashIcon),
+      kpiCard('Open tables', '—', 'Live tables appear once POS is active', 'blue', dashIcon),
+      kpiCard('Avg ticket', '—', 'Revenue per paid table', 'gold', dashIcon),
+    ].join('');
+    return;
+  }
+
+  var money = window.PLAT.utils.money;
+  var cur   = m.currency || 'USD';
+
+  kpiGrid.innerHTML = [
+    // 1) Orders today = distinct tables/sessions paid today (a closed check = an order)
+    kpiCard('Orders today', String(m.paidSessions),
+      'Tables paid & closed today',
+      'gold',
+      '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'),
+
+    // 2) Revenue today = sum of today's succeeded payments (bill principal, excl. tips)
+    kpiCard('Revenue today', money(m.revenueCents, cur),
+      'Paid sales today (excludes tips)',
+      'green',
+      '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'),
+
+    // 3) Open tables now = live sessions not yet paid/closed (point-in-time)
+    kpiCard('Open tables', String(m.openTables),
+      'Live sessions not yet paid out',
+      'blue',
+      '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'),
+
+    // 4) Avg ticket today = revenue / paid sessions (zero-safe)
+    kpiCard('Avg ticket', m.paidSessions > 0 ? money(m.avgTicketCents, cur) : money(0, cur),
+      m.paidSessions > 0 ? 'Average per paid table today' : 'No paid tables yet today',
+      'gold',
+      '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'),
+  ].join('');
+}
+
+/* Error state: keep the grid present but show a single non-alarming card so the
+   dashboard never looks broken if the POS report call fails. */
+function renderPosKPIsError() {
+  var kpiGrid = $('#kpi-grid');
+  if (!kpiGrid) return;
+  kpiGrid.setAttribute('role', 'list');
+  kpiGrid.innerHTML = kpiCard("Today's metrics", 'Unavailable',
+    'Could not load live POS data. Refresh to retry.',
+    'red',
+    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>');
 }
 
 function getTodayInTz(tz) {
@@ -1767,22 +1844,22 @@ if (viewAllResBtn) viewAllResBtn.addEventListener('click', function () {
 </script>
 
 <!-- Feature modules — each registers window.COV.screens.<name> = { render(sectionEl) } -->
-<script src="assets/floor.js?v=20260618b"></script>
-<script src="assets/timeline.js?v=20260618b"></script>
-<script src="assets/reservations.js?v=20260618b"></script>
-<script src="assets/guests.js?v=20260618b"></script>
-<script src="assets/waitlist.js?v=20260618b"></script>
-<script src="assets/blackouts.js?v=20260618b"></script>
-<script src="assets/settings.js?v=20260618b"></script>
-<script src="assets/mesa-floor.js?v=20260618b"></script>
-<script src="assets/mesa-menu.js?v=20260618b"></script>
-<script src="assets/mesa-tables.js?v=20260618b"></script>
-<script src="assets/mesa-analytics.js?v=20260618b"></script>
-<script src="assets/mesa-staff.js?v=20260618b"></script>
-<script src="assets/pos-reports.js?v=20260618b"></script>
-<script src="assets/pos-floor.js?v=20260618b"></script>
-<script src="assets/pos-menu.js?v=20260618b"></script>
-<script src="assets/pos-staff.js?v=20260618b"></script>
-<script src="assets/pos-settings.js?v=20260618b"></script>
+<script src="assets/floor.js?v=20260618c"></script>
+<script src="assets/timeline.js?v=20260618c"></script>
+<script src="assets/reservations.js?v=20260618c"></script>
+<script src="assets/guests.js?v=20260618c"></script>
+<script src="assets/waitlist.js?v=20260618c"></script>
+<script src="assets/blackouts.js?v=20260618c"></script>
+<script src="assets/settings.js?v=20260618c"></script>
+<script src="assets/mesa-floor.js?v=20260618c"></script>
+<script src="assets/mesa-menu.js?v=20260618c"></script>
+<script src="assets/mesa-tables.js?v=20260618c"></script>
+<script src="assets/mesa-analytics.js?v=20260618c"></script>
+<script src="assets/mesa-staff.js?v=20260618c"></script>
+<script src="assets/pos-reports.js?v=20260618c"></script>
+<script src="assets/pos-floor.js?v=20260618c"></script>
+<script src="assets/pos-menu.js?v=20260618c"></script>
+<script src="assets/pos-staff.js?v=20260618c"></script>
+<script src="assets/pos-settings.js?v=20260618c"></script>
 </body>
 </html>

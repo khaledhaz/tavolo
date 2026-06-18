@@ -910,6 +910,84 @@
     return { error: null, count: totalCount };
   }
 
+  /* --------------------------------------------------------------------------
+     POS DASHBOARD METRICS (admin landing page)
+     The admin app's state.restaurant is a cov_restaurants row, which has no
+     POS data. The POS lives on mesa_restaurants, linked by plat_restaurant_id.
+     resolveMesaRestaurantId() maps cov.plat_restaurant_id -> mesa_restaurants.id.
+
+     posDashboardMetrics() returns today's live POS/QR KPIs for that restaurant:
+       - openTables   : sessions NOT in (paid,closed)        [point-in-time]
+       - revenueCents : today's succeeded payments, principal only (excl tips)
+       - paidSessions : distinct sessions paid today          [today, local tz]
+       - avgTicketCents: revenueCents / paidSessions (0 when none)
+       - currency     : ISO code for money() formatting
+     "Today" is the restaurant's local calendar day. pos_x_report computes the
+     local-midnight cutoff server-side from the restaurant timezone (verified:
+     its `since` matches the JS local-midnight for Asia/Kuwait), so revenue and
+     openTables come straight from it. pos_x_report exposes no order/session
+     count, so paidSessions is a small supplemental query over today's payments.
+     Voided items are excluded from revenue by construction: revenue is summed
+     from succeeded payments (voided line items never reach a payment), and
+     pos_x_report's net_cents is payment-derived, not line-item-derived.
+  -------------------------------------------------------------------------- */
+  async function resolveMesaRestaurantId(restaurant) {
+    if (!restaurant) return null;
+    // The cov row carries plat_restaurant_id; mesa shares the same plat link.
+    var platId = restaurant.plat_restaurant_id;
+    if (!platId) return null;
+    var res = await sb.from('mesa_restaurants')
+      .select('id,currency')
+      .eq('plat_restaurant_id', platId)
+      .limit(1)
+      .maybeSingle();
+    if (res.error || !res.data) return null;
+    return { id: res.data.id, currency: res.data.currency || (restaurant.currency || 'USD') };
+  }
+
+  async function posDashboardMetrics(restaurant) {
+    var mesa = await resolveMesaRestaurantId(restaurant);
+    if (!mesa) return { available: false };
+
+    // 1) pos_x_report — open sessions + today's revenue (timezone-correct, server-side).
+    var x = await sb.rpc('pos_x_report', { p_restaurant: mesa.id });
+    if (x.error) throw x.error;
+    var report = x.data || {};
+    var sales  = report.sales_today || {};
+    var openTables   = Number(report.open_sessions || 0);
+    var revenueCents = Number(sales.net_cents || 0); // principal, excludes tips
+
+    // 2) Paid sessions today — distinct sessions with a succeeded payment since
+    //    the SAME local-midnight cutoff pos_x_report used (report.since). Today's
+    //    payment volume is small, so fetching session_ids and de-duping client
+    //    side is cheap and avoids a second RPC.
+    var since = report.since;
+    var paidSessions = 0;
+    if (since) {
+      var pr = await sb.from('mesa_payments')
+        .select('session_id')
+        .eq('restaurant_id', mesa.id)
+        .eq('status', 'succeeded')
+        .gte('created_at', since);
+      if (pr.error) throw pr.error;
+      var ids = {};
+      (pr.data || []).forEach(function (row) { if (row.session_id) ids[row.session_id] = 1; });
+      paidSessions = Object.keys(ids).length;
+    }
+
+    var avgTicketCents = paidSessions > 0 ? Math.round(revenueCents / paidSessions) : 0;
+
+    return {
+      available:      true,
+      currency:       mesa.currency,
+      openTables:     openTables,
+      revenueCents:   revenueCents,
+      paidSessions:   paidSessions,
+      avgTicketCents: avgTicketCents,
+      asOf:           report.as_of || null,
+    };
+  }
+
   /* ==========================================================================
      REALTIME
      _chSeq counter: every sb.channel() call gets a unique topic name.
@@ -1172,6 +1250,7 @@
         joinLoyalty:    joinLoyalty,
         startTableOrder: startTableOrder,
         addOrderItems:  addOrderItems,
+        posDashboardMetrics: posDashboardMetrics,
       },
       cov: {
         auth:           auth,          // COV screens access auth via data.cov.auth
