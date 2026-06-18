@@ -836,27 +836,71 @@
     return { error: null, session_id: sessionId, order_id: orderId };
   }
 
+  // Cart lines come in TWO shapes:
+  //   plain  : { menu_item_id, name, unit_price_cents | base_price_cents, qty }
+  //   w/mods : { menu_item_id, name, base_price_cents, qty,
+  //             modifiers:[{ modifier_id, name, price_delta_cents }] }
+  //
+  // WRITE PATH (verified against the live project 2026-06-18):
+  //   - anon CANNOT INSERT pos_order_item_modifiers (RLS 42501).
+  //   - anon CAN call the pos_add_item RPC (SECURITY DEFINER) which creates the
+  //     line AND persists its modifiers atomically.
+  // So: lines WITH modifiers go through pos_add_item (one RPC per physical unit).
+  // Plain lines keep the cheap bulk INSERT into mesa_order_items (unchanged path,
+  // base price only). pos_add_item also handles firing, but we keep a single
+  // explicit pos_fire_session at the end as a backstop for the plain-insert path.
   async function addOrderItems(orderId, sessionId, items) {
-    var rows = [];
+    var plainRows = [];
+    var modLines  = [];
     (items || []).forEach(function (it) {
       var n = Math.max(1, Number(it.qty || 1));
-      for (var i = 0; i < n; i++) {
-        rows.push({
-          order_id:         orderId,
-          session_id:       sessionId,
-          menu_item_id:     it.menu_item_id || null,
-          name:             it.name,
-          unit_price_cents: it.unit_price_cents,
-          qty:              1,
-        });
+      var base = (it.base_price_cents != null) ? it.base_price_cents : it.unit_price_cents;
+      var hasMods = it.modifiers && it.modifiers.length;
+      if (hasMods) {
+        for (var k = 0; k < n; k++) { modLines.push(it); }   // one RPC call per unit
+      } else {
+        for (var i = 0; i < n; i++) {
+          plainRows.push({
+            order_id:         orderId,
+            session_id:       sessionId,
+            menu_item_id:     it.menu_item_id || null,
+            name:             it.name,
+            unit_price_cents: base,
+            qty:              1,
+          });
+        }
       }
     });
-    if (!rows.length) return { error: null, count: 0 };
-    var ins = await sb.from('mesa_order_items').insert(rows);
+
+    var totalCount = plainRows.length + modLines.length;
+    if (!totalCount) return { error: null, count: 0 };
+
+    // 1) plain lines — single bulk insert
+    if (plainRows.length) {
+      var ins = await sb.from('mesa_order_items').insert(plainRows);
+      if (ins.error) return { error: ins.error, count: 0 };
+    }
+
+    // 2) modifier lines — pos_add_item RPC (anon-callable, persists modifiers)
+    for (var m2 = 0; m2 < modLines.length; m2++) {
+      var line = modLines[m2];
+      var modIds = (line.modifiers || []).map(function (mm) { return mm.modifier_id; });
+      var rpc = await sb.rpc('pos_add_item', {
+        p_session:      sessionId,
+        p_menu_item:    line.menu_item_id,
+        p_qty:          1,
+        p_seat:         null,
+        p_course:       1,
+        p_notes:        null,
+        p_modifier_ids: modIds,
+      });
+      if (rpc.error) return { error: rpc.error, count: m2 };
+    }
+
     // QR/diner orders fire to the kitchen immediately so the line cooks see them
     // (POS v2 unified kitchen — QR orders no longer get stuck at kitchen_status 'new').
-    if (!ins.error) { try { await sb.rpc('pos_fire_session', { p_session: sessionId }); } catch (e) {} }
-    return { error: ins.error, count: rows.length };
+    try { await sb.rpc('pos_fire_session', { p_session: sessionId }); } catch (e) {}
+    return { error: null, count: totalCount };
   }
 
   /* ==========================================================================

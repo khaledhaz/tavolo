@@ -685,6 +685,86 @@
   white-space: nowrap;\
 }\
 \
+/* ====== INLINE OPTION BUILDER (inside item drawer) ====== */\
+.posmenu-inlineopt {\
+  margin-top: var(--space-3);\
+  border: 1px dashed var(--color-border-strong);\
+  border-radius: var(--radius-md);\
+  padding: var(--space-3);\
+  background: var(--color-surface);\
+}\
+.posmenu-inlineopt-toggle {\
+  display: inline-flex;\
+  align-items: center;\
+  gap: 6px;\
+  background: none;\
+  border: none;\
+  color: var(--shell-copper, var(--color-primary));\
+  font-size: 13px;\
+  font-weight: 600;\
+  cursor: pointer;\
+  padding: 0;\
+}\
+.posmenu-inlineopt-body { margin-top: var(--space-3); display: none; }\
+.posmenu-inlineopt-body.open { display: block; }\
+.posmenu-inlineopt-row {\
+  display: flex;\
+  gap: var(--space-2);\
+  align-items: center;\
+  margin-bottom: var(--space-2);\
+  flex-wrap: wrap;\
+}\
+.posmenu-inlineopt-row .posmenu-input { min-height: 38px; }\
+.posmenu-inlineopt-seg {\
+  display: inline-flex;\
+  border: 1px solid var(--color-border);\
+  border-radius: var(--radius-full);\
+  overflow: hidden;\
+}\
+.posmenu-inlineopt-seg button {\
+  border: none;\
+  background: none;\
+  padding: 7px 14px;\
+  font-size: 13px;\
+  color: var(--color-text-secondary);\
+  cursor: pointer;\
+}\
+.posmenu-inlineopt-seg button.active {\
+  background: var(--shell-copper, var(--color-primary));\
+  color: #fff;\
+  font-weight: 600;\
+}\
+.posmenu-inlineopt-opts { display: flex; flex-direction: column; gap: 6px; margin: var(--space-2) 0; }\
+.posmenu-inlineopt-opt {\
+  display: flex;\
+  gap: var(--space-2);\
+  align-items: center;\
+}\
+.posmenu-inlineopt-opt .posmenu-input { min-height: 36px; }\
+.posmenu-inlineopt-optname { flex: 1; min-width: 0; }\
+.posmenu-inlineopt-optprice { width: 110px; flex-shrink: 0; }\
+.posmenu-inlineopt-del {\
+  background: none;\
+  border: none;\
+  color: var(--color-text-muted);\
+  cursor: pointer;\
+  padding: 4px;\
+  flex-shrink: 0;\
+}\
+.posmenu-inlineopt-del:hover { color: var(--color-destructive); }\
+.posmenu-inlineopt-addopt {\
+  background: none;\
+  border: 1px dashed var(--color-border-strong);\
+  border-radius: var(--radius-sm);\
+  color: var(--color-text-secondary);\
+  font-size: 13px;\
+  padding: 7px 10px;\
+  cursor: pointer;\
+  align-self: flex-start;\
+}\
+.posmenu-inlineopt-foot { display: flex; gap: var(--space-2); margin-top: var(--space-3); }\
+.posmenu-inlineopt-hint { font-size: 11px; color: var(--color-text-muted); margin-top: 4px; }\
+\
 /* ====== TOAST ====== */\
 #posmenu-toast {\
   position: fixed;\
@@ -1351,12 +1431,15 @@
     var modListEl = sectionEl.querySelector('#pm-mod-checklist');
     if (modListEl) {
       if (!_modGroups.length) {
-        modListEl.innerHTML = '<p style="padding:var(--space-3);font-size:13px;color:var(--color-text-muted)">No modifier groups yet. Create some in the Modifiers tab.</p>';
+        modListEl.innerHTML = '<p style="padding:var(--space-3);font-size:13px;color:var(--color-text-muted)">No option groups yet — add one below, or reuse groups from the Modifiers tab.</p>';
       } else {
         /* We'll render after fetching current links (if editing) */
         modListEl.innerHTML = _listSkeletons(2);
       }
     }
+
+    /* Reset the inline option-group builder to its collapsed empty state */
+    _resetInlineOptions(sectionEl);
 
     var overlay = sectionEl.querySelector('#pm-drawer-overlay');
     var drawer  = sectionEl.querySelector('#pm-drawer');
@@ -1386,7 +1469,7 @@
     var modListEl = sectionEl.querySelector('#pm-mod-checklist');
     if (!modListEl) return;
     if (!_modGroups.length) {
-      modListEl.innerHTML = '<p style="padding:var(--space-3);font-size:13px;color:var(--color-text-muted)">No modifier groups yet. Create some in the Modifiers tab.</p>';
+      modListEl.innerHTML = '<p style="padding:var(--space-3);font-size:13px;color:var(--color-text-muted)">No option groups yet — add one below.</p>';
       return;
     }
     modListEl.innerHTML = _modGroups.map(function (g) {
@@ -1492,6 +1575,9 @@
       });
     }
 
+    /* Inline option-group builder (create groups/options without leaving the drawer) */
+    _wireInlineOptions(sectionEl);
+
     /* Save item */
     if (saveBtn) {
       saveBtn.addEventListener('click', function () {
@@ -1575,6 +1661,194 @@
           .catch(function () { if (cb) cb(); });
       })
       .catch(function () { if (cb) cb(); });
+  }
+
+  /* ==========================================================================
+     INLINE OPTION BUILDER (item drawer) — create a modifier group + its options
+     right here, then auto-attach it to this item. Writes pos_modifier_groups +
+     pos_modifiers; the link to the item is created via _syncItemModGroups when
+     the item is saved (works for both new and existing items). Mirrors the
+     Modifiers-tab writes; runs in the authenticated POS context (anon is RLS-
+     blocked on these tables, the staff session is not).
+  ========================================================================== */
+  var _inlineMulti = false; /* false = pick one (radio), true = pick several */
+
+  function _resetInlineOptions(sectionEl) {
+    var body  = sectionEl.querySelector('#pm-inlineopt-body');
+    var tgl   = sectionEl.querySelector('#pm-inlineopt-toggle');
+    var gname = sectionEl.querySelector('#pm-inlineopt-gname');
+    var req   = sectionEl.querySelector('#pm-inlineopt-required');
+    var maxIn = sectionEl.querySelector('#pm-inlineopt-max');
+    if (body) body.classList.remove('open');
+    if (tgl)  tgl.setAttribute('aria-expanded', 'false');
+    if (gname) gname.value = '';
+    if (req)  req.checked = false;
+    if (maxIn) maxIn.value = '3';
+    _inlineMulti = false;
+    _setInlineSeg(sectionEl, false);
+    _renderInlineOpts(sectionEl, [{ name: '', delta: '' }, { name: '', delta: '' }]);
+  }
+
+  function _setInlineSeg(sectionEl, multi) {
+    _inlineMulti = multi;
+    var single = sectionEl.querySelector('#pm-inlineopt-single');
+    var mlt    = sectionEl.querySelector('#pm-inlineopt-multi');
+    var maxWrap= sectionEl.querySelector('#pm-inlineopt-maxwrap');
+    if (single) { single.classList.toggle('active', !multi); single.setAttribute('aria-pressed', String(!multi)); }
+    if (mlt)    { mlt.classList.toggle('active', multi);  mlt.setAttribute('aria-pressed', String(multi)); }
+    if (maxWrap) maxWrap.style.display = multi ? 'inline-flex' : 'none';
+  }
+
+  function _readInlineOpts(sectionEl) {
+    var rows = sectionEl.querySelectorAll('#pm-inlineopt-opts .posmenu-inlineopt-opt');
+    var out = [];
+    rows.forEach(function (row) {
+      var nm = (row.querySelector('.posmenu-inlineopt-optname').value || '').trim();
+      var pv = row.querySelector('.posmenu-inlineopt-optprice').value;
+      out.push({ name: nm, delta: pv });
+    });
+    return out;
+  }
+
+  function _renderInlineOpts(sectionEl, rows) {
+    var wrap = sectionEl.querySelector('#pm-inlineopt-opts');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    (rows || []).forEach(function (r) {
+      wrap.appendChild(_inlineOptRow(sectionEl, r.name, r.delta));
+    });
+  }
+
+  function _inlineOptRow(sectionEl, name, delta) {
+    var row = document.createElement('div');
+    row.className = 'posmenu-inlineopt-opt';
+    var nameInp = document.createElement('input');
+    nameInp.className = 'posmenu-input posmenu-inlineopt-optname';
+    nameInp.type = 'text';
+    nameInp.placeholder = 'Option name — e.g. Sourdough';
+    nameInp.autocomplete = 'off';
+    if (name) nameInp.value = name;
+    var priceInp = document.createElement('input');
+    priceInp.className = 'posmenu-input posmenu-inlineopt-optprice';
+    priceInp.type = 'number';
+    priceInp.min = '0';
+    priceInp.step = '0.01';
+    priceInp.placeholder = '+0.00';
+    priceInp.setAttribute('aria-label', 'Extra price for this option');
+    if (delta !== '' && delta != null) priceInp.value = delta;
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'posmenu-inlineopt-del';
+    del.setAttribute('aria-label', 'Remove option');
+    del.innerHTML = _svgClose ? _svgClose(14) : '&#x2715;';
+    del.addEventListener('click', function () {
+      var all = sectionEl.querySelectorAll('#pm-inlineopt-opts .posmenu-inlineopt-opt');
+      if (all.length <= 1) { nameInp.value = ''; priceInp.value = ''; return; }
+      row.remove();
+    });
+    row.appendChild(nameInp);
+    row.appendChild(priceInp);
+    row.appendChild(del);
+    return row;
+  }
+
+  function _wireInlineOptions(sectionEl) {
+    var tgl    = sectionEl.querySelector('#pm-inlineopt-toggle');
+    var body   = sectionEl.querySelector('#pm-inlineopt-body');
+    var single = sectionEl.querySelector('#pm-inlineopt-single');
+    var multi  = sectionEl.querySelector('#pm-inlineopt-multi');
+    var addOpt = sectionEl.querySelector('#pm-inlineopt-addopt');
+    var saveB  = sectionEl.querySelector('#pm-inlineopt-save');
+    var cancel = sectionEl.querySelector('#pm-inlineopt-cancel');
+
+    if (tgl && body) {
+      tgl.addEventListener('click', function () {
+        var open = body.classList.toggle('open');
+        tgl.setAttribute('aria-expanded', String(open));
+        if (open && !sectionEl.querySelectorAll('#pm-inlineopt-opts .posmenu-inlineopt-opt').length) {
+          _renderInlineOpts(sectionEl, [{ name: '', delta: '' }, { name: '', delta: '' }]);
+        }
+        if (open) { var g = sectionEl.querySelector('#pm-inlineopt-gname'); if (g) setTimeout(function () { g.focus(); }, 40); }
+      });
+    }
+    if (single) single.addEventListener('click', function () { _setInlineSeg(sectionEl, false); });
+    if (multi)  multi.addEventListener('click', function () { _setInlineSeg(sectionEl, true); });
+    if (addOpt) addOpt.addEventListener('click', function () {
+      var wrap = sectionEl.querySelector('#pm-inlineopt-opts');
+      if (wrap) { var r = _inlineOptRow(sectionEl, '', ''); wrap.appendChild(r); var n = r.querySelector('.posmenu-inlineopt-optname'); if (n) n.focus(); }
+    });
+    if (cancel) cancel.addEventListener('click', function () { _resetInlineOptions(sectionEl); });
+    if (saveB)  saveB.addEventListener('click', function () { _saveInlineOptionGroup(sectionEl, saveB); });
+  }
+
+  function _saveInlineOptionGroup(sectionEl, saveB) {
+    var gname = (sectionEl.querySelector('#pm-inlineopt-gname').value || '').trim();
+    if (!gname) { _toast('Name the option group.', 'err'); sectionEl.querySelector('#pm-inlineopt-gname').focus(); return; }
+    var req   = sectionEl.querySelector('#pm-inlineopt-required').checked;
+    var rawOpts = _readInlineOpts(sectionEl).filter(function (o) { return o.name; });
+    if (!rawOpts.length) { _toast('Add at least one option.', 'err'); return; }
+
+    /* single = radio (max 1); multi = up to N (default from the Max input). */
+    var maxSel, minSel;
+    if (_inlineMulti) {
+      maxSel = parseInt(sectionEl.querySelector('#pm-inlineopt-max').value, 10) || rawOpts.length;
+      if (maxSel < 1) maxSel = 1;
+      minSel = req ? 1 : 0;
+    } else {
+      maxSel = 1;
+      minSel = req ? 1 : 0;
+    }
+
+    var sb = _client();
+    if (!sb) { _toast('Client not ready.', 'err'); return; }
+    saveB.disabled = true;
+    var orig = saveB.textContent;
+    saveB.textContent = 'Saving…';
+
+    var groupPayload = {
+      restaurant_id: _rid,
+      name:          gname,
+      required:      req,
+      min_select:    minSel,
+      max_select:    maxSel,
+      sort:          _modGroups.length,
+    };
+
+    sb.from('pos_modifier_groups').insert(groupPayload).select('*').single()
+      .then(function (gr) {
+        if (gr.error || !gr.data) { throw gr.error || new Error('group insert failed'); }
+        var group = gr.data;
+        var optRows = rawOpts.map(function (o, i) {
+          var dollars = parseFloat(o.delta) || 0;
+          return {
+            group_id:         group.id,
+            name:             o.name,
+            price_delta_cents: Math.round(dollars * 100),
+            sort:             i,
+            is_available:     true,
+          };
+        });
+        return sb.from('pos_modifiers').insert(optRows).select('id').then(function (or) {
+          if (or.error) { throw or.error; }
+          return group;
+        });
+      })
+      .then(function (group) {
+        saveB.disabled = false;
+        saveB.textContent = orig;
+        /* make the new group available + attached to this item */
+        _modGroups.push(group);
+        _drawerModIds[group.id] = true;
+        _renderModChecklist(sectionEl);   /* re-renders checklist with the new group checked */
+        _resetInlineOptions(sectionEl);
+        _toast('Option group added — it\'s attached to this item.', 'ok');
+      })
+      .catch(function (err) {
+        saveB.disabled = false;
+        saveB.textContent = orig;
+        console.error('[pos-menu] inline option save error', err);
+        _toast('Could not save the option group.', 'err');
+      });
   }
 
   /* ---------- CATEGORIES LOAD ---------- */
@@ -2243,8 +2517,41 @@
           '</div>',
 
           '<div class="posmenu-field">',
-            '<label class="posmenu-label">Modifier groups</label>',
+            '<label class="posmenu-label">Options &amp; add-ons</label>',
             '<div id="pm-mod-checklist" class="posmenu-modcheck-list" role="group" aria-label="Attach modifier groups"></div>',
+
+            /* ---- INLINE: add a new option group for THIS item, right here ---- */
+            '<div class="posmenu-inlineopt">',
+              '<button type="button" class="posmenu-inlineopt-toggle" id="pm-inlineopt-toggle" aria-expanded="false">',
+                '+ Add an option group (e.g. Choose bread, Add sauces, Drink size)',
+              '</button>',
+              '<div class="posmenu-inlineopt-body" id="pm-inlineopt-body">',
+                '<div class="posmenu-inlineopt-row">',
+                  '<input class="posmenu-input posmenu-inlineopt-optname" id="pm-inlineopt-gname" type="text" placeholder="Group name — e.g. Choose your bread" autocomplete="off">',
+                '</div>',
+                '<div class="posmenu-inlineopt-row">',
+                  '<div class="posmenu-inlineopt-seg" role="group" aria-label="Selection type">',
+                    '<button type="button" id="pm-inlineopt-single" class="active" aria-pressed="true">Pick one</button>',
+                    '<button type="button" id="pm-inlineopt-multi" aria-pressed="false">Pick several</button>',
+                  '</div>',
+                  '<label class="posmenu-modcheck-item" style="padding:0;gap:6px">',
+                    '<input type="checkbox" id="pm-inlineopt-required"> ',
+                    '<span class="posmenu-modcheck-label" style="font-size:13px">Required</span>',
+                  '</label>',
+                  '<span id="pm-inlineopt-maxwrap" style="display:none;align-items:center;gap:6px">',
+                    '<span style="font-size:13px;color:var(--color-text-secondary)">Max</span>',
+                    '<input class="posmenu-input" id="pm-inlineopt-max" type="number" min="1" step="1" value="3" style="width:64px;min-height:36px">',
+                  '</span>',
+                '</div>',
+                '<div class="posmenu-inlineopt-opts" id="pm-inlineopt-opts"></div>',
+                '<button type="button" class="posmenu-inlineopt-addopt" id="pm-inlineopt-addopt">+ Add option</button>',
+                '<p class="posmenu-inlineopt-hint">Set a + price for paid add-ons (leave 0 for free choices like “Medium rare”).</p>',
+                '<div class="posmenu-inlineopt-foot">',
+                  '<button type="button" class="btn btn-primary" id="pm-inlineopt-save" style="border-radius:var(--radius-md);min-height:40px">Save option group</button>',
+                  '<button type="button" class="btn btn-secondary" id="pm-inlineopt-cancel" style="border-radius:var(--radius-md);min-height:40px">Cancel</button>',
+                '</div>',
+              '</div>',
+            '</div>',
           '</div>',
 
         '</div>',/* /drawer-body */
